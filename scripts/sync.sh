@@ -130,6 +130,37 @@ if [ "$MODE" = "check" ]; then
     exit 1
   fi
 
+  # Completeness: every file under shared/ must be a mapped source. An unmapped
+  # shared file would silently never reach any platform, defeating the "single
+  # source of truth" contract, so --check fails loudly on it.
+  mapped_srcs=()
+  for entry in "${MAP[@]}"; do
+    mapped_srcs+=("${entry%%|*}")
+  done
+  unmapped=()
+  while IFS= read -r abs; do
+    rel="${abs#"${SHARED_DIR}/"}"
+    found=0
+    for m in "${mapped_srcs[@]}"; do
+      if [ "$m" = "$rel" ]; then
+        found=1
+        break
+      fi
+    done
+    if [ "$found" -eq 0 ]; then
+      unmapped+=("$rel")
+    fi
+  done < <(find "$SHARED_DIR" -type f -not -path '*/__pycache__/*' | sort)
+
+  if [ "${#unmapped[@]}" -gt 0 ]; then
+    echo "sync.sh --check: ${#unmapped[@]} shared file(s) not wired into the sync MAP:" >&2
+    for rel in "${unmapped[@]}"; do
+      echo "  unmapped_shared_source=$rel" >&2
+    done
+    echo "Add a MAP entry in scripts/sync.sh so the file reaches every platform." >&2
+    exit 1
+  fi
+
   echo "sync.sh --check: in sync (${#MAP[@]} copies across 3 platforms)."
   exit 0
 fi
