@@ -75,7 +75,7 @@ Planner-docs/
     Phase1.1-*.md
 ```
 
-The artifact filenames (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the bundled planner prompts and validator match exactly — don't rename them. (Renamed from the Turkish `Faz` and the misspelled `Planing` in 0.2.0; see CHANGELOG.)
+The artifact filenames (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the bundled planner prompts and validator match exactly — don't rename them.
 
 ## Validator
 

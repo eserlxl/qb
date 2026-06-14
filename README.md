@@ -72,7 +72,7 @@ Planner-docs/
     └── Phase1.2-...md
 ```
 
-> The artifact names — `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English. (Earlier releases used the Turkish `Faz` and the misspelled `Planing`; both were standardized to `Phase` / `Planning` — see the platform CHANGELOGs for the migration note.)
+> The artifact names — `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English.
 
 ---
 

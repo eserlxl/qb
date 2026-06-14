@@ -145,7 +145,7 @@ Planner-docs/
     └── Phase1.2-...md
 ```
 
-> The artifact names (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the validator and index cross-references match exactly — don't rename them. The document *content* is English. (Renamed from `Faz` / `Planing` in 0.2.0; see CHANGELOG.)
+> The artifact names (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the validator and index cross-references match exactly — don't rename them. The document *content* is English.
 
 ---
 
@@ -225,7 +225,7 @@ Questions follow your language; all planning documents are written in English.
 <details>
 <summary><strong>Can I rename the planning files?</strong></summary>
 
-No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. (They were renamed from the Turkish `Faz` and the misspelled `Planing` in 0.2.0 — see CHANGELOG.) The document *content* is English.
+No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. The document *content* is English.
 </details>
 
 <details>

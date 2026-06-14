@@ -186,7 +186,7 @@ Questions follow your language; all planning documents are written in English.
 <details>
 <summary><strong>Can I rename the planning files?</strong></summary>
 
-No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. (They were renamed from the Turkish `Faz` and the misspelled `Planing` in 0.5.0 — see CHANGELOG.) The document *content* is English.
+No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. The document *content* is English.
 </details>
 
 <details>
