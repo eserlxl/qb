@@ -1,8 +1,8 @@
-"""Failure-path coverage for a platform's validate.sh CI gate.
+"""Failure-path coverage for every platform's validate.sh CI gate.
 
 The per-platform validate.sh scripts are otherwise only run against the healthy
-repo, so their rejection branches are unverified. This copies the claude-code
-package into a temp dir and confirms validate.sh actually fails on a missing
+repo, so their rejection branches are unverified. For each platform this copies
+the package into a temp dir and confirms validate.sh actually fails on a missing
 required file and on a mis-named manifest, not just that it passes when clean.
 """
 
@@ -15,9 +15,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from tests.qb_monorepo import CLAUDE_CODE
-
-SRC_ROOT = CLAUDE_CODE["root"]
+from tests.qb_monorepo import CLAUDE_CODE, CODEX, CURSOR
 
 
 def _run(tmp_root: Path) -> subprocess.CompletedProcess[str]:
@@ -29,13 +27,26 @@ def _run(tmp_root: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-class ClaudeCodeValidateShFailureTests(unittest.TestCase):
+class _ValidateShFailureBase:
+    """Rejection-branch checks parameterized by a tests.qb_monorepo descriptor.
+
+    Concrete subclasses set ``PLATFORM`` and also inherit ``unittest.TestCase``
+    so the shared ``test_*`` methods run once per platform. This mixin is not a
+    TestCase itself, so it is never collected on its own.
+    """
+
+    PLATFORM: dict
+
     def setUp(self) -> None:
-        if not (SRC_ROOT / "scripts/validate.sh").exists():
-            self.skipTest("claude-code platform not built yet")
+        src_root = self.PLATFORM["root"]
+        if not (src_root / "scripts/validate.sh").exists():
+            self.skipTest(f"{self.PLATFORM['id']} platform not built yet")
         self._tmp = TemporaryDirectory()
-        self.root = Path(self._tmp.name) / "claude-code"
-        shutil.copytree(SRC_ROOT, self.root)
+        self.root = Path(self._tmp.name) / src_root.name
+        shutil.copytree(src_root, self.root)
+        # Manifest path inside the copy; host layouts differ, so derive it from
+        # the descriptor rather than hard-coding a per-platform path here.
+        self.manifest = self.root / self.PLATFORM["manifest"].relative_to(src_root)
 
     def tearDown(self) -> None:
         self._tmp.cleanup()
@@ -51,13 +62,24 @@ class ClaudeCodeValidateShFailureTests(unittest.TestCase):
         self.assertIn("missing_required_file", result.stdout + result.stderr)
 
     def test_wrong_manifest_name_fails(self) -> None:
-        manifest = self.root / ".claude-plugin/plugin.json"
-        data = json.loads(manifest.read_text(encoding="utf-8"))
-        data["name"] = "not-claudeqb"
-        manifest.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        data = json.loads(self.manifest.read_text(encoding="utf-8"))
+        data["name"] = f"not-{self.PLATFORM['id']}"
+        self.manifest.write_text(json.dumps(data, indent=2), encoding="utf-8")
         result = _run(self.root)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("unexpected_plugin_name", result.stdout + result.stderr)
+
+
+class ClaudeCodeValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
+    PLATFORM = CLAUDE_CODE
+
+
+class CursorValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
+    PLATFORM = CURSOR
+
+
+class CodexValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
+    PLATFORM = CODEX
 
 
 if __name__ == "__main__":
