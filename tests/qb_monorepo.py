@@ -45,7 +45,15 @@ CODEX = {
     "id": "codexqb",
     "root": PLATFORMS_DIR / "codex",
     "manifest": PLATFORMS_DIR / "codex/plugins/codexqb/.codex-plugin/plugin.json",
-    "forbidden": ("claudeqb", "cursorqb", ".claude-plugin", ".cursor-plugin"),
+    "forbidden": (
+        "claudeqb",
+        "cursorqb",
+        ".claude-plugin",
+        ".cursor-plugin",
+        "define-goal",
+        "create_goal",
+        "get_goal",
+    ),
 }
 
 ALL_PLATFORMS = (CLAUDE_CODE, CURSOR, CODEX)
