@@ -289,6 +289,45 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             self.assertIn("p2_findings=0", result.stdout)
             self.assertIn("p3_findings=0", result.stdout)
 
+    def test_all_secret_pattern_classes_are_detected(self) -> None:
+        samples = {
+            "openai_api_key": "sk-" + "A" * 24,
+            "github_pat": "github_pat_" + "A" * 22,
+            "github_legacy_pat": "ghp_" + "A" * 24,
+            "aws_access_key": "AKIA" + "1234567890ABCDEF",
+            "slack_token": "xoxb-" + "1" * 24,
+            "private_key": "-----BEGIN OPENSSH PRIVATE KEY-----",
+        }
+        for name, sample in samples.items():
+            with self.subTest(pattern=name), tempfile.TemporaryDirectory() as temp_dir:
+                docs = write_valid_step2_fixture(Path(temp_dir))
+                (docs / "leak.md").write_text(f"leaked secret: {sample}\n", encoding="utf-8")
+                result = run_validator(Path(temp_dir), "step2")
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn(f"secret_pattern={name}", result.stdout)
+
+    def test_typed_pem_private_key_headers_are_all_detected(self) -> None:
+        for header in (
+            "RSA PRIVATE KEY",
+            "EC PRIVATE KEY",
+            "DSA PRIVATE KEY",
+            "ENCRYPTED PRIVATE KEY",
+            "PRIVATE KEY",
+        ):
+            with self.subTest(header=header), tempfile.TemporaryDirectory() as temp_dir:
+                docs = write_valid_step2_fixture(Path(temp_dir))
+                (docs / "key.md").write_text(f"-----BEGIN {header}-----\n", encoding="utf-8")
+                result = run_validator(Path(temp_dir), "step2")
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn("secret_pattern=private_key", result.stdout)
+
+    def test_public_key_header_is_not_flagged_as_private_key(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            docs = write_valid_step2_fixture(Path(temp_dir))
+            (docs / "pub.md").write_text("-----BEGIN RSA PUBLIC KEY-----\n", encoding="utf-8")
+            result = run_validator(Path(temp_dir), "step2")
+            self.assertNotIn("secret_pattern=private_key", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
