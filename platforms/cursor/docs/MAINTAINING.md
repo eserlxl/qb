@@ -3,8 +3,7 @@
 ## Validate locally
 
 ```bash
-make check   # manifest + required files + frontmatter + cross-host residue scan + tests
-make test    # unit tests only (verbose)
+make check   # manifest + required files + frontmatter + cross-host residue scan
 ```
 
 `make check` runs `scripts/validate.sh`, which:
@@ -12,8 +11,7 @@ make test    # unit tests only (verbose)
 1. parses `.cursor-plugin/plugin.json` and checks `name == "cursorqb"`;
 2. confirms every required file exists (skills, bundled planner specs, references, scripts, commands, docs);
 3. checks that each skill's frontmatter `name` equals its directory and each command's `name` equals its filename stem;
-4. fails on cross-host residue in the hand-authored host files (skills `SKILL.md` and commands): the forbidden set is `claudeqb`, `codexqb`, the other-host plugin invocation token, `.claude-plugin`, and `.codex-plugin`. The synced neutral planner specs, references, and validator are intentionally **not** brand-scanned (they say only "QB");
-5. runs the test suite under `tests/`.
+4. fails on cross-host residue in the hand-authored host files (skills `SKILL.md` and commands): the forbidden set is `claudeqb`, `codexqb`, the other-host plugin invocation token, `.claude-plugin`, and `.codex-plugin`. The synced neutral planner specs, references, and validator are intentionally **not** brand-scanned (they say only "QB").
 
 `scripts/validate.sh` is dependency-free (pure POSIX shell) and ends with the line
 `cursorqb_repo_validation=passed`.

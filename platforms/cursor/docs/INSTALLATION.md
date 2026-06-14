@@ -25,9 +25,10 @@ plugin marketplace. The manifest at `.cursor-plugin/plugin.json` is the source o
 
 ## Optional dependency
 
-The bundled validator (`scripts/validate_planner_docs.py`) and the test suite use `python3`.
-`python3` ships on macOS and most Linux systems. If `python3` is unavailable, the skills fall
-back to equivalent manual checks and say so; the workflow still runs.
+The bundled spec validator (`scripts/validate_planner_docs.py`) uses `python3`, but the host
+validator (`scripts/validate.sh`) is pure POSIX shell and needs no `python3`. `python3` ships on
+macOS and most Linux systems. If `python3` is unavailable, the skills fall back to equivalent
+manual checks and say so; the workflow still runs.
 
 ## Verify the install
 
@@ -35,5 +36,5 @@ back to equivalent manual checks and say so; the workflow still runs.
 make check
 ```
 
-This validates the manifest, required files, frontmatter, and runs the test suite. Expect a
+This validates the manifest, required files, frontmatter, and cross-host residue. Expect a
 final `cursorqb_repo_validation=passed` line.

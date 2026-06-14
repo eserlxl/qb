@@ -200,8 +200,7 @@ No. CursorQB runs entirely in-session inside Cursor.
 ## Development
 
 ```bash
-make check   # validate the manifest, required files, and frontmatter, then run the tests
-make test    # run the unit tests only
+make check   # validate the manifest, required files, frontmatter, and cross-host residue
 ```
 
 Further reading: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) ·
