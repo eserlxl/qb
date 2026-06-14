@@ -40,3 +40,4 @@ QB-sanitized.zip
 
 # Claude Code session scaffolding (not part of the project)
 .remember/
+.planwright/
