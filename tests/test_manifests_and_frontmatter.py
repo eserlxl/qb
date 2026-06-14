@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 
 from tests.qb_monorepo import (
@@ -33,6 +34,28 @@ class ManifestIdTests(unittest.TestCase):
                     platform["id"],
                     f"manifest name {data.get('name')!r} != expected id {platform['id']!r} "
                     f"in {platform['manifest']}",
+                )
+
+    def test_each_manifest_declares_semver_version_and_mit_license(self) -> None:
+        semver = re.compile(r"^\d+\.\d+\.\d+$")
+        for platform in ALL_PLATFORMS:
+            with self.subTest(platform=platform["id"]):
+                if not platform["manifest"].exists():
+                    self.skipTest(f"platform not built yet: {platform['manifest']}")
+                data = load_manifest(platform)
+                version = data.get("version")
+                self.assertIsInstance(
+                    version, str, f"missing version in {platform['manifest']}"
+                )
+                self.assertRegex(
+                    version,
+                    semver,
+                    f"version {version!r} is not semver in {platform['manifest']}",
+                )
+                self.assertEqual(
+                    data.get("license"),
+                    "MIT",
+                    f"license != MIT in {platform['manifest']}",
                 )
 
     def test_codex_manifest_is_read_from_the_nested_codex_plugin_dir(self) -> None:
