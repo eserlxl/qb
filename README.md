@@ -159,7 +159,12 @@ make export-sanitized   # git archive the committed tree to QB-sanitized.zip
 
 ## Attribution
 
-QB is an attributed, multi-platform port of **CursorQB** (the Cursor plugin) and **CodexQB** (the Codex plugin) by **Alican Kiraz**. The planner prompts, repo-aware intake, workflow-quality guidance, and read-only validator are ported faithfully into the shared source of truth; each platform's launch mechanism is adapted to its native host (Claude Code subagents via the Task tool, Cursor `define-goal` goals, Codex Goal-mode handoff). Released under the **MIT** license.
+QB is derived from two projects by **[Alican Kiraz](https://github.com/alicankiraz1)** — it is an attributed, multi-platform port of:
+
+- **[CursorQB](https://github.com/alicankiraz1/CursorQB)** — the Cursor plugin
+- **[CodexQB](https://github.com/alicankiraz1/CodexQB)** — the Codex plugin
+
+The planner prompts, repo-aware intake, workflow-quality guidance, and read-only validator are ported faithfully into the shared source of truth; each platform's launch mechanism is adapted to its native host (Claude Code subagents via the Task tool, Cursor `define-goal` goals, Codex Goal-mode handoff). Released under the **MIT** license.
 
 ---
 
