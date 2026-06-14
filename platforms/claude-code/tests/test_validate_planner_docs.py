@@ -296,7 +296,7 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             "github_legacy_pat": "ghp_" + "A" * 24,
             "aws_access_key": "AKIA" + "1234567890ABCDEF",
             "slack_token": "xoxb-" + "1" * 24,
-            "private_key": "-----BEGIN OPENSSH PRIVATE KEY-----",
+            "private_key": "-----BEGIN OPENSSH PRIVATE KEY-----",  # pragma: allowlist secret
         }
         for name, sample in samples.items():
             with self.subTest(pattern=name), tempfile.TemporaryDirectory() as temp_dir:
