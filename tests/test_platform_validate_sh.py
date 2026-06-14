@@ -81,6 +81,20 @@ class CursorValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
 class CodexValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
     PLATFORM = CODEX
 
+    def test_planted_secret_fails(self) -> None:
+        # Codex-only: its validate.sh is the repo's CI-time tracked-file secret
+        # scanner. Build the token by concatenation so this source carries no
+        # literal credential (and never trips a secret scan itself).
+        fake_secret = "ghp_" + "A" * 32  # matches the github_legacy_pat pattern
+        leak = self.root / "docs/USAGE.md"  # exists, passes checks 1-7
+        leak.write_text(
+            leak.read_text(encoding="utf-8") + f"\n{fake_secret}\n",
+            encoding="utf-8",
+        )
+        result = _run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("tracked_secret_hygiene_failed", result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
