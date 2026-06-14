@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+__MACOSX/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.local.*
+*.pem
+*.key
+
+# Build outputs
+build/
+dist/
+
+# Generated/runtime
+CursorQB-sanitized.zip
+artifacts/
+logs/
+tmp/

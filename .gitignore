@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments / env & secrets
+.venv/
+venv/
+env/
+.env
+.env.*
+*.env
+secrets.*
+*.pem
+*.key
+
+# Build outputs
+build/
+dist/
+QB-sanitized.zip
+*-sanitized.zip
+
+# Editor / OS noise
+.idea/
+.vscode/
+*.swp
+*~
+
+# Claude Code session scaffolding (not part of the project)
+.remember/

@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+#
+# sync.sh -- materialize the canonical shared/ source of truth into every platform.
+#
+# The files under shared/ are the single source of truth for QB's host-neutral IP:
+# the five planner prompt specs, the two reference docs, and the read-only
+# validator. They are deliberately host-neutral (they speak only of "QB"), so the
+# platform copies are PLAIN byte-for-byte copies -- there is NO re-branding here.
+#
+# Modes:
+#   (default)   Copy each shared file to all of its mapped platform destinations,
+#               creating parent directories as needed. Prints a concise summary.
+#   --check     Compare each destination to its shared source. Exits 1 and lists
+#               every path that is missing or differs (used by CI). Writes nothing.
+#
+# Dependency-free: bash + coreutils (cmp / cp / mkdir / dirname).
+
+set -euo pipefail
+
+# --- Resolve repo root from this script's location (scripts/sync.sh) -----------
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+# Resolve symlink chain so the repo root is correct even if invoked via a symlink.
+while [ -h "$SCRIPT_SOURCE" ]; do
+  dir="$(cd -P "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+  SCRIPT_SOURCE="$(readlink "$SCRIPT_SOURCE")"
+  [[ "$SCRIPT_SOURCE" != /* ]] && SCRIPT_SOURCE="$dir/$SCRIPT_SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+REPO_ROOT="$(cd -P "$SCRIPT_DIR/.." && pwd)"
+
+SHARED_DIR="$REPO_ROOT/shared"
+
+# --- Parse mode ----------------------------------------------------------------
+MODE="sync"
+case "${1:-}" in
+  "")        MODE="sync" ;;
+  --check)   MODE="check" ;;
+  -h|--help)
+    cat <<'EOF'
+Usage: scripts/sync.sh [--check]
+
+  (no args)   Copy shared/ files into every platform destination (default).
+  --check     Verify every platform copy byte-matches its shared source.
+              Exits 1 and lists drifting/missing paths. Writes nothing.
+EOF
+    exit 0
+    ;;
+  *)
+    echo "sync.sh: unknown argument: $1" >&2
+    echo "Usage: scripts/sync.sh [--check]" >&2
+    exit 2
+    ;;
+esac
+
+# --- The SYNC CONTRACT mapping -------------------------------------------------
+# One entry per (source, destination) pair. Source paths are relative to
+# SHARED_DIR; destination paths are relative to REPO_ROOT. The grouping by source
+# mirrors the SPEC: each shared file fans out to claude-code, cursor, and codex.
+MAP=(
+  # shared/planners/first-planner.md
+  "planners/first-planner.md|platforms/claude-code/skills/claudeqb-planner/planners/first-planner.md"
+  "planners/first-planner.md|platforms/cursor/skills/cursorqb-planner/planners/first-planner.md"
+  "planners/first-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/First-Planner.md"
+
+  # shared/planners/second-planner.md
+  "planners/second-planner.md|platforms/claude-code/skills/claudeqb-subplanner/second-planner.md"
+  "planners/second-planner.md|platforms/cursor/skills/cursorqb-subplanner/second-planner.md"
+  "planners/second-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Second-Planner.md"
+
+  # shared/planners/third-planner.md
+  "planners/third-planner.md|platforms/claude-code/skills/claudeqb-auditor/third-planner.md"
+  "planners/third-planner.md|platforms/cursor/skills/cursorqb-auditor/third-planner.md"
+  "planners/third-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Third-Planner.md"
+
+  # shared/planners/fourth-planner.md
+  "planners/fourth-planner.md|platforms/claude-code/skills/claudeqb-implementer/fourth-planner.md"
+  "planners/fourth-planner.md|platforms/cursor/skills/cursorqb-implementer/fourth-planner.md"
+  "planners/fourth-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Fourth-Planner.md"
+
+  # shared/planners/autopsy-planner.md
+  "planners/autopsy-planner.md|platforms/claude-code/skills/claudeqb-autopsy/autopsy-planner.md"
+  "planners/autopsy-planner.md|platforms/cursor/skills/cursorqb-autopsy/autopsy-planner.md"
+  "planners/autopsy-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Autopsy-Planner.md"
+
+  # shared/references/repo-aware-intake.md
+  "references/repo-aware-intake.md|platforms/claude-code/references/repo-aware-intake.md"
+  "references/repo-aware-intake.md|platforms/cursor/references/repo-aware-intake.md"
+  "references/repo-aware-intake.md|platforms/codex/plugins/codexqb/skills/codexqb/references/repo-aware-intake.md"
+
+  # shared/references/workflow-quality.md
+  "references/workflow-quality.md|platforms/claude-code/references/workflow-quality.md"
+  "references/workflow-quality.md|platforms/cursor/references/workflow-quality.md"
+  "references/workflow-quality.md|platforms/codex/plugins/codexqb/skills/codexqb/references/workflow-quality.md"
+
+  # shared/scripts/validate_planner_docs.py
+  "scripts/validate_planner_docs.py|platforms/claude-code/scripts/validate_planner_docs.py"
+  "scripts/validate_planner_docs.py|platforms/cursor/scripts/validate_planner_docs.py"
+  "scripts/validate_planner_docs.py|platforms/codex/plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py"
+)
+
+# Number of distinct shared source files (for the summary line).
+SHARED_FILE_COUNT="$(printf '%s\n' "${MAP[@]}" | cut -d'|' -f1 | sort -u | wc -l | tr -d ' ')"
+
+# --- Run -----------------------------------------------------------------------
+if [ "$MODE" = "check" ]; then
+  drift=()
+  for entry in "${MAP[@]}"; do
+    src_rel="${entry%%|*}"
+    dst_rel="${entry#*|}"
+    src="$SHARED_DIR/$src_rel"
+    dst="$REPO_ROOT/$dst_rel"
+
+    if [ ! -f "$src" ]; then
+      echo "sync.sh: missing shared source: $src" >&2
+      exit 1
+    fi
+    if [ ! -f "$dst" ]; then
+      drift+=("MISSING  $dst_rel")
+    elif ! cmp -s "$src" "$dst"; then
+      drift+=("DIFFERS  $dst_rel")
+    fi
+  done
+
+  if [ "${#drift[@]}" -gt 0 ]; then
+    echo "sync.sh --check: out of sync (${#drift[@]} path(s)):" >&2
+    for line in "${drift[@]}"; do
+      echo "  $line" >&2
+    done
+    echo "Run 'scripts/sync.sh' to materialize the shared source of truth." >&2
+    exit 1
+  fi
+
+  echo "sync.sh --check: in sync (${#MAP[@]} copies across 3 platforms)."
+  exit 0
+fi
+
+# Default mode: copy.
+copied=0
+for entry in "${MAP[@]}"; do
+  src_rel="${entry%%|*}"
+  dst_rel="${entry#*|}"
+  src="$SHARED_DIR/$src_rel"
+  dst="$REPO_ROOT/$dst_rel"
+
+  if [ ! -f "$src" ]; then
+    echo "sync.sh: missing shared source: $src" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "$dst")"
+  cp -p "$src" "$dst"
+  copied=$((copied + 1))
+done
+
+echo "sync.sh: synced $SHARED_FILE_COUNT shared file(s) to 3 platforms ($copied copies)."

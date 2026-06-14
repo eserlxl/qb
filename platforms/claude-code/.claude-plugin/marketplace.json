@@ -1,0 +1,13 @@
+{
+  "name": "claudeqb",
+  "owner": {
+    "name": "Alican Kiraz"
+  },
+  "plugins": [
+    {
+      "name": "claudeqb",
+      "source": "./",
+      "description": "Repo-aware, gated, multi-step project planning workflow for Claude Code: master plan, autopsy, phase decomposition, coverage/quality audit, and gated implementation. Produces English Planner-docs/; in-session and zero-setup."
+    }
+  ]
+}

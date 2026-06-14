@@ -1,0 +1,16 @@
+---
+name: cursorqb-audit
+description: Run only the CursorQB Step 3 audit (re-audit) of existing Planner-docs sub-plans.
+---
+
+# CursorQB Audit
+
+Invoke the `cursorqb-auditor` skill directly, without re-running Steps 1 and 2. It launches
+automatically as a Cursor goal via the `define-goal` skill - no manual "Follow the Goal" button.
+
+Use this to (re)audit the current `Planner-docs/` sub-plans - for example after applying
+repairs from a previous `PASS_WITH_WARNINGS` result. The skill reads
+`Planner-docs/Main-Planing.md`, `Planner-docs/Sub-Planing-Index.md`, and every
+`Planner-docs/Faz-*-Plans/*.md`, then produces only `Planner-docs/Sub-Planing-Audit.md`
+(in English) and returns a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. It never edits the
+plans themselves.
