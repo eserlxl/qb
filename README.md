@@ -170,6 +170,6 @@ The planner prompts, repo-aware intake, workflow-quality guidance, and read-only
 
 <div align="center">
 
-**[MIT](LICENSE)** © Alican Kiraz
+**[MIT](LICENSE)** · original © Alican Kiraz · port © Eser KUBALI
 
 </div>
