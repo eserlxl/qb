@@ -23,10 +23,10 @@ This package is the Codex platform build of QB. The planner prompts, reference d
 
 | Step | What CodexQB Does | Output |
 | --- | --- | --- |
-| 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `Planner-docs/Main-Planing.md` |
+| 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `Planner-docs/Main-Planning.md` |
 | 1.5 Autopsy | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `Planner-docs/Autopsy.md` |
-| 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `Planner-docs/Sub-Planing-Index.md`, `Planner-docs/Faz-*-Plans/*.md` |
-| 3. QA Audit | Audits coverage, structure, quality, readiness, and governance without repairing files. | `Planner-docs/Sub-Planing-Audit.md` |
+| 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `Planner-docs/Sub-Planning-Index.md`, `Planner-docs/Phase-*-Plans/*.md` |
+| 3. QA Audit | Audits coverage, structure, quality, readiness, and governance without repairing files. | `Planner-docs/Sub-Planning-Audit.md` |
 | 4. Gated Handoff | Prints a copy-ready implementation Goal prompt when Step 3 passes. | Text-only Goal mode prompt |
 
 Step 1 runs in the current Codex thread. Steps 2, 3, and 4 are intentionally handed off as text-only Goal mode prompts so the user stays in control of long-running work.
@@ -65,17 +65,17 @@ CodexQB writes planning artifacts under the target project's `Planner-docs/` dir
 
 ```text
 Planner-docs/
-  Main-Planing.md
+  Main-Planning.md
   Autopsy.md
-  Sub-Planing-Index.md
-  Sub-Planing-Audit.md
-  Faz-0-Plans/
-    Faz0.1-*.md
-  Faz-1-Plans/
-    Faz1.1-*.md
+  Sub-Planning-Index.md
+  Sub-Planning-Audit.md
+  Phase-0-Plans/
+    Phase0.1-*.md
+  Phase-1-Plans/
+    Phase1.1-*.md
 ```
 
-The `Planing` spelling is intentionally preserved because the bundled planner prompts and validators use these exact filenames.
+The artifact filenames (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the bundled planner prompts and validator match exactly — don't rename them. (Renamed from the Turkish `Faz` and the misspelled `Planing` in 0.2.0; see CHANGELOG.)
 
 ## Validator
 

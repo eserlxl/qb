@@ -51,12 +51,12 @@ After all four values are available:
 1. Read `references/First-Planner.md`.
 2. Substitute the four collected values into the matching placeholders.
 3. Follow the substituted Step 1 prompt exactly.
-4. Create or update only `Planner-docs/Main-Planing.md`, as required by the Step 1 prompt.
+4. Create or update only `Planner-docs/Main-Planning.md`, as required by the Step 1 prompt.
 5. After completing Step 1, decide whether Step 1.5 Autopsy applies.
 6. Run Step 1.5 automatically only when the repository is an existing or partially built project: it is not empty and contains meaningful evidence such as README, manifests, source/service/package directories, tests, docs, configs, or CI.
 7. Skip Step 1.5 for new or nearly empty projects; do not create `Planner-docs/Autopsy.md` in that case.
 8. After Step 1 and any Step 1.5 Autopsy work, ask the user in plain text whether they have feedback for the main plan and autopsy.
-9. If feedback is provided, apply it under the same file boundary: update only `Planner-docs/Main-Planing.md` for main plan feedback and only `Planner-docs/Autopsy.md` for autopsy feedback.
+9. If feedback is provided, apply it under the same file boundary: update only `Planner-docs/Main-Planning.md` for main plan feedback and only `Planner-docs/Autopsy.md` for autopsy feedback.
 
 ## Step 1.5 Autopsy
 
@@ -65,10 +65,10 @@ Step 1.5 is for existing or partially built projects. It should not run for genu
 When Step 1.5 applies:
 
 1. Read `references/Autopsy-Planner.md`.
-2. Read `Planner-docs/Main-Planing.md`.
+2. Read `Planner-docs/Main-Planning.md`.
 3. Inspect the repository with read-only commands.
 4. Create or update only `Planner-docs/Autopsy.md`.
-5. Do not modify source files, `Planner-docs/Main-Planing.md`, or any Step 2/3 files.
+5. Do not modify source files, `Planner-docs/Main-Planning.md`, or any Step 2/3 files.
 6. Treat `Autopsy.md` as Step 2 feedback, not as a replacement for the main plan.
 
 ## Step 2 Handoff
@@ -78,7 +78,7 @@ After Step 1 feedback is handled, ask whether the user wants to continue to Step
 ```text
 Use $codexqb. Run Step 2 according to references/Second-Planner.md.
 
-Read all main phases in Planner-docs/Main-Planing.md. If Planner-docs/Autopsy.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create Faz-<n>-Plans folders and detailed Faz<n>.<m>-*.md sub-plan files under Planner-docs. Do not stop until all phases are covered. Modify only Planner-docs.
+Read all main phases in Planner-docs/Main-Planning.md. If Planner-docs/Autopsy.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create Phase-<n>-Plans folders and detailed Phase<n>.<m>-*.md sub-plan files under Planner-docs. Do not stop until all phases are covered. Modify only Planner-docs.
 ```
 
 When executing Step 2 directly:
@@ -100,7 +100,7 @@ After Step 2 is complete, ask whether the user wants to continue to Step 3. If y
 ```text
 Use $codexqb. Run Step 3 according to references/Third-Planner.md.
 
-Audit Planner-docs/Main-Planing.md, Planner-docs/Sub-Planing-Index.md, and Planner-docs/Faz-*-Plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only Planner-docs/Sub-Planing-Audit.md. Do not stop until all phases and sub-plans have been reviewed.
+Audit Planner-docs/Main-Planning.md, Planner-docs/Sub-Planning-Index.md, and Planner-docs/Phase-*-Plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only Planner-docs/Sub-Planning-Audit.md. Do not stop until all phases and sub-plans have been reviewed.
 ```
 
 When executing Step 3 directly:
@@ -111,7 +111,7 @@ When executing Step 3 directly:
    `python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root . --mode step3 --strict`
    If no script path is accessible, perform equivalent all-file validation and report that fallback clearly.
 4. Follow audit, file-boundary, validation, and stopping rules exactly.
-5. Modify only `Planner-docs/Sub-Planing-Audit.md`.
+5. Modify only `Planner-docs/Sub-Planning-Audit.md`.
 6. After the Step 3 summary, print the Step 4 handoff prompt from `references/Fourth-Planner.md` only if the audit permits implementation.
 
 ## Step 4 Handoff
@@ -144,7 +144,7 @@ When Step 3 completes:
 - Inspect the repository before writing any planning file, using the safe read-only commands required by the active planner prompt.
 - Do not implement product features, refactor source code, install dependencies, commit, push, deploy, or open pull requests.
 - Do not write secrets, tokens, credentials, private keys, or local sensitive environment values into planning files.
-- Preserve the required misspelled filenames exactly: `Main-Planing.md`, `Sub-Planing-Index.md`, and `Sub-Planing-Audit.md`.
+- Preserve the exact required filenames: `Main-Planning.md`, `Sub-Planning-Index.md`, and `Sub-Planning-Audit.md`.
 - Preserve `Planner-docs/Autopsy.md` as the Step 1.5 autopsy filename.
 - If a required source file is missing, follow the blocker behavior in the active planner prompt instead of inventing speculative output.
 

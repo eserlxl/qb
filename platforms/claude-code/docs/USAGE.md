@@ -26,7 +26,7 @@ confirm or edit:
 - `TARGET_END_STATE` (product, engineering, operations, security, user value)
 - `KNOWN_CONSTRAINTS` (team, infra, budget, timeline, stack, compliance, must-use/must-not-use)
 
-It writes `Planner-docs/Main-Planing.md` and validates it (`--mode step1`).
+It writes `Planner-docs/Main-Planning.md` and validates it (`--mode step1`).
 
 ## Step 1.5: Existing-Project Autopsy (automatic for existing repos)
 
@@ -41,14 +41,14 @@ not created.
 ## Gate 1
 
 You review the master plan (and the autopsy, when present), give feedback, and
-approve moving on. Main-plan feedback is applied to `Main-Planing.md` only;
+approve moving on. Main-plan feedback is applied to `Main-Planning.md` only;
 autopsy feedback to `Autopsy.md` only.
 
 ## Step 2: Phase Sub-Plans (subagent-delegated)
 
 The `claudeqb-subplanner` subagent decomposes every phase into detailed
-sub-plans under `Planner-docs/Faz-<n>-Plans/`, plus a full-path
-`Planner-docs/Sub-Planing-Index.md`. When `Autopsy.md` exists, it is read as
+sub-plans under `Planner-docs/Phase-<n>-Plans/`, plus a full-path
+`Planner-docs/Sub-Planning-Index.md`. When `Autopsy.md` exists, it is read as
 supporting feedback (not a replacement for the main plan). It runs until every
 phase is covered, then validates all files (`--mode step2 --strict`).
 
@@ -59,7 +59,7 @@ ClaudeQB asks for explicit approval before auditing.
 ## Step 3: Sub-Plan QA Audit (subagent-delegated)
 
 The `claudeqb-auditor` subagent runs the validator first, audits the sub-plans
-against the master plan, and writes `Planner-docs/Sub-Planing-Audit.md` with a
+against the master plan, and writes `Planner-docs/Sub-Planning-Audit.md` with a
 status of `PASS`, `PASS_WITH_WARNINGS`, or `BLOCKED`. It never edits the plans
 themselves. Findings are listed as `- AUDIT-FIX-NN | PX | <title>` single-line
 headers.
@@ -95,7 +95,7 @@ zero-setup, and gated at every step.
 
 ## Direct step invocation
 
-- `/claudeqb-autopsy` - run only the autopsy on an existing `Main-Planing.md`.
+- `/claudeqb-autopsy` - run only the autopsy on an existing `Main-Planning.md`.
 - `/claudeqb-audit` - re-run only the audit (for example after repairs).
 - `/claudeqb-implement` - run only the gated implementation for one `READY` sub-plan.
 
@@ -127,11 +127,11 @@ never in the plugin directory:
 
 ```text
 Planner-docs/
-├── Main-Planing.md         # the master plan                          (Step 1)
+├── Main-Planning.md         # the master plan                          (Step 1)
 ├── Autopsy.md              # repo health report for existing projects (Step 1.5)
-├── Sub-Planing-Index.md    # map of every sub-plan + coverage check   (Step 2)
-├── Sub-Planing-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-└── Faz-1-Plans/            # detailed sub-plans, one folder per phase
-    ├── Faz1.1-...md
-    └── Faz1.2-...md
+├── Sub-Planning-Index.md    # map of every sub-plan + coverage check   (Step 2)
+├── Sub-Planning-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
+└── Phase-1-Plans/            # detailed sub-plans, one folder per phase
+    ├── Phase1.1-...md
+    └── Phase1.2-...md
 ```

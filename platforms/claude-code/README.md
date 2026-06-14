@@ -105,12 +105,12 @@ flowchart TD
 
 | Step | Name | What happens | Output | Your part |
 |:--:|---|---|---|---|
-| **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `Planner-docs/Main-Planing.md` | Answer 4 questions |
+| **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `Planner-docs/Main-Planning.md` | Answer 4 questions |
 | **1.5** | Autopsy | For existing projects, a technical health report. | `Planner-docs/Autopsy.md` | — (auto / skipped) |
 | **Gate 1** | Review | Review the plan (and autopsy) together. | — | Feedback + approve |
-| **2** | Sub-plans | Every phase becomes detailed sub-plans plus an index. | `Planner-docs/Faz-<n>-Plans/` + `Sub-Planing-Index.md` | — |
+| **2** | Sub-plans | Every phase becomes detailed sub-plans plus an index. | `Planner-docs/Phase-<n>-Plans/` + `Sub-Planning-Index.md` | — |
 | **Gate 2** | Approve audit | Confirm you want the quality audit. | — | Approve |
-| **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `Planner-docs/Sub-Planing-Audit.md` | Approve repairs if needed |
+| **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `Planner-docs/Sub-Planning-Audit.md` | Approve repairs if needed |
 | **4** | Implement | One bounded, reversible code slice from a `READY` sub-plan. | code changes (gated) | Approve (gated) |
 
 ---
@@ -136,16 +136,16 @@ Every artifact lands under `Planner-docs/` in **your** workspace — never in th
 
 ```text
 Planner-docs/
-├── Main-Planing.md         # the master plan                          (Step 1)
+├── Main-Planning.md         # the master plan                          (Step 1)
 ├── Autopsy.md              # repo health report for existing projects (Step 1.5)
-├── Sub-Planing-Index.md    # map of every sub-plan + coverage check   (Step 2)
-├── Sub-Planing-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-└── Faz-1-Plans/            # detailed sub-plans, one folder per phase
-    ├── Faz1.1-...md
-    └── Faz1.2-...md
+├── Sub-Planning-Index.md    # map of every sub-plan + coverage check   (Step 2)
+├── Sub-Planning-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
+└── Phase-1-Plans/            # detailed sub-plans, one folder per phase
+    ├── Phase1.1-...md
+    └── Phase1.2-...md
 ```
 
-> The `Faz` and `Planing` spellings are intentional, stable file/folder identifiers that the bundled validator and the index references depend on. The document *content* is English.
+> The artifact names (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the validator and index cross-references match exactly — don't rename them. The document *content* is English. (Renamed from `Faz` / `Planing` in 0.2.0; see CHANGELOG.)
 
 ---
 
@@ -223,9 +223,9 @@ Questions follow your language; all planning documents are written in English.
 </details>
 
 <details>
-<summary><strong>Why the names <code>Faz</code> and <code>Planing</code>?</strong></summary>
+<summary><strong>Can I rename the planning files?</strong></summary>
 
-They are intentional, stable file/folder identifiers that the validator and index references depend on. The document *content* is English.
+No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. (They were renamed from the Turkish `Faz` and the misspelled `Planing` in 0.2.0 — see CHANGELOG.) The document *content* is English.
 </details>
 
 <details>

@@ -30,7 +30,7 @@ python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step4
 
 ## Token discipline
 
-- Read `Planner-docs/Sub-Planing-Audit.md` and `Planner-docs/Sub-Planing-Index.md` first.
+- Read `Planner-docs/Sub-Planning-Audit.md` and `Planner-docs/Sub-Planning-Index.md` first.
 - Select ONE `READY` or `READY_WITH_WARNINGS` sub-plan from the audit's `## 12. Step 4 Readiness Assessment` table (highest-priority first, unless the user names another).
 - Load only that sub-plan and the repo files needed for the slice. Do not load all sub-plans.
 

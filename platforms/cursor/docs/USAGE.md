@@ -21,7 +21,7 @@ at a time, in your language, each with a repo-derived draft to confirm or edit:
 - `TARGET_END_STATE` (product, engineering, operations, security, user value)
 - `KNOWN_CONSTRAINTS` (team, infra, budget, timeline, stack, compliance, must-use/must-not-use)
 
-It writes `Planner-docs/Main-Planing.md` and validates it (`--mode step1`).
+It writes `Planner-docs/Main-Planning.md` and validates it (`--mode step1`).
 
 ## Step 1.5: Existing-Project Autopsy (automatic for existing repos)
 
@@ -34,12 +34,12 @@ alignment with the main plan). For empty or nearly empty repositories this step 
 ## Gate 1
 
 You review the master plan (and the autopsy, when present), give feedback, and approve moving on.
-Main-plan feedback is applied to `Main-Planing.md` only; autopsy feedback to `Autopsy.md` only.
+Main-plan feedback is applied to `Main-Planning.md` only; autopsy feedback to `Autopsy.md` only.
 
 ## Step 2: Phase Sub-Plans (goal-backed)
 
 The `cursorqb-subplanner` skill decomposes every phase into detailed sub-plans under
-`Planner-docs/Faz-<n>-Plans/`, plus a full-path `Planner-docs/Sub-Planing-Index.md`. When
+`Planner-docs/Phase-<n>-Plans/`, plus a full-path `Planner-docs/Sub-Planning-Index.md`. When
 `Autopsy.md` exists, it is read as supporting feedback (not a replacement for the main plan). It
 runs until every phase is covered, then validates all files (`--mode step2 --strict`).
 
@@ -50,7 +50,7 @@ CursorQB asks for explicit approval before auditing.
 ## Step 3: Sub-Plan QA Audit (goal-backed)
 
 The `cursorqb-auditor` skill runs the validator first, audits the sub-plans against the master
-plan, and writes `Planner-docs/Sub-Planing-Audit.md` with a status of `PASS`,
+plan, and writes `Planner-docs/Sub-Planning-Audit.md` with a status of `PASS`,
 `PASS_WITH_WARNINGS`, or `BLOCKED`. It never edits the plans themselves. Findings are listed as
 `- AUDIT-FIX-NN | PX | <title>` single-line headers.
 
@@ -65,7 +65,7 @@ external systems unless you explicitly ask. Re-run `/cursorqb-implement` for eac
 
 ## Direct step invocation
 
-- `/cursorqb-autopsy` - run only the autopsy on an existing `Main-Planing.md`.
+- `/cursorqb-autopsy` - run only the autopsy on an existing `Main-Planning.md`.
 - `/cursorqb-audit` - re-run only the audit (for example after repairs).
 - `/cursorqb-implement` - run only the gated implementation for one `READY` sub-plan.
 

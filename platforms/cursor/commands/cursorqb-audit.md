@@ -10,7 +10,7 @@ automatically as a Cursor goal via the `define-goal` skill - no manual "Follow t
 
 Use this to (re)audit the current `Planner-docs/` sub-plans - for example after applying
 repairs from a previous `PASS_WITH_WARNINGS` result. The skill reads
-`Planner-docs/Main-Planing.md`, `Planner-docs/Sub-Planing-Index.md`, and every
-`Planner-docs/Faz-*-Plans/*.md`, then produces only `Planner-docs/Sub-Planing-Audit.md`
+`Planner-docs/Main-Planning.md`, `Planner-docs/Sub-Planning-Index.md`, and every
+`Planner-docs/Phase-*-Plans/*.md`, then produces only `Planner-docs/Sub-Planning-Audit.md`
 (in English) and returns a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. It never edits the
 plans themselves.

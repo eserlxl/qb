@@ -21,7 +21,7 @@ IMPORTANT:
 Purpose:
 
 Step 1 created:
-Planner-docs/Main-Planing.md
+Planner-docs/Main-Planning.md
 
 Step 1.5 must read that main plan and inspect the current repository in detail. The output is an autopsy-style technical feedback report that helps Step 2 create better phase sub-plans.
 
@@ -30,7 +30,7 @@ This step is intended for existing or partially built projects. If the repositor
 Source of truth:
 
 Primary source:
-- Planner-docs/Main-Planing.md
+- Planner-docs/Main-Planning.md
 
 Supporting evidence:
 - repository file tree;
@@ -49,7 +49,7 @@ Run only read-only or safe local commands such as:
 - find . -maxdepth 3 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type f -print | sort | head -300
 - for d in Planner-docs docs configs scripts services packages tests infra .github; do [ -d "$d" ] && find "$d" -maxdepth 2 -type f | sort | head -80; done
 - if [ -d Planner-docs ]; then find Planner-docs -maxdepth 3 -type f | sort; fi
-- cat Planner-docs/Main-Planing.md
+- cat Planner-docs/Main-Planning.md
 - cat README.md if present
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Cargo.toml, go.mod, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, tests, config examples, service skeletons, package skeletons, and policy files if present
@@ -201,7 +201,7 @@ Include:
 
 ## 11. Alignment with the Main Plan
 
-Compare the repository evidence against Planner-docs/Main-Planing.md.
+Compare the repository evidence against Planner-docs/Main-Planning.md.
 
 Include:
 - main plan assumptions that are supported;
@@ -275,6 +275,6 @@ Include:
 Remember:
 When Step 1.5 is not skipped, only create or update Planner-docs/Autopsy.md.
 Do not modify source code.
-Do not modify Planner-docs/Main-Planing.md.
+Do not modify Planner-docs/Main-Planning.md.
 Do not create implementation files.
 Do not commit, push, install, deploy, or open PRs.

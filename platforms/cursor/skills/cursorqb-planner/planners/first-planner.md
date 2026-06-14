@@ -8,7 +8,7 @@ IMPORTANT:
 - Do not refactor code.
 - Do not modify source files.
 - The only file you are allowed to create or update is:
-  Planner-docs/Main-Planing.md
+  Planner-docs/Main-Planning.md
 - If the Planner-docs directory does not exist, create it.
 - Do not create additional planning files.
 - Do not install dependencies.
@@ -69,7 +69,7 @@ Use the following principles while planning:
 
 Your task:
 
-Analyze the current repository in detail and create or update Planner-docs/Main-Planing.md with a high-level master project plan.
+Analyze the current repository in detail and create or update Planner-docs/Main-Planning.md with a high-level master project plan.
 
 This Step 1 plan must describe the project’s current state and the rough phase roadmap from the current state, or from Phase 0 if the project has not started, to the desired final state.
 
@@ -125,13 +125,13 @@ If the repo already has Planner-docs/plans:
 - Preserve useful existing intent.
 - Identify contradictions, gaps, stale assumptions, and over-planning.
 - Do not delete existing plans.
-- Planner-docs/Main-Planing.md should become the high-level master plan that points future detailed planning in the right direction.
+- Planner-docs/Main-Planning.md should become the high-level master plan that points future detailed planning in the right direction.
 
 Output file requirements:
 
 Create or update:
 
-Planner-docs/Main-Planing.md
+Planner-docs/Main-Planning.md
 
 The document must be written in English.
 
@@ -139,7 +139,7 @@ Use clear headings and a professional engineering-planning tone.
 
 The file must include exactly these top-level sections, in this order:
 
-# Main Planing
+# Main Planning
 
 ## 1. Executive Summary
 
@@ -320,16 +320,16 @@ If CI/local smoke exists, describe what it proves and what it does not prove.
 
 If the project is already advanced in some areas, preserve that progress and plan from there.
 
-If there are naming inconsistencies such as “Planing” vs “Planning”, do not rename files unless instructed. Use the exact required filename Planner-docs/Main-Planing.md.
+Always use the exact required artifact filenames the validator expects (e.g. Planner-docs/Main-Planning.md); do not invent alternate spellings or rename generated files unless instructed.
 
 Validation after writing:
 
-After creating/updating Planner-docs/Main-Planing.md:
+After creating/updating Planner-docs/Main-Planning.md:
 1. Read the file back.
 2. Check that all required top-level sections exist.
 3. Check that the document is in English.
 4. Check that it does not contain secrets.
-5. Run git diff -- Planner-docs/Main-Planing.md and review the diff.
+5. Run git diff -- Planner-docs/Main-Planning.md and review the diff.
 6. Provide a final concise summary of:
    - what file was changed;
    - what current-state conclusion was reached;
@@ -338,5 +338,5 @@ After creating/updating Planner-docs/Main-Planing.md:
    - any uncertainties or blockers.
 
 Remember:
-Only create or modify Planner-docs/Main-Planing.md.
+Only create or modify Planner-docs/Main-Planning.md.
 Do not modify anything else.

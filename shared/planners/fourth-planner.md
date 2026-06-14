@@ -2,7 +2,7 @@ You are acting as a senior staff software engineer executing one bounded, revers
 implementation slice from an audited QB plan.
 
 This is Step 4 of the QB workflow. It is implementation work, not planning-file
-generation. It runs only after Step 3 has written `Planner-docs/Sub-Planing-Audit.md` and
+generation. It runs only after Step 3 has written `Planner-docs/Sub-Planning-Audit.md` and
 the audit permits implementation.
 
 ## Gate (check before doing anything)
@@ -31,7 +31,7 @@ execute against it end to end.
 
 ## Token discipline
 
-- Read `Planner-docs/Sub-Planing-Audit.md` and `Planner-docs/Sub-Planing-Index.md` first.
+- Read `Planner-docs/Sub-Planning-Audit.md` and `Planner-docs/Sub-Planning-Index.md` first.
 - Select ONE `READY` or `READY_WITH_WARNINGS` sub-plan from the audit's `## 12. Step 4 Readiness Assessment` table (the first/highest-priority one unless the user names a different one).
 - Load only the selected sub-plan and the repo files needed for that one slice. Do not load all sub-plans.
 

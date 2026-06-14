@@ -45,7 +45,7 @@ commands, the five `SKILL.md` orchestrations, `docs/`, `README.md`, `CHANGELOG.m
 python3 scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
 ```
 
-Modes: `step1` (Main-Planing.md sections + phase roadmap), `step2` (phase folders, sub-plan
+Modes: `step1` (Main-Planning.md sections + phase roadmap), `step2` (phase folders, sub-plan
 structure, full-path index references, optional `Autopsy.md` heading order, duplicate/gap
 numbering), `step3` (audit heading order), `step4` (audit status + `AUDIT-FIX-NN | PX` severity
 gating). It also runs a length-bounded secret scan in every mode. `--strict` turns quality
@@ -63,8 +63,8 @@ Key invariants the tests guard (`tests/`):
 The bundled planner specs are the host-neutral source of truth for each step and live in the
 monorepo's `shared/planners/`. Edit them there, then re-sync into this platform.
 
-When editing them: preserve the misspelled output filenames (`Main-Planing.md`,
-`Sub-Planing-Index.md`, `Sub-Planing-Audit.md`), keep all required section headings and order (the
+When editing them: preserve the exact required output filenames (`Main-Planning.md`,
+`Sub-Planning-Index.md`, `Sub-Planning-Audit.md`), keep all required section headings and order (the
 validator and `tests/test_validate_planner_docs.py` enforce them), keep the four Step-1
 placeholders, and keep the specs host-neutral (they refer to the product generically as "QB").
 

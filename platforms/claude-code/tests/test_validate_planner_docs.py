@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = REPO_ROOT / "scripts/validate_planner_docs.py"
 
 STEP1_HEADINGS = [
-    "# Main Planing",
+    "# Main Planning",
     "## 1. Executive Summary",
     "## 2. Project Vision",
     "## 3. Current State Analysis",
@@ -41,7 +41,7 @@ AUTOPSY_HEADINGS = [
 ]
 
 INDEX_HEADINGS = [
-    "# Sub-Planing Index",
+    "# Sub-Planning Index",
     "## 1. Purpose",
     "## 2. Source Master Plan",
     "## 3. Phase and Sub-Plan Map",
@@ -68,7 +68,7 @@ SUBPLAN_HEADINGS = [
 ]
 
 AUDIT_HEADINGS = [
-    "# Sub-Planing Audit",
+    "# Sub-Planning Audit",
     "## 1. Audit Summary",
     "## 2. Inspected Sources",
     "## 3. Main Phase Coverage Analysis",
@@ -113,7 +113,7 @@ def write_main_plan(docs: Path) -> None:
                 "| 2 | Live Gateway Activation | ready_live evidence | M4 | make smoke |",
                 "",
             ]
-    (docs / "Main-Planing.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "Main-Planning.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_autopsy(docs: Path, headings: list[str] | None = None) -> None:
@@ -124,7 +124,7 @@ def write_autopsy(docs: Path, headings: list[str] | None = None) -> None:
 
 
 def write_subplan(path: Path, phase: int, subphase: int) -> None:
-    lines = [f"# Faz {phase}.{subphase} — Test Sub-Plan", ""]
+    lines = [f"# Phase {phase}.{subphase} — Test Sub-Plan", ""]
     for heading in SUBPLAN_HEADINGS:
         text = body(heading)
         if heading == "## 6. Current Repository Evidence":
@@ -137,11 +137,11 @@ def write_subplan(path: Path, phase: int, subphase: int) -> None:
 
 def write_index(docs: Path, relative_refs: bool = False) -> None:
     refs = [
-        "Faz-1-Plans/Faz1.1-local-contract.md",
-        "./Planner-docs/Faz-2-Plans/Faz2.1-live-gateway.md",
+        "Phase-1-Plans/Phase1.1-local-contract.md",
+        "./Planner-docs/Phase-2-Plans/Phase2.1-live-gateway.md",
     ] if relative_refs else [
-        "Planner-docs/Faz-1-Plans/Faz1.1-local-contract.md",
-        "Planner-docs/Faz-2-Plans/Faz2.1-live-gateway.md",
+        "Planner-docs/Phase-1-Plans/Phase1.1-local-contract.md",
+        "Planner-docs/Phase-2-Plans/Phase2.1-live-gateway.md",
     ]
 
     lines: list[str] = []
@@ -149,7 +149,7 @@ def write_index(docs: Path, relative_refs: bool = False) -> None:
         lines += [heading, "", body(heading), ""]
         if heading == "## 3. Phase and Sub-Plan Map":
             lines += [f"- {ref}" for ref in refs] + [""]
-    (docs / "Sub-Planing-Index.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "Sub-Planning-Index.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_audit(docs: Path, status: str, fixes: list[str] | None = None) -> None:
@@ -163,17 +163,17 @@ def write_audit(docs: Path, status: str, fixes: list[str] | None = None) -> None
                 lines += [fix, ""]
         if heading == "## 15. Audit Result":
             lines += [f"Final status: {status}", ""]
-    (docs / "Sub-Planing-Audit.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "Sub-Planning-Audit.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_valid_step2_fixture(root: Path, relative_refs: bool = False) -> Path:
     docs = root / "Planner-docs"
-    (docs / "Faz-1-Plans").mkdir(parents=True)
-    (docs / "Faz-2-Plans").mkdir(parents=True)
+    (docs / "Phase-1-Plans").mkdir(parents=True)
+    (docs / "Phase-2-Plans").mkdir(parents=True)
     write_main_plan(docs)
     write_index(docs, relative_refs=relative_refs)
-    write_subplan(docs / "Faz-1-Plans/Faz1.1-local-contract.md", 1, 1)
-    write_subplan(docs / "Faz-2-Plans/Faz2.1-live-gateway.md", 2, 1)
+    write_subplan(docs / "Phase-1-Plans/Phase1.1-local-contract.md", 1, 1)
+    write_subplan(docs / "Phase-2-Plans/Phase2.1-live-gateway.md", 2, 1)
     return docs
 
 
@@ -209,8 +209,8 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             result = run_validator(Path(temp_dir), "step2", strict=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("main_phase_count=2", result.stdout)
-            self.assertNotIn("Faz-10-Plans", result.stdout)
-            self.assertNotIn("Faz-11-Plans", result.stdout)
+            self.assertNotIn("Phase-10-Plans", result.stdout)
+            self.assertNotIn("Phase-11-Plans", result.stdout)
 
     def test_placeholder_safe_and_example_placeholder_are_not_false_positive(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -244,7 +244,7 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             write_valid_step2_fixture(Path(temp_dir))
             result = run_validator(Path(temp_dir), "step4")
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("missing_file=Planner-docs/Sub-Planing-Audit.md", result.stdout)
+            self.assertIn("missing_file=Planner-docs/Sub-Planning-Audit.md", result.stdout)
 
     def test_step4_blocked_audit_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

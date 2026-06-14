@@ -26,7 +26,7 @@ For existing repositories, the questions should include repo-derived defaults or
 After the answers are collected, CodexQB loads `First-Planner.md`, substitutes the values, inspects the repository, and creates or updates:
 
 ```text
-Planner-docs/Main-Planing.md
+Planner-docs/Main-Planning.md
 ```
 
 Step 1 is allowed to modify only that file.
@@ -41,7 +41,7 @@ Expected output:
 Planner-docs/Autopsy.md
 ```
 
-The Autopsy report analyzes project sections, feature inventory, placeholders/stubs/skeletons, technical debt, missing or broken integrations, test and CI gaps, security/governance issues, operational readiness, and alignment with `Planner-docs/Main-Planing.md`.
+The Autopsy report analyzes project sections, feature inventory, placeholders/stubs/skeletons, technical debt, missing or broken integrations, test and CI gaps, security/governance issues, operational readiness, and alignment with `Planner-docs/Main-Planning.md`.
 
 Step 1.5 is skipped for empty or nearly empty repositories. In that case, `Autopsy.md` is not required and Step 2 should continue without it.
 
@@ -54,19 +54,19 @@ The prompt is:
 ```text
 Use $codexqb. Run Step 2 according to references/Second-Planner.md.
 
-Read all main phases in Planner-docs/Main-Planing.md. If Planner-docs/Autopsy.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create Faz-<n>-Plans folders and detailed Faz<n>.<m>-*.md sub-plan files under Planner-docs. Do not stop until all phases are covered. Modify only Planner-docs.
+Read all main phases in Planner-docs/Main-Planning.md. If Planner-docs/Autopsy.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create Phase-<n>-Plans folders and detailed Phase<n>.<m>-*.md sub-plan files under Planner-docs. Do not stop until all phases are covered. Modify only Planner-docs.
 ```
 
 Expected outputs:
 
 ```text
-Planner-docs/Sub-Planing-Index.md
-Planner-docs/Faz-<n>-Plans/Faz<n>.<m>-*.md
+Planner-docs/Sub-Planning-Index.md
+Planner-docs/Phase-<n>-Plans/Phase<n>.<m>-*.md
 ```
 
 Step 2 is allowed to modify only files under `Planner-docs/`.
 
-`Planner-docs/Main-Planing.md` remains the primary source of truth. `Planner-docs/Autopsy.md`, when present, is supporting feedback that should influence sub-plan evidence, work breakdowns, acceptance criteria, and risk sections.
+`Planner-docs/Main-Planning.md` remains the primary source of truth. `Planner-docs/Autopsy.md`, when present, is supporting feedback that should influence sub-plan evidence, work breakdowns, acceptance criteria, and risk sections.
 
 At the end of Step 2, CodexQB should run the bundled validator or an equivalent all-file validation, summarize the result, and print the Step 3 Goal mode handoff block. Do not rely on sampled reads alone for Step 2 structure checks.
 
@@ -87,18 +87,18 @@ The prompt is:
 ```text
 Use $codexqb. Run Step 3 according to references/Third-Planner.md.
 
-Audit Planner-docs/Main-Planing.md, Planner-docs/Sub-Planing-Index.md, and Planner-docs/Faz-*-Plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only Planner-docs/Sub-Planing-Audit.md. Do not stop until all phases and sub-plans have been reviewed.
+Audit Planner-docs/Main-Planning.md, Planner-docs/Sub-Planning-Index.md, and Planner-docs/Phase-*-Plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only Planner-docs/Sub-Planning-Audit.md. Do not stop until all phases and sub-plans have been reviewed.
 ```
 
 Expected output:
 
 ```text
-Planner-docs/Sub-Planing-Audit.md
+Planner-docs/Sub-Planning-Audit.md
 ```
 
 Step 3 is an audit step. It reports problems but does not fix the sub-plans.
 
-Step 3 should run the bundled validator first and incorporate its findings into `Planner-docs/Sub-Planing-Audit.md`. When manually validating from a CodexQB repository checkout, use:
+Step 3 should run the bundled validator first and incorporate its findings into `Planner-docs/Sub-Planning-Audit.md`. When manually validating from a CodexQB repository checkout, use:
 
 ```bash
 python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
@@ -114,7 +114,7 @@ After Step 3, CodexQB may print a Step 4 Goal mode prompt. This prompt is for a 
 
 CodexQB should print the Step 4 prompt only when:
 
-- `Planner-docs/Sub-Planing-Audit.md` exists;
+- `Planner-docs/Sub-Planning-Audit.md` exists;
 - the audit status is `PASS`, or `PASS_WITH_WARNINGS` with no P0/P1 findings;
 - the Step 4 validator passes.
 
@@ -137,7 +137,7 @@ Step 4 should not stop after the first successful slice. It should continue to t
 You can invoke Step 2 or Step 3 directly:
 
 ```text
-Use $codexqb to run Step 2 on the existing Planner-docs/Main-Planing.md.
+Use $codexqb to run Step 2 on the existing Planner-docs/Main-Planning.md.
 ```
 
 ```text

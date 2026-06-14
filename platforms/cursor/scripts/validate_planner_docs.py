@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 STEP1_HEADINGS = [
-    "# Main Planing",
+    "# Main Planning",
     "## 1. Executive Summary",
     "## 2. Project Vision",
     "## 3. Current State Analysis",
@@ -47,7 +47,7 @@ AUTOPSY_HEADINGS = [
 ]
 
 INDEX_HEADINGS = [
-    "# Sub-Planing Index",
+    "# Sub-Planning Index",
     "## 1. Purpose",
     "## 2. Source Master Plan",
     "## 3. Phase and Sub-Plan Map",
@@ -74,7 +74,7 @@ SUBPLAN_HEADINGS = [
 ]
 
 AUDIT_HEADINGS = [
-    "# Sub-Planing Audit",
+    "# Sub-Planning Audit",
     "## 1. Audit Summary",
     "## 2. Inspected Sources",
     "## 3. Main Phase Coverage Analysis",
@@ -94,16 +94,16 @@ AUDIT_HEADINGS = [
 
 FIX_LIST_HEADING = "## 13. Prioritized Fix List"
 
-FOLDER_RE = re.compile(r"^Faz-(\d+)-Plans$")
-SUBPLAN_RE = re.compile(r"^Faz(\d+)\.(\d+)-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
+FOLDER_RE = re.compile(r"^Phase-(\d+)-Plans$")
+SUBPLAN_RE = re.compile(r"^Phase(\d+)\.(\d+)-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
 INDEX_REF_RE = re.compile(
-    r"(?:\./)?(?:Planner-docs/)?Faz-\d+-Plans/Faz\d+\.\d+-[a-z0-9]+(?:-[a-z0-9]+)*\.md"
+    r"(?:\./)?(?:Planner-docs/)?Phase-\d+-Plans/Phase\d+\.\d+-[a-z0-9]+(?:-[a-z0-9]+)*\.md"
 )
-MAIN_PHASE_RE = re.compile(r"\b(?:Faz|Phase)\s*-?\s*(\d+)\b", re.IGNORECASE)
+MAIN_PHASE_RE = re.compile(r"\bPhase\s*-?\s*(\d+)\b", re.IGNORECASE)
 ROADMAP_HEADING = "## 6. Phased Master Roadmap"
 ROADMAP_TABLE_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|", re.MULTILINE)
-ROADMAP_HEADING_PHASE_RE = re.compile(r"^#{3,6}\s*(?:Faz|Phase)\s*-?\s*(\d+)\b", re.MULTILINE | re.IGNORECASE)
-H1_SUBPLAN_RE = re.compile(r"^# Faz\s+(\d+)\.(\d+)\s+[—-]\s+.+$", re.MULTILINE)
+ROADMAP_HEADING_PHASE_RE = re.compile(r"^#{3,6}\s*Phase\s*-?\s*(\d+)\b", re.MULTILINE | re.IGNORECASE)
+H1_SUBPLAN_RE = re.compile(r"^# Phase\s+(\d+)\.(\d+)\s+[—-]\s+.+$", re.MULTILINE)
 SECTION_RE = re.compile(r"^(##\s+\d+\.\s+.+)$", re.MULTILINE)
 AUDIT_FIX_RE = re.compile(
     r"^\s*(?:[-*]\s*)?\|?\s*(AUDIT-FIX-\d+)\s*(?:\||:|—|–|-)\s*(P0|P1|P2|P3)\b",
@@ -227,7 +227,7 @@ def collect_phase_folders(state: ValidationState) -> dict[int, Path]:
         state.error("missing_directory=Planner-docs")
         return folders
 
-    for folder in sorted(state.planner_docs.glob("Faz-*-Plans")):
+    for folder in sorted(state.planner_docs.glob("Phase-*-Plans")):
         if not folder.is_dir():
             continue
         match = FOLDER_RE.match(folder.name)
@@ -236,14 +236,14 @@ def collect_phase_folders(state: ValidationState) -> dict[int, Path]:
             continue
         phase = int(match.group(1))
         if phase in folders:
-            state.error(f"duplicate_phase_folder=Faz-{phase}-Plans")
+            state.error(f"duplicate_phase_folder=Phase-{phase}-Plans")
         folders[phase] = folder
     return folders
 
 
 def collect_subplans(state: ValidationState) -> list[tuple[int | None, int | None, Path]]:
     result: list[tuple[int | None, int | None, Path]] = []
-    for folder in sorted(state.planner_docs.glob("Faz-*-Plans")):
+    for folder in sorted(state.planner_docs.glob("Phase-*-Plans")):
         if not folder.is_dir():
             continue
         folder_match = FOLDER_RE.match(folder.name)
@@ -297,7 +297,7 @@ def add_repeated_sentence_candidates(
 
 
 def validate_step1(state: ValidationState) -> list[int]:
-    main_path = state.planner_docs / "Main-Planing.md"
+    main_path = state.planner_docs / "Main-Planning.md"
     text = read_text(main_path, state)
     if text is None:
         state.metrics["main_phase_count"] = 0
@@ -307,7 +307,7 @@ def validate_step1(state: ValidationState) -> list[int]:
     phases = extract_main_phase_numbers(text)
     state.metrics["main_phase_count"] = len(phases)
     if not phases:
-        state.error("main_plan_has_no_detected_phases=Planner-docs/Main-Planing.md")
+        state.error("main_plan_has_no_detected_phases=Planner-docs/Main-Planning.md")
     return phases
 
 
@@ -325,7 +325,7 @@ def validate_autopsy_optional(state: ValidationState) -> None:
 
 
 def validate_index(state: ValidationState) -> set[str]:
-    index_path = state.planner_docs / "Sub-Planing-Index.md"
+    index_path = state.planner_docs / "Sub-Planning-Index.md"
     text = read_text(index_path, state)
     if text is None:
         state.metrics["index_reference_count"] = 0
@@ -403,10 +403,10 @@ def validate_step2(state: ValidationState) -> None:
     if main_phases:
         for phase in main_phases:
             if phase not in folders:
-                state.error(f"missing_phase_folder=Planner-docs/Faz-{phase}-Plans")
+                state.error(f"missing_phase_folder=Planner-docs/Phase-{phase}-Plans")
         for phase in sorted(folders):
             if phase not in main_phases:
-                state.warning(f"extra_phase_folder_without_main_phase=Planner-docs/Faz-{phase}-Plans")
+                state.warning(f"extra_phase_folder_without_main_phase=Planner-docs/Phase-{phase}-Plans")
 
     actual_refs = {state.rel(path) for _, subphase, path in subplans if subphase is not None}
     for ref in sorted(actual_refs - index_refs):
@@ -424,7 +424,7 @@ def validate_step2(state: ValidationState) -> None:
             continue
         key = (phase, subphase)
         if key in seen:
-            state.error(f"duplicate_subplan_number=Faz{phase}.{subphase}")
+            state.error(f"duplicate_subplan_number=Phase{phase}.{subphase}")
         seen.add(key)
         per_phase[phase].append(subphase)
         validate_subplan_structure(state, phase, subphase, path, repeated_bodies, repeated_sentences)
@@ -436,7 +436,7 @@ def validate_step2(state: ValidationState) -> None:
             continue
         expected = list(range(1, max(numbers) + 1))
         if numbers != expected:
-            state.error(f"subplan_numbering_gap=Faz{phase}::expected={expected}::actual={numbers}")
+            state.error(f"subplan_numbering_gap=Phase{phase}::expected={expected}::actual={numbers}")
 
     for key, paths in sorted(repeated_bodies.items()):
         if len(paths) >= 3:
@@ -453,10 +453,10 @@ def validate_step2(state: ValidationState) -> None:
 
 def validate_step3_preflight(state: ValidationState) -> None:
     validate_step2(state)
-    audit_path = state.planner_docs / "Sub-Planing-Audit.md"
+    audit_path = state.planner_docs / "Sub-Planning-Audit.md"
     state.metrics["audit_exists"] = "true" if audit_path.exists() else "false"
     if state.mode == "all" and not audit_path.exists():
-        state.error("missing_file=Planner-docs/Sub-Planing-Audit.md")
+        state.error("missing_file=Planner-docs/Sub-Planning-Audit.md")
     if audit_path.exists():
         text = read_text(audit_path, state)
         if text is not None:
@@ -490,7 +490,7 @@ def count_audit_severities(text: str) -> dict[str, int]:
 
 def validate_step4_readiness(state: ValidationState) -> None:
     validate_step3_preflight(state)
-    audit_path = state.planner_docs / "Sub-Planing-Audit.md"
+    audit_path = state.planner_docs / "Sub-Planning-Audit.md"
     text = read_text(audit_path, state)
     if text is None:
         state.metrics["audit_status"] = "missing"
@@ -499,7 +499,7 @@ def validate_step4_readiness(state: ValidationState) -> None:
     status = extract_audit_status(text)
     state.metrics["audit_status"] = status or "unknown"
     if status is None:
-        state.error("audit_status_missing=Planner-docs/Sub-Planing-Audit.md")
+        state.error("audit_status_missing=Planner-docs/Sub-Planning-Audit.md")
     elif status == "BLOCKED":
         state.error("step4_blocked_by_audit_status=BLOCKED")
 

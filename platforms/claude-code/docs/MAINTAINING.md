@@ -32,7 +32,7 @@ project's `Planner-docs/`:
 python3 scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
 ```
 
-Modes: `step1` (Main-Planing.md sections + phase roadmap), `step2` (phase
+Modes: `step1` (Main-Planning.md sections + phase roadmap), `step2` (phase
 folders, sub-plan structure, full-path index references, optional `Autopsy.md`
 heading order, duplicate/gap numbering), `step3` (audit heading order), `step4`
 (audit status + `AUDIT-FIX-NN | PX` severity gating). It also runs a
@@ -99,8 +99,8 @@ faithful to the upstream prompts:
 - `skills/claudeqb-auditor/third-planner.md` (Step 3)
 - `skills/claudeqb-implementer/fourth-planner.md` (Step 4)
 
-When editing them: preserve the misspelled output filenames (`Main-Planing.md`,
-`Sub-Planing-Index.md`, `Sub-Planing-Audit.md`), keep all required section
+When editing them: preserve the exact required output filenames (`Main-Planning.md`,
+`Sub-Planning-Index.md`, `Sub-Planning-Audit.md`), keep all required section
 headings and order (the validator and
 `tests/test_validate_planner_docs.py` enforce them), keep the four Step-1
 placeholders, and keep the workflow Claude Code-native — delegate long

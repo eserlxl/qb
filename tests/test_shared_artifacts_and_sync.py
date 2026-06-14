@@ -10,13 +10,13 @@ from tests.qb_monorepo import PLATFORMS_DIR, REPO_ROOT, SHARED_DIR
 VALIDATOR = SHARED_DIR / "scripts/validate_planner_docs.py"
 SYNC_SCRIPT = REPO_ROOT / "scripts/sync.sh"
 
-# Exact artifact identifiers the workflow + validator depend on (the "Planing"
+# Exact artifact identifiers the workflow + validator depend on (the "Planning"
 # spelling is intentional and must be preserved verbatim).
 PRESERVED_LITERALS = (
-    "Main-Planing.md",
+    "Main-Planning.md",
     "Autopsy.md",
-    "Sub-Planing-Index.md",
-    "Sub-Planing-Audit.md",
+    "Sub-Planning-Index.md",
+    "Sub-Planning-Audit.md",
 )
 
 # Audit-status vocabulary the Step-4 gate depends on.
@@ -28,7 +28,7 @@ AUDIT_VOCABULARY = (
 
 
 class SharedValidatorArtifactTests(unittest.TestCase):
-    """The shared validator references every preserved artifact name + Faz pattern."""
+    """The shared validator references every preserved artifact name + Phase pattern."""
 
     def setUp(self) -> None:
         if not VALIDATOR.exists():
@@ -40,11 +40,11 @@ class SharedValidatorArtifactTests(unittest.TestCase):
         self.assertEqual(missing, [], f"missing artifact names in validator: {missing}")
 
     def test_faz_folder_and_subplan_patterns_appear_in_validator(self) -> None:
-        # The folder + sub-plan regex literals (intentional "Faz" spelling).
-        self.assertIn("Faz-", self.text, "Faz-<n>-Plans folder pattern missing from validator")
-        self.assertIn("Faz", self.text, "Faz sub-plan pattern missing from validator")
-        # Sub-plan numbering uses Faz<n>.<m>; assert the dotted form is present.
-        self.assertIn(r"Faz(\d+)\.(\d+)", self.text, "Faz<n>.<m> sub-plan regex missing")
+        # The folder + sub-plan regex literals (intentional "Phase" spelling).
+        self.assertIn("Phase-", self.text, "Phase-<n>-Plans folder pattern missing from validator")
+        self.assertIn("Phase", self.text, "Phase sub-plan pattern missing from validator")
+        # Sub-plan numbering uses Phase<n>.<m>; assert the dotted form is present.
+        self.assertIn(r"Phase(\d+)\.(\d+)", self.text, "Phase<n>.<m> sub-plan regex missing")
 
     def test_audit_vocabulary_appears_in_validator(self) -> None:
         missing = [word for word in AUDIT_VOCABULARY if word not in self.text]
@@ -62,7 +62,7 @@ class SharedSpecArtifactTests(unittest.TestCase):
             path.read_text(encoding="utf-8") for path in sorted(planners_dir.glob("*.md"))
         )
         self.assertIn("Planner-docs", corpus, "shared planner specs never mention Planner-docs/")
-        self.assertIn("Main-Planing.md", corpus, "shared planner specs never mention Main-Planing.md")
+        self.assertIn("Main-Planning.md", corpus, "shared planner specs never mention Main-Planning.md")
 
 
 class SyncCleanTests(unittest.TestCase):

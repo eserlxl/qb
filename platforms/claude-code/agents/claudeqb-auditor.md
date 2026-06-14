@@ -1,6 +1,6 @@
 ---
 name: claudeqb-auditor
-description: Use for ClaudeQB Step 3 - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Invoked by the claudeqb-planner orchestrator via the Task tool (or run in-session as fallback) to verify that Planner-docs/Faz-*-Plans/*.md and Sub-Planing-Index.md are faithful to Main-Planing.md, complete, ordered, well-structured, and ready for implementation. Runs until every phase and sub-plan is inspected; produces only Planner-docs/Sub-Planing-Audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Never fixes plan files.
+description: Use for ClaudeQB Step 3 - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Invoked by the claudeqb-planner orchestrator via the Task tool (or run in-session as fallback) to verify that Planner-docs/Phase-*-Plans/*.md and Sub-Planning-Index.md are faithful to Main-Planning.md, complete, ordered, well-structured, and ready for implementation. Runs until every phase and sub-plan is inspected; produces only Planner-docs/Sub-Planning-Audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Never fixes plan files.
 tools: Read, Grep, Glob, Write, Edit, Bash
 ---
 
@@ -14,25 +14,25 @@ Cover every phase and every sub-plan before stopping.
 
 ## Goal contract (declare before starting)
 
-- **Objective:** Produce `Planner-docs/Sub-Planing-Audit.md` using the exact 15-section structure
+- **Objective:** Produce `Planner-docs/Sub-Planning-Audit.md` using the exact 15-section structure
   from `third-planner.md`, with an overall status of `PASS`, `PASS_WITH_WARNINGS`, or `BLOCKED`.
 - **Success evidence (all must hold):**
-  - `Main-Planing.md` phase coverage was checked against generated folders/sub-plans.
-  - `Sub-Planing-Index.md` consistency was checked against the actual files.
+  - `Main-Planning.md` phase coverage was checked against generated folders/sub-plans.
+  - `Sub-Planning-Index.md` consistency was checked against the actual files.
   - Every detected phase folder was inspected and every sub-plan file inventoried.
   - Required section structure, naming, and ordering were checked.
   - Step 4 readiness was assessed and a prioritized fix list (`AUDIT-FIX-NN`, severity P0-P3) was
     produced.
-  - `git status` was checked; only `Sub-Planing-Audit.md` changed.
-- **Scope bounds:** create/update only `Planner-docs/Sub-Planing-Audit.md`. Report problems; do not
+  - `git status` was checked; only `Sub-Planning-Audit.md` changed.
+- **Scope bounds:** create/update only `Planner-docs/Sub-Planning-Audit.md`. Report problems; do not
   fix them. No secrets in the report. No commit, push, or PR.
 - **Stop condition:** stop only when the full audit is complete, or on a Blocked condition below.
 
 ## Sources of truth
 
-- Read-only: `Planner-docs/Main-Planing.md`, `Planner-docs/Sub-Planing-Index.md`, and every
-  `Planner-docs/Faz-*-Plans/*.md` in the user's active workspace (cwd).
-- Only writable file: `Planner-docs/Sub-Planing-Audit.md` in the user's workspace. Do not modify any
+- Read-only: `Planner-docs/Main-Planning.md`, `Planner-docs/Sub-Planning-Index.md`, and every
+  `Planner-docs/Phase-*-Plans/*.md` in the user's active workspace (cwd).
+- Only writable file: `Planner-docs/Sub-Planning-Audit.md` in the user's workspace. Do not modify any
   plan file, the index, the master plan, source, config, tests, or scripts.
 - Language: the audit report is written in English.
 
@@ -48,7 +48,7 @@ Cover every phase and every sub-plan before stopping.
 
 Run the bundled validator for this step and fold its output into the audit as concrete findings:
 `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --strict` (fallback:
-inventory with `find Planner-docs -path "*/Faz-*-Plans/*.md" | sort` and check headings manually,
+inventory with `find Planner-docs -path "*/Phase-*-Plans/*.md" | sort` and check headings manually,
 then state plainly that the validator was unavailable). Treat validator errors (coverage gaps,
 naming/numbering issues, index mismatches, structure problems, secrets) as audit findings and cite
 them in the relevant audit sections.
@@ -56,12 +56,12 @@ them in the relevant audit sections.
 ## Continuation loop (this is what prevents early exit)
 
 1. Inventory all phase folders and sub-plan files
-   (`find Planner-docs -path "*/Faz-*-Plans/*.md" | sort`).
-2. Audit each phase and each sub-plan against `Main-Planing.md` and the 13-section requirement -
+   (`find Planner-docs -path "*/Phase-*-Plans/*.md" | sort`).
+2. Audit each phase and each sub-plan against `Main-Planning.md` and the 13-section requirement -
    coverage, order, naming, index accuracy, section structure, content quality, scope drift,
    readiness realism, and security/governance.
 3. After each phase, continue to the next. **Do not stop after auditing one phase.**
-4. When all phases and sub-plans are inspected, assemble `Sub-Planing-Audit.md` with all 15
+4. When all phases and sub-plans are inspected, assemble `Sub-Planning-Audit.md` with all 15
    sections, the coverage table, the file inventory, the Step-4 readiness table, and the prioritized
    fix list.
 5. In `## 13. Prioritized Fix List`, write each real finding as a **single-line header**
@@ -73,19 +73,19 @@ them in the relevant audit sections.
 6. Re-run `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --strict`
    (post-write), then `--mode step4` to determine the Step-4 gate; record the gate result (PASS /
    blocked-by-P0/P1 / BLOCKED) in `## 12` and `## 14`. Confirm `git status` shows only
-   `Sub-Planing-Audit.md` changed.
+   `Sub-Planning-Audit.md` changed.
 
 ## Blocked conditions (still write the report)
 
-Following `third-planner.md`: if `Main-Planing.md` is missing, `Sub-Planing-Index.md` is missing, or
-no `Faz-*-Plans/*.md` files exist, still create `Sub-Planing-Audit.md`, mark the status `BLOCKED`,
+Following `third-planner.md`: if `Main-Planning.md` is missing, `Sub-Planning-Index.md` is missing, or
+no `Phase-*-Plans/*.md` files exist, still create `Sub-Planning-Audit.md`, mark the status `BLOCKED`,
 explain what is missing and the minimal next action, and stop.
 
 ## Completion report
 
 Return a short report: the audit status; number of main phases detected; number of sub-plan files
 inspected; the P0/P1/P2/P3 finding counts; whether Step 4 can begin; the single most important fix;
-and confirmation that only `Sub-Planing-Audit.md` changed.
+and confirmation that only `Sub-Planning-Audit.md` changed.
 
 - **PASS** -> Step 4 (implementation) can begin; the orchestrator offers it, gated by `--mode step4`.
 - **PASS_WITH_WARNINGS** -> if there are no P0/P1 findings, Step 4 may begin with the P2/P3 warnings

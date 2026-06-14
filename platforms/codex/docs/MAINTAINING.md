@@ -56,7 +56,7 @@ When changing the validator, test at least:
 - a missing-section fixture;
 - a normal filename containing `sk-` such as `task-spec.yaml`;
 - a fake long secret token that should be detected;
-- roadmap table extraction with historical phase references such as `Faz 0B-10` or `Phase 11`;
+- roadmap table extraction with historical phase references such as `Phase 0B-10` or `Phase 11`;
 - optional `Autopsy.md` validation when present, and no failure when it is absent;
 - Step 4 readiness gating for missing audit, `BLOCKED`, `PASS`, `PASS_WITH_WARNINGS`, and prose such as `no P0/P1 findings`.
 
@@ -134,6 +134,6 @@ CodexQB currently uses repository marketplace distribution. Public directory or 
 
 - Keep the skill concise.
 - Keep long planner prompts in `references/`.
-- Preserve the `Planner-docs/*Planing*` filenames required by the bundled prompts.
+- Preserve the `Planner-docs/*Planning*` filenames required by the bundled prompts.
 - Do not add MCP servers, apps, hooks, or assets unless the plugin manifest and validator are updated accordingly.
 - Do not put secrets or environment-specific credentials into docs, planner prompts, or examples.

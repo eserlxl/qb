@@ -3,11 +3,11 @@ You are acting as a senior staff software architect, delivery quality auditor, p
 You are executing Step 3 of a multi-step project planning workflow.
 
 Step 1 produced:
-Planner-docs/Main-Planing.md
+Planner-docs/Main-Planning.md
 
 Step 2 produced:
-Planner-docs/Sub-Planing-Index.md
-Planner-docs/Faz-<number>-Plans/Faz<number>.<subnumber>-<slug>.md
+Planner-docs/Sub-Planning-Index.md
+Planner-docs/Phase-<number>-Plans/Phase<number>.<subnumber>-<slug>.md
 
 Your job in Step 3:
 Audit and analyze the Step 2 sub-planning output.
@@ -28,32 +28,32 @@ Do not write secrets, credentials, tokens, private keys, local environment value
 Allowed file changes:
 You may only create or update this file:
 
-Planner-docs/Sub-Planing-Audit.md
+Planner-docs/Sub-Planning-Audit.md
 
 Do not modify:
-- Planner-docs/Main-Planing.md
-- Planner-docs/Sub-Planing-Index.md
-- any Planner-docs/Faz-*-Plans/*.md file
+- Planner-docs/Main-Planning.md
+- Planner-docs/Sub-Planning-Index.md
+- any Planner-docs/Phase-*-Plans/*.md file
 - any source code
 - any config
 - any tests
 - any scripts
-- any docs outside Planner-docs/Sub-Planing-Audit.md
+- any docs outside Planner-docs/Sub-Planning-Audit.md
 
 If you find problems, do not fix them directly.
-Instead, report them clearly in Planner-docs/Sub-Planing-Audit.md with recommended remediation actions.
+Instead, report them clearly in Planner-docs/Sub-Planning-Audit.md with recommended remediation actions.
 
 Primary sources of truth:
 
-1. Planner-docs/Main-Planing.md
-2. Planner-docs/Sub-Planing-Index.md
-3. Planner-docs/Faz-*-Plans/*.md
+1. Planner-docs/Main-Planning.md
+2. Planner-docs/Sub-Planning-Index.md
+3. Planner-docs/Phase-*-Plans/*.md
 
-Main-Planing.md is the master plan.
-Sub-Planing-Index.md and all sub-plan files must be checked against it.
+Main-Planning.md is the master plan.
+Sub-Planning-Index.md and all sub-plan files must be checked against it.
 
 Language:
-Write Planner-docs/Sub-Planing-Audit.md in English.
+Write Planner-docs/Sub-Planning-Audit.md in English.
 
 Repository inspection requirements:
 
@@ -65,31 +65,31 @@ Run only safe read-only commands such as:
 - git branch --show-current
 - git log --oneline -n 10
 - find Planner-docs -maxdepth 4 -type f | sort
-- cat Planner-docs/Main-Planing.md
-- cat Planner-docs/Sub-Planing-Index.md
-- find Planner-docs -path "*/Faz-*-Plans/*.md" -type f | sort
+- cat Planner-docs/Main-Planning.md
+- cat Planner-docs/Sub-Planning-Index.md
+- find Planner-docs -path "*/Phase-*-Plans/*.md" -type f | sort
 - grep/ripgrep commands for headings and phase markers
 
 Useful discovery commands:
-- rg "^#|^##|Faz|Phase|Maturity|Acceptance|Risk|Dependency|Validation|Test|Desired|Scope|Out of Scope|Current Repository Evidence|Planned Work Breakdown" Planner-docs
+- rg "^#|^##|Phase|Phase|Maturity|Acceptance|Risk|Dependency|Validation|Test|Desired|Scope|Out of Scope|Current Repository Evidence|Planned Work Breakdown" Planner-docs
 - rg "TODO|FIXME|TBD|unclear|missing|later|future|assumption|blocked|blocker|risk|secret|token|credential|production|live|local|readiness" Planner-docs
-- rg "docs/|Planner-docs/|Main-Planing|Sub-Planing|Faz-" Planner-docs
+- rg "docs/|Planner-docs/|Main-Planning|Sub-Planning|Phase-" Planner-docs
 
-If Planner-docs/Main-Planing.md is missing:
-- Create Planner-docs/Sub-Planing-Audit.md.
+If Planner-docs/Main-Planning.md is missing:
+- Create Planner-docs/Sub-Planning-Audit.md.
 - Mark the audit status as BLOCKED.
-- Explain that Step 3 cannot audit coverage without Main-Planing.md.
+- Explain that Step 3 cannot audit coverage without Main-Planning.md.
 - Stop.
 
-If Planner-docs/Sub-Planing-Index.md is missing:
-- Create Planner-docs/Sub-Planing-Audit.md.
+If Planner-docs/Sub-Planning-Index.md is missing:
+- Create Planner-docs/Sub-Planning-Audit.md.
 - Mark the audit status as BLOCKED.
-- Explain that Step 3 cannot audit Step 2 index coverage without Sub-Planing-Index.md.
-- Still inspect any Faz-*-Plans folders if present.
+- Explain that Step 3 cannot audit Step 2 index coverage without Sub-Planning-Index.md.
+- Still inspect any Phase-*-Plans folders if present.
 - Stop after writing the blocker audit.
 
-If no Planner-docs/Faz-*-Plans/*.md files exist:
-- Create Planner-docs/Sub-Planing-Audit.md.
+If no Planner-docs/Phase-*-Plans/*.md files exist:
+- Create Planner-docs/Sub-Planning-Audit.md.
 - Mark the audit status as BLOCKED.
 - Explain that Step 2 appears incomplete or missing.
 - Stop.
@@ -99,49 +99,49 @@ Audit objectives:
 You must evaluate:
 
 1. Phase coverage
-- Every main phase in Main-Planing.md must have a matching Planner-docs/Faz-<number>-Plans/ folder.
+- Every main phase in Main-Planning.md must have a matching Planner-docs/Phase-<number>-Plans/ folder.
 - Every main phase must have at least one sub-plan file.
 - No major phase should be silently missing.
 - No generated phase folder should exist without a corresponding main phase unless clearly justified.
 
 2. Phase order consistency
-- Generated folders must preserve the phase order from Main-Planing.md.
+- Generated folders must preserve the phase order from Main-Planning.md.
 - Sub-plan numbering must be sequential within each phase.
-- Detect gaps such as Faz2.1, Faz2.3 with missing Faz2.2.
-- Detect duplicates such as two Faz3.1 files.
-- Detect inconsistent numbering such as Faz-2-Plans containing Faz3.1 files.
+- Detect gaps such as Phase2.1, Phase2.3 with missing Phase2.2.
+- Detect duplicates such as two Phase3.1 files.
+- Detect inconsistent numbering such as Phase-2-Plans containing Phase3.1 files.
 
 3. Naming convention compliance
 Expected folder format:
-Planner-docs/Faz-<number>-Plans/
+Planner-docs/Phase-<number>-Plans/
 
 Expected sub-plan filename format:
-Faz<phase-number>.<subphase-number>-<ascii-kebab-slug>.md
+Phase<phase-number>.<subphase-number>-<ascii-kebab-slug>.md
 
 Check:
 - ASCII-only filename slugs.
 - No spaces in filenames.
-- No Turkish characters in filenames.
+- No accented or non-ASCII characters in filenames.
 - No duplicate filenames.
 - Folder number and file phase number match.
 - Slugs are meaningful, not generic.
 
 4. Index accuracy
-Check Planner-docs/Sub-Planing-Index.md against actual files.
+Check Planner-docs/Sub-Planning-Index.md against actual files.
 
 Verify:
 - It references all phase folders.
 - It references all generated sub-plan files.
 - It does not reference missing files.
 - It does not omit existing sub-plan files.
-- Detected phase count matches Main-Planing.md.
+- Detected phase count matches Main-Planning.md.
 - Recommended execution order is plausible.
 - Coverage checklist is honest.
 
 5. Required section structure in each sub-plan
 Every sub-plan must contain exactly these required top-level sections, in this order:
 
-# Faz X.Y — <Sub-Phase Title>
+# Phase X.Y — <Sub-Phase Title>
 
 ## 1. Context
 ## 2. Goal
@@ -167,7 +167,7 @@ Detect:
 
 6. Content quality
 For each sub-plan, evaluate whether it is:
-- grounded in Main-Planing.md;
+- grounded in Main-Planning.md;
 - grounded in repository evidence where possible;
 - specific enough for Step 4 implementation-task decomposition;
 - not generic boilerplate;
@@ -184,7 +184,7 @@ For each sub-plan, evaluate whether it is:
 
 7. Scope drift
 Detect whether Step 2 introduced:
-- new major phases not present in Main-Planing.md;
+- new major phases not present in Main-Planning.md;
 - missing major phases;
 - renamed phases that change meaning;
 - excessive documentation-only work;
@@ -235,11 +235,11 @@ Audit output file:
 
 Create or update:
 
-Planner-docs/Sub-Planing-Audit.md
+Planner-docs/Sub-Planning-Audit.md
 
 Use exactly this top-level structure:
 
-# Sub-Planing Audit
+# Sub-Planning Audit
 
 ## 1. Audit Summary
 
@@ -267,7 +267,7 @@ Do not include secrets.
 
 ## 3. Main Phase Coverage Analysis
 
-Create a table comparing Main-Planing.md phases to generated folders and sub-plans.
+Create a table comparing Main-Planning.md phases to generated folders and sub-plans.
 
 Columns:
 - Main phase number
@@ -312,7 +312,7 @@ If no issues, explicitly say no naming/order issues were found.
 
 ## 6. Index Consistency Check
 
-Compare Sub-Planing-Index.md to actual files.
+Compare Sub-Planning-Index.md to actual files.
 
 Report:
 - missing references;
@@ -351,7 +351,7 @@ Be direct. If the docs are generic, say so.
 
 ## 9. Scope Drift and Architectural Consistency Analysis
 
-Report any drift from Main-Planing.md.
+Report any drift from Main-Planning.md.
 
 Include:
 - added/removed/renamed phase meaning;
@@ -452,13 +452,13 @@ Do not actually run the next prompt.
 End with:
 - final status;
 - confidence level: high, medium, or low;
-- whether only Planner-docs/Sub-Planing-Audit.md was modified;
+- whether only Planner-docs/Sub-Planning-Audit.md was modified;
 - whether any unexpected modifications were detected;
 - whether Step 4 can safely begin.
 
 Validation after writing the audit:
 
-After creating/updating Planner-docs/Sub-Planing-Audit.md:
+After creating/updating Planner-docs/Sub-Planning-Audit.md:
 
 1. Read the file back.
 
@@ -466,14 +466,14 @@ After creating/updating Planner-docs/Sub-Planing-Audit.md:
    find Planner-docs -maxdepth 4 -type f | sort
 
 3. Run:
-   git diff -- Planner-docs/Sub-Planing-Audit.md
+   git diff -- Planner-docs/Sub-Planning-Audit.md
 
 4. Run:
    git status --short
 
-5. Confirm whether only Planner-docs/Sub-Planing-Audit.md changed.
+5. Confirm whether only Planner-docs/Sub-Planning-Audit.md changed.
 
-6. If any file outside Planner-docs/Sub-Planing-Audit.md changed, report it as unexpected and do not attempt to fix unless explicitly asked.
+6. If any file outside Planner-docs/Sub-Planning-Audit.md changed, report it as unexpected and do not attempt to fix unless explicitly asked.
 
 Goal-following behavior:
 
@@ -486,9 +486,9 @@ Use this stopping rule:
 You may stop only when one of the following is true:
 
 A. Success:
-- Planner-docs/Sub-Planing-Audit.md exists;
-- Main-Planing.md coverage was checked;
-- Sub-Planing-Index.md consistency was checked;
+- Planner-docs/Sub-Planning-Audit.md exists;
+- Main-Planning.md coverage was checked;
+- Sub-Planning-Index.md consistency was checked;
 - all detected phase folders were inspected;
 - all detected sub-plan files were inventoried;
 - required section structure was checked;
@@ -498,13 +498,13 @@ A. Success:
 - git status was checked.
 
 B. Blocked:
-- Planner-docs/Main-Planing.md is missing;
-- Planner-docs/Sub-Planing-Index.md is missing;
+- Planner-docs/Main-Planning.md is missing;
+- Planner-docs/Sub-Planning-Index.md is missing;
 - no sub-plan files exist;
 - repository access/read errors prevent audit.
 
 If blocked:
-- still create Planner-docs/Sub-Planing-Audit.md;
+- still create Planner-docs/Sub-Planning-Audit.md;
 - mark status BLOCKED;
 - explain the blocker;
 - provide the minimal next action;
@@ -522,11 +522,11 @@ Include:
 - whether Step 4 can begin;
 - the most important fix, if any;
 - the recommended next prompt direction;
-- confirmation that only Planner-docs/Sub-Planing-Audit.md was modified, or list unexpected modifications.
+- confirmation that only Planner-docs/Sub-Planning-Audit.md was modified, or list unexpected modifications.
 
 Remember:
 This is an audit and analysis step.
 Do not fix the sub-plans.
 Do not create new phase plans.
 Do not change the master plan.
-Only create or update Planner-docs/Sub-Planing-Audit.md.
+Only create or update Planner-docs/Sub-Planning-Audit.md.
