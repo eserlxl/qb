@@ -112,6 +112,17 @@ class RunStoreTests(unittest.TestCase):
                 store.record_evidence({"finding_id": "QBF-dup", "outcome": "kept",
                                        "rollback_handle": "h"})
 
+    def test_overwrite_clears_stale_evidence(self) -> None:
+        # A fresh (overwrite=True) run must clear stale evidence/ so the clobber guard
+        # does not abort a re-run over the same output dir on a leftover record.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / self.rs.OUTPUT_DIR_NAME
+            self.rs.RunStore(root).open().record_evidence(
+                {"finding_id": "QBF-stale", "outcome": "reverted"})
+            store2 = self.rs.RunStore(root).open(overwrite=True)
+            store2.record_evidence({"finding_id": "QBF-stale", "outcome": "reverted"})  # no clobber
+            self.assertEqual(len(store2.read_evidence()), 1)
+
     def test_run_log_is_append_only_and_seq_ordered(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)

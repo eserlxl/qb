@@ -21,6 +21,7 @@ new run never silently clobbers a prior run's directory unless ``overwrite=True`
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 from importlib import util as _import_util
 from pathlib import Path
@@ -76,6 +77,10 @@ class RunStore:
     def open(self, overwrite: bool = False) -> "RunStore":
         if self.root.exists() and any(self.root.iterdir()) and not overwrite:
             raise RunStoreError(f"run store already exists (use overwrite=True): {self.root}")
+        # overwrite=True means a fresh run: clear stale per-fix evidence too, so a
+        # re-run does not trip record_evidence's clobber guard on a leftover file.
+        if overwrite and self.evidence_dir.exists():
+            shutil.rmtree(self.evidence_dir, ignore_errors=True)
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
         # start an append-only run log
         (self.root / RUN_LOG_FILENAME).write_text("", encoding="utf-8")
