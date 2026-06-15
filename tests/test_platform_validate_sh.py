@@ -9,6 +9,7 @@ required file and on a mis-named manifest, not just that it passes when clean.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import unittest
@@ -94,6 +95,56 @@ class CodexValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
         result = _run(self.root)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("tracked_secret_hygiene_failed", result.stdout + result.stderr)
+
+
+def _required_files(validate_text: str) -> set:
+    """Extract the required_files entries from a validate.sh (bash array or heredoc)."""
+    array = re.search(r"required_files=\((.*?)\)", validate_text, re.DOTALL)
+    if array:
+        return set(re.findall(r'"([^"]+)"', array.group(1)))
+    heredoc = re.search(r'required_files="\n(.*?)\n"', validate_text, re.DOTALL)
+    if heredoc:
+        return {ln.strip() for ln in heredoc.group(1).splitlines() if ln.strip()}
+    return set()
+
+
+def _shipped_components(root: Path) -> set:
+    """Every shipped SKILL.md, command, and agent file, relative to the platform root."""
+    comps = {p.relative_to(root).as_posix() for p in root.rglob("SKILL.md")
+             if "__pycache__" not in p.parts}
+    for sub in ("commands", "agents"):
+        directory = root / sub
+        if directory.is_dir():
+            comps.update(p.relative_to(root).as_posix() for p in directory.glob("*.md"))
+    return comps
+
+
+class RequiredFilesCompletenessTests(unittest.TestCase):
+    """Pin each validate.sh required_files list COMPLETE versus the shipped component
+    set. Without this, a newly added skill/command/agent ships un-gated by the
+    package CI -- the exact drift that left qb-runner, qb-harden, and qb_headless.py
+    out of the required_files lists until they were caught by audit."""
+
+    def _check(self, platform: dict) -> None:
+        validate = platform["root"] / "scripts/validate.sh"
+        if not validate.exists():
+            self.skipTest(f"{platform['id']} platform not built yet")
+        required = _required_files(validate.read_text(encoding="utf-8"))
+        missing = sorted(c for c in _shipped_components(platform["root"]) if c not in required)
+        self.assertEqual(
+            missing, [],
+            f"{platform['root'].name}: shipped components missing from validate.sh "
+            f"required_files (deletion would pass CI undetected): {missing}",
+        )
+
+    def test_claude_code_required_files_are_complete(self) -> None:
+        self._check(CLAUDE_CODE)
+
+    def test_cursor_required_files_are_complete(self) -> None:
+        self._check(CURSOR)
+
+    def test_codex_required_files_are_complete(self) -> None:
+        self._check(CODEX)
 
 
 if __name__ == "__main__":
