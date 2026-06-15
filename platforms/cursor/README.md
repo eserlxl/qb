@@ -54,13 +54,14 @@ QB is the Cursor edition of the QB planning workflow. Sibling editions exist for
 
 ## Quick start
 
-**1. Install** — link the plugin into Cursor's local plugins folder:
+**1. Install** — clone the repo and link the Cursor package into Cursor's local plugins folder:
 
 ```bash
-ln -s "/absolute/path/to/qb/platforms/cursor" ~/.cursor/plugins/local/qb
+git clone https://github.com/eserlxl/qb.git
+ln -s "$(pwd)/qb/platforms/cursor" ~/.cursor/plugins/local/qb
 ```
 
-If you are using a standalone Cursor package checkout instead of this monorepo, symlink that package root.
+You can also import `eserlxl/qb` as a marketplace from Cursor's Plugins settings. For a standalone Cursor package checkout, symlink that package root.
 
 **2. Reload Cursor** — `Cmd/Ctrl + Shift + P` → **Developer: Reload Window**.
 

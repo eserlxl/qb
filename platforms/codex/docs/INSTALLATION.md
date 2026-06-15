@@ -31,7 +31,7 @@ Clone the repository:
 
 ```bash
 git clone git@github.com:eserlxl/qb.git
-cd QB
+cd qb
 ```
 
 Add the local marketplace root:

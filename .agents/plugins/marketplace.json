@@ -1,0 +1,20 @@
+{
+  "name": "eserlxl",
+  "interface": {
+    "displayName": "QB"
+  },
+  "plugins": [
+    {
+      "name": "qb",
+      "source": {
+        "source": "local",
+        "path": "./platforms/codex/plugins/qb"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

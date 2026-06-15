@@ -1,0 +1,13 @@
+{
+  "name": "eserlxl",
+  "owner": {
+    "name": "Eser KUBALI"
+  },
+  "plugins": [
+    {
+      "name": "qb",
+      "source": "./platforms/cursor",
+      "description": "Five-step, goal-backed, repo-aware project planning workflow for Cursor: master plan, autopsy, phase decomposition, coverage/quality audit, and gated implementation. Produces English Planner-docs/; in-session and zero-setup."
+    }
+  ]
+}

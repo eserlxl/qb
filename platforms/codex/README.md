@@ -35,22 +35,20 @@ Step 1 runs in the current Codex thread. Steps 2, 3, and 4 are intentionally han
 
 ## Quick Start
 
-From this monorepo checkout, add the Codex platform package as a local Codex marketplace:
-
-```bash
-cd /absolute/path/to/qb/platforms/codex
-codex plugin marketplace add .
-codex plugin add qb@eserlxl
-```
-
-If you are using a standalone Codex package checkout, run the same commands from that package root. If the package is published as a remote Codex marketplace, use the repository reference instead:
+Add the marketplace from GitHub, then invoke `$qb` in a new Codex thread:
 
 ```bash
 codex plugin marketplace add eserlxl/qb --ref main
 codex plugin add qb@eserlxl
 ```
 
-If the repository is private, your Codex/GitHub environment must have access to `eserlxl/qb`.
+If the repository is private, your Codex/GitHub environment must have access to `eserlxl/qb`. To install from a local checkout instead, run the marketplace add from the `platforms/codex` directory:
+
+```bash
+cd /absolute/path/to/qb/platforms/codex
+codex plugin marketplace add .
+codex plugin add qb@eserlxl
+```
 
 Start a new Codex thread in the project you want to plan, then ask:
 

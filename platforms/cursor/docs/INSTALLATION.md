@@ -1,14 +1,16 @@
 # Installation
 
-QB is a single-plugin Cursor repository: Cursor discovers it directly from
-`.cursor-plugin/plugin.json` at the repository root.
+QB's Cursor package lives at `platforms/cursor` in the QB monorepo. Its plugin
+manifest is `platforms/cursor/.cursor-plugin/plugin.json`, and the repo-root
+`.cursor-plugin/marketplace.json` registers it for marketplace import.
 
 ## Local install (immediate use)
 
-Symlink this plugin into your local Cursor plugins directory, then reload Cursor:
+Clone the repo and symlink the Cursor package into your local Cursor plugins directory, then reload Cursor:
 
 ```bash
-ln -s "/absolute/path/to/QB" ~/.cursor/plugins/local/qb
+git clone https://github.com/eserlxl/qb.git
+ln -s "$(pwd)/qb/platforms/cursor" ~/.cursor/plugins/local/qb
 ```
 
 After reloading, the skills and these commands become available:
@@ -20,8 +22,10 @@ After reloading, the skills and these commands become available:
 
 ## Marketplace
 
-To publish, host this directory as its own git repository and submit it to the Cursor
-plugin marketplace. The manifest at `.cursor-plugin/plugin.json` is the source of truth.
+The repo-root `.cursor-plugin/marketplace.json` registers the `qb` plugin
+(`source: ./platforms/cursor`), so you can import `eserlxl/qb` as a marketplace
+from Cursor's Plugins settings. The per-plugin manifest at
+`platforms/cursor/.cursor-plugin/plugin.json` is the plugin's own source of truth.
 
 ## Optional dependency
 

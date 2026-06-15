@@ -100,21 +100,23 @@ Each platform is correct *for its own host*: all three install under the plugin 
 
 (For a local checkout, point `/plugin marketplace add` at the `platforms/claude-code` directory instead.) Then run `/qb-plan` in your project.
 
-**Cursor** — symlink or copy the platform package, reload Cursor, then run `/qb-plan`:
+**Cursor** — clone the repo, symlink the platform package into Cursor's local plugins, reload Cursor, then run `/qb-plan`:
 
 ```bash
-ln -s "/absolute/path/to/qb/platforms/cursor" ~/.cursor/plugins/local/qb
+git clone https://github.com/eserlxl/qb.git
+ln -s "$(pwd)/qb/platforms/cursor" ~/.cursor/plugins/local/qb
 ```
 
-**Codex** — from this monorepo checkout, add the Codex platform package as the marketplace root, then invoke `$qb` in a new Codex thread:
+(Cursor can also import `eserlxl/qb` as a marketplace from its Plugins settings.)
+
+**Codex** — add the marketplace from GitHub, then invoke `$qb` in a new Codex thread:
 
 ```bash
-cd /absolute/path/to/qb/platforms/codex
-codex plugin marketplace add .
+codex plugin marketplace add eserlxl/qb --ref main
 codex plugin add qb@eserlxl
 ```
 
-For a standalone Codex package repository, the same commands run from that package root. If the package is published as a remote Codex marketplace, use its repository reference instead of `.`.
+(For a local checkout, run `codex plugin marketplace add .` from the `platforms/codex` directory instead.)
 
 Each platform directory ships its own README and `docs/` with host-specific install and usage details.
 
