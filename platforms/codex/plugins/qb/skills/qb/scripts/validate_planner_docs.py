@@ -8,11 +8,32 @@ QB generates without editing or normalizing them.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _load_analyzer_core():
+    """Load the co-located reusable analysis primitives (single source of truth).
+
+    Resolved by path so it works both when this file is run as a CLI and when a
+    test loads it via importlib; the module is materialized next to this one on
+    every platform by scripts/sync.sh.
+    """
+    if "qb_analyzer_core" in sys.modules:
+        return sys.modules["qb_analyzer_core"]
+    path = Path(__file__).resolve().parent / "analyzer_core.py"
+    spec = importlib.util.spec_from_file_location("qb_analyzer_core", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["qb_analyzer_core"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_core = _load_analyzer_core()
 
 
 STEP1_HEADINGS = [
@@ -110,14 +131,9 @@ AUDIT_FIX_RE = re.compile(
     re.MULTILINE,
 )
 
-SECRET_PATTERNS = [
-    ("openai_api_key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
-    ("github_pat", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b")),
-    ("github_legacy_pat", re.compile(r"\bghp_[A-Za-z0-9]{20,}\b")),
-    ("aws_access_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
-    ("private_key", re.compile(r"BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY")),
-    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b")),
-]
+# Single source of the length-bounded secret patterns lives in analyzer_core;
+# the planning validator is now a caller, not the owner (Phase 1.3 refactor).
+SECRET_PATTERNS = _core.SECRET_PATTERNS
 
 PLACEHOLDER_PATTERNS = [
     ("todo", re.compile(r"\bTODO\b", re.IGNORECASE)),
@@ -482,10 +498,8 @@ def extract_audit_status(text: str) -> str | None:
 
 def count_audit_severities(text: str) -> dict[str, int]:
     fix_section = markdown_section(text, FIX_LIST_HEADING)
-    counts = {severity: 0 for severity in ("P0", "P1", "P2", "P3")}
-    for _, severity in AUDIT_FIX_RE.findall(fix_section):
-        counts[severity] += 1
-    return counts
+    severities = [severity for _, severity in AUDIT_FIX_RE.findall(fix_section)]
+    return _core.count_severities(severities)
 
 
 def validate_step4_readiness(state: ValidationState) -> None:
@@ -526,11 +540,9 @@ def scan_secrets(state: ValidationState) -> None:
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        for name, pattern in SECRET_PATTERNS:
-            for match in pattern.finditer(text):
-                secret_findings += 1
-                line = text.count("\n", 0, match.start()) + 1
-                state.error(f"secret_pattern={name}::{state.rel(path)}:{line}")
+        for name, line in _core.scan_text_for_secrets(text):
+            secret_findings += 1
+            state.error(f"secret_pattern={name}::{state.rel(path)}:{line}")
     state.metrics["secret_findings"] = secret_findings
 
 
