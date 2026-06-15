@@ -110,6 +110,10 @@ zero-setup, and gated at every step.
 - `/qb-audit` - re-run only the audit (for example after repairs).
 - `/qb-implement` - run only the gated implementation for one `READY` sub-plan.
 
+The Step 5 planwright export has no dedicated command (it runs automatically at the end
+of every `/qb-plan` run). To refresh `.qb/plan.md` on its own, re-run `/qb-plan`, or ask
+QB to run only the Step 5 export against the existing `.qb/` sub-plans.
+
 ## Validator output
 
 The validator prints deterministic summary lines, for example:

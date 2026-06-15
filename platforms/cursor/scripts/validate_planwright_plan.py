@@ -12,6 +12,13 @@ It is intentionally read-only and dependency-free (Python standard library only,
 preserving QB's zero-setup property). It checks structure; it never edits or
 normalizes the plan, and it does not need planwright to be installed.
 
+It also secret-scans the plan with the same length-bounded patterns the rest of
+QB uses (the single source in analyzer_core.py): .qb/plan.md is generated AFTER
+validate_planner_docs.py's .qb/ scan has run, so without this the export would
+be the one planning artifact no gate scans for committed credentials. A secret
+match is always a failure; if analyzer_core cannot be loaded the structural gate
+still runs and the missing scan is reported as an advisory.
+
 Checked invariants (the structural subset; semantic judgement stays the agent's job):
   * every pending item carries all required fields (Mode, Rationale, Evidence,
     Surfaces, Development, Acceptance, Verification; New Surfaces optional), non-empty;
@@ -32,9 +39,11 @@ clean or empty). With --strict, advisory notes are promoted to failures too.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import re
 import sys
+from pathlib import Path
 
 # --- Plan-format constants (mirror planwright's plan_parse.py / lint-plan.py) ----
 REQUIRED_FIELDS = ("Mode", "Rationale", "Evidence", "Surfaces",
@@ -311,6 +320,31 @@ def validate_plan(text, root):
     return errors, advisories, len(items)
 
 
+def _load_analyzer_core():
+    """Load the co-located analyzer_core for the single-source secret patterns.
+
+    Returns the module, or None if it cannot be loaded — the structural gate must
+    still run, so a missing/uninstallable core degrades to a reported advisory
+    rather than crashing the validator. analyzer_core.py is materialized next to
+    this file on every platform by scripts/sync.sh (alongside its own siblings)."""
+    if "qb_analyzer_core" in sys.modules:
+        return sys.modules["qb_analyzer_core"]
+    path = Path(__file__).resolve().parent / "analyzer_core.py"
+    try:
+        spec = importlib.util.spec_from_file_location("qb_analyzer_core", path)
+        module = importlib.util.module_from_spec(spec)
+        # Register BEFORE exec: analyzer_core's @dataclass type resolution looks up
+        # sys.modules[cls.__module__], so the module must be present while it executes
+        # (mirrors validate_planner_docs._load_analyzer_core). On any failure, drop the
+        # half-initialized entry and degrade to None — the structural gate still runs.
+        sys.modules["qb_analyzer_core"] = module
+        spec.loader.exec_module(module)
+    except (OSError, ImportError, AttributeError, ValueError, KeyError, TypeError):
+        sys.modules.pop("qb_analyzer_core", None)
+        return None
+    return module
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Validate the QB-exported planwright plan (.qb/plan.md).")
@@ -333,6 +367,7 @@ def main(argv):
     errors = []
     advisories = []
     item_count = 0
+    secret_findings = 0
 
     if not os.path.exists(plan_path):
         errors.append(f"missing_plan_file={plan_path}")
@@ -348,6 +383,18 @@ def main(argv):
             text = None
         if text is not None:
             errors, advisories, item_count = validate_plan(text, root)
+            # Secret scan: plan.md is generated after validate_planner_docs.py's
+            # .qb/ scan, so it must be scanned here or not at all. A match is
+            # always a failure (value redacted — only pattern name + line).
+            core = _load_analyzer_core()
+            if core is None:
+                advisories.append(
+                    "secret scan unavailable (analyzer_core not loadable); structural "
+                    "checks ran but plan.md was not scanned for committed credentials")
+            else:
+                for name, line in core.scan_text_for_secrets(text):
+                    secret_findings += 1
+                    errors.append(f"secret_pattern={name}::{plan_path}:{line}")
 
     if args.strict:
         errors = errors + [f"strict_note={a}" for a in advisories]
@@ -356,6 +403,7 @@ def main(argv):
     print(f"planwright_plan_validation={status}")
     print(f"plan_path={plan_path}")
     print(f"pending_item_count={item_count}")
+    print(f"secret_findings={secret_findings}")
     print(f"violation_count={len(errors)}")
     print(f"advisory_count={len(advisories)}")
     for note in advisories:

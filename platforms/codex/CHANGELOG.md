@@ -18,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   by planwright on hand-off). New reference `Export-Planner.md`. Hand-off:
   `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`).
 
+## [0.6.0] - 2026-06-15
+
+### Changed
+
+- **Manifest version alignment (Phase 6.4).** The Codex plugin manifest version was bumped
+  to match the new shared root `VERSION` file, which became the single source of truth across
+  all three platform packages (enforced by `test_version_and_structure.py`). No Codex behavior
+  change; this entry records the manifest jump (`0.3.0` → `0.6.0`) that the per-package
+  CHANGELOG had not previously tracked. Intermediate `0.4.0`/`0.5.0` were never separate Codex
+  releases.
+
 ## [0.3.0] - 2026-06-15
 
 ### Changed

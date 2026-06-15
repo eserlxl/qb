@@ -126,10 +126,11 @@ Validation after writing:
 After creating/updating .qb/plan.md:
 1. Read it back and confirm every item has all required fields, a valid Mode, existing
    Surfaces, non-existent New Surfaces, a runnable Verification, and a unique title.
-2. Run the bundled structural validator when available:
+2. Run the bundled validator when available:
    `python3 <plugin-root>/scripts/validate_planwright_plan.py --root . --strict`
-   (fallback: perform the equivalent manual checks and say so). Fix every flagged item
-   and re-run until it passes.
+   (fallback: perform the equivalent manual checks and say so). It checks the structural
+   rules above and scans the plan for committed secrets. Fix every flagged item and
+   re-run until it passes.
 3. Confirm the document is in English and contains no secrets; run
    `git diff -- .qb/plan.md` and review it.
 4. Give a concise summary: how many sub-plans were read, how many items were exported,

@@ -168,6 +168,12 @@ You can also ask for the Step 4 prompt text after a completed audit:
 Use $qb to print the Step 4 implementation handoff prompt if the audit allows it.
 ```
 
+The Step 5 export runs automatically after Step 3, but you can re-run it directly against existing sub-plans:
+
+```text
+Use $qb to export the .qb/ sub-plans to .qb/plan.md in planwright format.
+```
+
 ## Validator Output
 
 The validator prints deterministic summary lines such as:

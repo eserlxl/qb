@@ -80,14 +80,19 @@ class ValidatePlanwrightPlanTests(unittest.TestCase):
             errors, _adv, _n = self.v.validate_plan(plan_text, str(root))
             return errors
 
-    def _exit_code(self, plan_text: str | None, strict: bool = False) -> int:
+    def _run_main(self, plan_text: str | None, strict: bool = False) -> tuple[int, str]:
         with tempfile.TemporaryDirectory() as tmp:
             root = make_root(tmp)
             if plan_text is not None:
                 (root / ".qb/plan.md").write_text(plan_text, encoding="utf-8")
             argv = ["--root", str(root)] + (["--strict"] if strict else [])
-            with contextlib.redirect_stdout(io.StringIO()):
-                return self.v.main(argv)
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                code = self.v.main(argv)
+            return code, buf.getvalue()
+
+    def _exit_code(self, plan_text: str | None, strict: bool = False) -> int:
+        return self._run_main(plan_text, strict)[0]
 
     # --- passing cases -------------------------------------------------------
     def test_clean_plan_passes(self) -> None:
@@ -175,6 +180,21 @@ class ValidatePlanwrightPlanTests(unittest.TestCase):
 
     def test_missing_plan_file_exit_nonzero(self) -> None:
         self.assertEqual(self._exit_code(None), 1)
+
+    # --- secret scanning -----------------------------------------------------
+    def test_clean_plan_reports_zero_secret_findings(self) -> None:
+        code, out = self._run_main(render())
+        self.assertEqual(code, 0)
+        self.assertIn("secret_findings=0", out)
+
+    def test_secret_in_plan_fails(self) -> None:
+        # Build the token at runtime so no literal secret is committed to this file
+        # (mirrors the planner-docs secret tests; see tests/test_no_committed_secrets.py).
+        leak = render(Rationale="leaked credential " + "sk-" + "A" * 24)
+        code, out = self._run_main(leak)
+        self.assertEqual(code, 1)
+        self.assertIn("secret_pattern=openai_api_key", out)
+        self.assertIn("secret_findings=1", out)
 
     def test_strict_promotes_missing_anchor_advisory(self) -> None:
         # A non-repair Evidence anchor to a missing file is advisory by default,
