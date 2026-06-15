@@ -121,6 +121,11 @@ MAP=(
   "scripts/command_safety.py|platforms/claude-code/scripts/command_safety.py"
   "scripts/command_safety.py|platforms/cursor/scripts/command_safety.py"
   "scripts/command_safety.py|platforms/codex/plugins/qb/skills/qb/scripts/command_safety.py"
+
+  # shared/scripts/analyzer_quality.py
+  "scripts/analyzer_quality.py|platforms/claude-code/scripts/analyzer_quality.py"
+  "scripts/analyzer_quality.py|platforms/cursor/scripts/analyzer_quality.py"
+  "scripts/analyzer_quality.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_quality.py"
 )
 
 # Number of distinct shared source files (for the summary line).
