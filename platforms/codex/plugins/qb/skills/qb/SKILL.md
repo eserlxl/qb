@@ -30,8 +30,29 @@ Bundled support files:
 3. If the user directly asks for Step 2, read `references/Second-Planner.md` and execute it.
 4. If the user directly asks for Step 3, read `references/Third-Planner.md` and execute it.
 5. If the user asks only for the Goal mode prompt text, print the matching Step 2, Step 3, or gated Step 4 copy block without modifying files.
+6. If the user asks to audit and harden the repository (rather than plan it), launch the QB engine loop described under "Audit and Harden" below instead of the planner.
 
 Do not run `migrate-to-codex` for this workflow. This is a native Codex skill workflow, not a Claude migration.
+
+## Audit and Harden (engine loop)
+
+QB also ships an autonomous audit -> harden -> report engine, separate from the planning workflow above. When the user asks to audit or harden the repository, run the engine rather than the planner.
+
+Run brief (state before starting):
+
+- Target repository: the current working directory.
+- Autonomy level: `A0` (report-only) by default; raise to `A1` (propose in throwaway isolation), `A2` (apply only verified fixes), or `A3` (prepare a reviewable changeset) only on explicit request. Never escalate silently.
+- Policy: an optional policy JSON; absent or unparseable means the conservative default (A0, deny-all writes, no commit/push/PR).
+- Budgets: max findings / fixes / iterations / wall-time / tokens, taken from the policy.
+
+Launch it through the bundled engine entry point:
+
+```text
+Use $qb. Run the audit and harden engine over this repository.
+python3 scripts/qb_headless.py --root . --out QB-Audit
+```
+
+The exit code is the contract: `0` clean, `1` findings present, `2` policy/budget boundary, `3` internal error. The engine writes graded findings, per-fix evidence, and an append-only log to the fixed-name `QB-Audit/` store, plus `report.json`, `report.sarif`, and a human summary. At A0 nothing is written to the working tree; at A1+ each fix runs in git isolation, is kept only when its verification command passes, and is otherwise auto-reverted. Never commit, push, open a PR, or deploy; A3 deliver is explicit opt-in only; never write secrets into any output.
 
 ## Step 1 Intake
 
