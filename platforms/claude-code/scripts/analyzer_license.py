@@ -54,7 +54,12 @@ _MIN_LICENSE_CHARS = 40
 
 
 def _is_license_file(path: Path) -> bool:
-    return path.name.split(".", 1)[0].lower() in _LICENSE_STEMS
+    # Strip any extension (LICENSE.md, COPYING.txt), then match an exact stem or a
+    # conventional dual-license variant (LICENSE-MIT, LICENSE-APACHE, COPYING-LESSER).
+    # The "-" separator is required so an unrelated file like license_manager.py or
+    # licensed.py is not mistaken for a license declaration.
+    base = path.name.split(".", 1)[0].lower()
+    return base in _LICENSE_STEMS or any(base.startswith(stem + "-") for stem in _LICENSE_STEMS)
 
 
 class LicenseAnalyzer:

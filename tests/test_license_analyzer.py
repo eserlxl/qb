@@ -73,6 +73,18 @@ class LicenseAnalyzerTests(unittest.TestCase):
         self.assertEqual(self._analyze({"LICENSE": _MIT}), [])
         self.assertEqual(self._analyze({"COPYING.md": _MIT}), [])
 
+    def test_dual_license_naming_is_recognized(self) -> None:
+        # Conventional split-license names must not be reported as a missing license.
+        self.assertEqual(self._analyze({"LICENSE-MIT": _MIT}), [])
+        self.assertEqual(self._analyze({"LICENSE-APACHE": _MIT}), [])
+
+    def test_unrelated_license_named_file_does_not_satisfy(self) -> None:
+        # A source file that merely starts with "license" is not a license declaration,
+        # so a repo whose only such file is license_manager.py is still flagged.
+        findings = self._analyze({"license_manager.py": "def f():\n    return 1\n"})
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].category, "license")
+
     def test_descriptor_and_default_registration(self) -> None:
         descriptor = self.mod.LicenseAnalyzer().descriptor
         self.assertEqual(descriptor.id, "license-hygiene")
