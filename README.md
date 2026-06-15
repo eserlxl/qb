@@ -86,12 +86,16 @@ From an installed platform package, use that package's copied script path instea
 | **A2** | Promote only fixes that pass policy, verification, and rollback gates. |
 | **A3** | A2 plus a reviewable changeset path, still explicit opt-in; commit, push, and PR remain policy-gated and default-off. |
 
+A declared autonomy level is **clamped by the earned ceiling**: auto-apply (A2) requires prior-run telemetry showing sufficient precision and fix safety, so a cold start with no telemetry isolates and verifies but promotes nothing above A1 (fail-closed).
+
 The built-in analyzers are dependency-free and offline by default:
 
-- secret hygiene using length-bounded token patterns;
+- secret hygiene using length-bounded token patterns (OpenAI, GitHub, AWS incl. STS, Stripe, Slack, private keys);
 - command injection, dynamic eval, and path-traversal sink detection;
 - local quality/correctness adapters such as `ruff` and `pyflakes` when those tools already exist;
-- dependency hygiene for manifests and lockfiles, with advisory enrichment only when networked analysis is explicitly enabled.
+- dependency hygiene for manifests and lockfiles, with advisory enrichment only when networked analysis is explicitly enabled;
+- license hygiene: a missing or effectively empty repository-root license file;
+- config hygiene: a committed, non-template dotenv file (`.env` / `.env.<env>`).
 
 The fixed run store is:
 
