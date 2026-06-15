@@ -161,6 +161,11 @@ MAP=(
   "scripts/budget.py|platforms/claude-code/scripts/budget.py"
   "scripts/budget.py|platforms/cursor/scripts/budget.py"
   "scripts/budget.py|platforms/codex/plugins/qb/skills/qb/scripts/budget.py"
+
+  # shared/scripts/review.py
+  "scripts/review.py|platforms/claude-code/scripts/review.py"
+  "scripts/review.py|platforms/cursor/scripts/review.py"
+  "scripts/review.py|platforms/codex/plugins/qb/skills/qb/scripts/review.py"
 )
 
 # Number of distinct shared source files (for the summary line).

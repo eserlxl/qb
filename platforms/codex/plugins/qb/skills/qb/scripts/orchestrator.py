@@ -79,7 +79,7 @@ def _promote(isolation, repo_root):
     return promoted
 
 
-def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a3=False) -> dict:
+def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a3=False, review=None) -> dict:
     """The single enforcement chokepoint for one finding's fix attempt."""
     level = policy.autonomy_level
     finding = fix_plan.finding
@@ -116,8 +116,14 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         result["outcome"] = record.outcome
         result["reason"] = record.reason
         if record.outcome == "kept" and caps["promote"]:
-            result["promoted"] = _promote(isolation, repo_root)
-        if record.outcome == "kept" and caps["changeset"] and enable_a3:
+            # Phase 4.4 cross-review gate composes here, before any working-tree write.
+            decision = review(finding) if review is not None else {"promote": True, "reason": "no-review"}
+            if decision["promote"]:
+                result["promoted"] = _promote(isolation, repo_root)
+            else:
+                result["outcome"] = "blocked"          # demoted by review; isolation discarded on teardown
+                result["reason"] = decision["reason"]
+        if result["outcome"] == "kept" and caps["changeset"] and enable_a3:
             result["changeset"] = {"files": list(result["promoted"]),
                                    "commit_permitted": bool(policy.allow_commit)}
     finally:
