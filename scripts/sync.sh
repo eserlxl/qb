@@ -191,6 +191,11 @@ MAP=(
   "scripts/release_gate.py|platforms/claude-code/scripts/release_gate.py"
   "scripts/release_gate.py|platforms/cursor/scripts/release_gate.py"
   "scripts/release_gate.py|platforms/codex/plugins/qb/skills/qb/scripts/release_gate.py"
+
+  # shared/scripts/least_privilege.py
+  "scripts/least_privilege.py|platforms/claude-code/scripts/least_privilege.py"
+  "scripts/least_privilege.py|platforms/cursor/scripts/least_privilege.py"
+  "scripts/least_privilege.py|platforms/codex/plugins/qb/skills/qb/scripts/least_privilege.py"
 )
 
 # Number of distinct shared source files (for the summary line).
