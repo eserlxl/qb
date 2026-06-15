@@ -13,10 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plugin-only.** It no longer ships a marketplace manifest; both the root
   `.claude-plugin/marketplace.json` and the package-local
   `platforms/claude-code/.claude-plugin/marketplace.json` were removed. QB is now
-  published through the dedicated [`eserlxl/marketplace`](https://github.com/eserlxl/marketplace)
+  published through the dedicated [`eserlxl/claude-marketplace`](https://github.com/eserlxl/claude-marketplace)
   aggregator repo, which references this package with a `git-subdir` source and
   also offers `planwright`.
-  - **Install changed:** `/plugin marketplace add eserlxl/marketplace` then
+  - **Install changed:** `/plugin marketplace add eserlxl/claude-marketplace` then
     `/plugin install qb@eserlxl` (previously `/plugin marketplace add eserlxl/qb`).
   - **Why:** a Claude Code marketplace is keyed by the `name` inside its manifest,
     not by the repo. `eserlxl/qb` and `eserlxl/planwright` both declared a

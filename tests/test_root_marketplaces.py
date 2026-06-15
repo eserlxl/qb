@@ -9,7 +9,7 @@ per-plugin manifest). These root files are NOT covered by the per-platform
 monorepo level.
 
 Claude Code is deliberately NOT in this list: its package is plugin-only and is
-distributed via the dedicated ``eserlxl/marketplace`` aggregator repo (which
+distributed via the dedicated ``eserlxl/claude-marketplace`` aggregator repo (which
 references this repo with a ``git-subdir`` source). Two repos cannot both claim the
 marketplace name ``eserlxl`` without colliding, so this repo no longer ships a
 Claude Code marketplace manifest. ``test_claude_code_package_is_plugin_only`` pins
@@ -26,7 +26,7 @@ from tests.qb_monorepo import REPO_ROOT
 
 # (root marketplace manifest, per-plugin manifest expected inside the source dir)
 # Claude Code is intentionally excluded: it is plugin-only and distributed via the
-# external eserlxl/marketplace aggregator. See the module docstring.
+# external eserlxl/claude-marketplace aggregator. See the module docstring.
 ROOT_MARKETPLACES = [
     (".agents/plugins/marketplace.json", ".codex-plugin/plugin.json"),
     (".cursor-plugin/marketplace.json", ".cursor-plugin/plugin.json"),
@@ -80,14 +80,14 @@ class RootMarketplaceTests(unittest.TestCase):
 
     def test_claude_code_package_is_plugin_only(self) -> None:
         # The Claude Code package ships NO marketplace manifest; it is distributed
-        # via the external eserlxl/marketplace aggregator. Re-introducing a manifest
+        # via the external eserlxl/claude-marketplace aggregator. Re-introducing a manifest
         # here would re-create the marketplace-name collision on "eserlxl".
         for manifest_rel in CLAUDE_CODE_MARKETPLACE_MANIFESTS:
             with self.subTest(manifest=manifest_rel):
                 self.assertFalse(
                     (REPO_ROOT / manifest_rel).exists(),
                     f"Claude Code is plugin-only; {manifest_rel} must not exist "
-                    f"(it would collide with the eserlxl/marketplace aggregator)",
+                    f"(it would collide with the eserlxl/claude-marketplace aggregator)",
                 )
         # The plugin manifest itself must still be present.
         self.assertTrue(

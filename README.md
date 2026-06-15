@@ -94,12 +94,12 @@ Each platform is correct *for its own host*: all three install under the plugin 
 **Claude Code** — add the `eserlxl` marketplace, then install it:
 
 ```text
-/plugin marketplace add eserlxl/marketplace
+/plugin marketplace add eserlxl/claude-marketplace
 /plugin install qb@eserlxl
 ```
 
 The Claude Code package is plugin-only; it is published through the dedicated
-[`eserlxl/marketplace`](https://github.com/eserlxl/marketplace) aggregator (which
+[`eserlxl/claude-marketplace`](https://github.com/eserlxl/claude-marketplace) aggregator (which
 also offers `planwright`). For local development, register `platforms/claude-code`
 directly as a plugin — see `platforms/claude-code/docs/INSTALLATION.md`. Then run
 `/qb-plan` in your project.
