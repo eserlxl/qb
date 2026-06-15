@@ -150,6 +150,30 @@ class VerificationGateTests(unittest.TestCase):
             finally:
                 isolation.teardown()
 
+    def test_minimal_env_drops_secrets_keeps_essentials(self) -> None:
+        cs = _load("qb_command_safety_for_gate_test", SHARED_DIR / "scripts/command_safety.py")
+        env = cs.minimal_env({"PATH": "/usr/bin", "HOME": "/h", "LC_ALL": "C",
+                              "AWS_SECRET_ACCESS_KEY": "x", "MY_API_TOKEN": "y"})
+        self.assertEqual(env.get("PATH"), "/usr/bin")
+        self.assertEqual(env.get("HOME"), "/h")
+        self.assertEqual(env.get("LC_ALL"), "C")
+        self.assertNotIn("AWS_SECRET_ACCESS_KEY", env)
+        self.assertNotIn("MY_API_TOKEN", env)
+
+    def test_verification_does_not_inherit_secret_env(self) -> None:
+        import os
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            os.environ["QB_TEST_FAKE_SECRET"] = "leaked"
+            try:
+                # Exits 0 only if the secret env var is ABSENT from the child.
+                cmd = ["python3", "-c",
+                       "import os,sys; sys.exit(1 if 'QB_TEST_FAKE_SECRET' in os.environ else 0)"]
+                code, out = self.gate.run_verification(cmd, cwd=repo)
+                self.assertEqual(code, 0, f"secret env leaked into verification child: {out}")
+            finally:
+                os.environ.pop("QB_TEST_FAKE_SECRET", None)
+
 
 if __name__ == "__main__":
     unittest.main()

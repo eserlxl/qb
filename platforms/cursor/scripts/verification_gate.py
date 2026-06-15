@@ -83,7 +83,10 @@ def run_verification(command, cwd, timeout=120):
     """Run the verification command (argv); return (exit_code, combined_output)."""
     assert_argv(command)
     try:
-        completed = _cs.run_command(command, cwd=str(cwd), timeout=timeout)
+        # The verification command runs the audited repo's own code; give it a
+        # minimized environment so QB's secrets are never inherited by repo code.
+        completed = _cs.run_command(command, cwd=str(cwd), timeout=timeout,
+                                    env=_cs.minimal_env())
     except subprocess.TimeoutExpired:
         return _TIMEOUT_EXIT, "verification timed out"
     except Exception as exc:  # command error counts as non-green

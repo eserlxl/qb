@@ -28,10 +28,20 @@ with two halves:
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+# Environment keys safe to forward to an untrusted / repo-provided command: enough
+# for a typical test runner (PATH, HOME, locale, tmpdir, terminal) and nothing else,
+# so a secret in QB's own environment never reaches the code being verified.
+_SAFE_ENV_KEYS = (
+    "PATH", "HOME", "TMPDIR", "TEMP", "TMP", "LANG", "LANGUAGE",
+    "TERM", "SHELL", "USER", "LOGNAME", "TZ", "PWD",
+)
+_SAFE_ENV_PREFIXES = ("LC_",)
 
 # QB never auto-runs scripts from the audited repository without explicit,
 # sandboxed authorization. This is a hard, testable rule.
@@ -80,6 +90,24 @@ def run_command(argv, cwd=None, timeout=None, env=None):
         capture_output=True,
         text=True,
     )
+
+
+def minimal_env(base=None) -> dict:
+    """A least-privilege environment for running an untrusted / repo-provided command.
+
+    Forwards only the allowlisted keys a test runner needs (PATH, HOME, locale,
+    tmpdir, terminal) and drops everything else -- so any credential present in QB's
+    own environment cannot leak into the verified repository's code. PATH is always
+    present (falling back to ``os.defpath``) so the command can still be located.
+    """
+    source = os.environ if base is None else base
+    env = {
+        key: value
+        for key, value in source.items()
+        if key in _SAFE_ENV_KEYS or any(key.startswith(prefix) for prefix in _SAFE_ENV_PREFIXES)
+    }
+    env.setdefault("PATH", os.defpath)
+    return env
 
 
 # --- Path containment ---------------------------------------------------------
