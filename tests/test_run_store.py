@@ -79,6 +79,25 @@ class RunStoreTests(unittest.TestCase):
             self.assertEqual(records["QBF-2"]["outcome"], "not-kept")
             self.assertEqual(records["QBF-2"]["reason"], "missing-rollback-handle")
 
+    def test_findings_redacted(self) -> None:
+        # write_findings must redact secret-shaped material in any field, like the
+        # other writers; the findings file is not exempt from the no-secret invariant.
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            token = "ghp_" + "C" * 30
+            f = self.schema.Finding(
+                id=self.schema.compute_finding_id("secret", "src/x.py:1", "k"),
+                category="secret", severity="P1", confidence="high",
+                evidence="src/x.py:1",
+                rationale=f"a length-bounded pattern matched value {token} here",
+                suggested_fix="remove it and rotate", fix_strategy="manual")
+            store.write_findings([f])
+            raw = (store.root / self.rs.FINDINGS_FILENAME).read_text(encoding="utf-8")
+            self.assertNotIn(token, raw)
+            self.assertIn("<redacted>", raw)
+            # round-trip still parses and preserves the id
+            self.assertEqual([r["id"] for r in store.read_findings()], [f.id])
+
     def test_run_log_is_append_only_and_seq_ordered(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)

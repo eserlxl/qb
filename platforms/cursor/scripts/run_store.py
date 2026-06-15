@@ -83,8 +83,13 @@ class RunStore:
         return self
 
     def write_findings(self, findings) -> None:
+        # Redaction is mandatory on EVERY persisted artifact (see module docstring):
+        # redact each finding's on-disk mapping before serialization, mirroring the
+        # record_evidence / append_log / write_summary writers. A finding's rationale
+        # or suggested_fix can quote secret-shaped material, so the findings file is
+        # not exempt from the no-secret-value invariant.
         ordered = sorted(findings, key=lambda f: f.id)
-        text = "".join(serialize_finding(f) + "\n" for f in ordered)
+        text = "".join(serialize_finding(redact(f.to_dict())) + "\n" for f in ordered)
         (self.root / FINDINGS_FILENAME).write_text(text, encoding="utf-8")
 
     def record_evidence(self, evidence: dict) -> None:
