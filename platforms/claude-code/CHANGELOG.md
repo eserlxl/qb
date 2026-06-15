@@ -5,6 +5,26 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING (Claude Code distribution) — the Claude Code package is now
+  plugin-only.** It no longer ships a marketplace manifest; both the root
+  `.claude-plugin/marketplace.json` and the package-local
+  `platforms/claude-code/.claude-plugin/marketplace.json` were removed. QB is now
+  published through the dedicated [`eserlxl/marketplace`](https://github.com/eserlxl/marketplace)
+  aggregator repo, which references this package with a `git-subdir` source and
+  also offers `planwright`.
+  - **Install changed:** `/plugin marketplace add eserlxl/marketplace` then
+    `/plugin install qb@eserlxl` (previously `/plugin marketplace add eserlxl/qb`).
+  - **Why:** a Claude Code marketplace is keyed by the `name` inside its manifest,
+    not by the repo. `eserlxl/qb` and `eserlxl/planwright` both declared a
+    marketplace named `eserlxl`, so adding both made the second overwrite the
+    first. A single aggregator repo owns the `eserlxl` name; the plugin repos no
+    longer compete for it.
+  - Cursor and Codex are unaffected — they remain self-hosted marketplaces.
+
 ## [0.3.0] - 2026-06-15
 
 ### Changed

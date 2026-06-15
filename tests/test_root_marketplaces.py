@@ -1,13 +1,19 @@
 """The repo-root marketplace manifests register the qb plugin for each host.
 
-Each host's CLI/UI installs from the repository ROOT: Claude Code reads
-``.claude-plugin/marketplace.json``, Codex reads
-``.agents/plugins/marketplace.json``, and Cursor reads
-``.cursor-plugin/marketplace.json``. Each must register exactly the ``qb`` plugin
-under the marketplace named ``eserlxl`` with a ``./``-relative source that points
-at the real platform package (the directory holding that host's per-plugin
-manifest). These root files are NOT covered by the per-platform ``validate.sh``
-(which run inside ``platforms/<host>``), so this guards them at the monorepo level.
+Cursor and Codex still self-host: Cursor reads ``.cursor-plugin/marketplace.json``
+and Codex reads ``.agents/plugins/marketplace.json``. Each must register exactly
+the ``qb`` plugin under the marketplace named ``eserlxl`` with a ``./``-relative
+source that points at the real platform package (the directory holding that host's
+per-plugin manifest). These root files are NOT covered by the per-platform
+``validate.sh`` (which run inside ``platforms/<host>``), so this guards them at the
+monorepo level.
+
+Claude Code is deliberately NOT in this list: its package is plugin-only and is
+distributed via the dedicated ``eserlxl/marketplace`` aggregator repo (which
+references this repo with a ``git-subdir`` source). Two repos cannot both claim the
+marketplace name ``eserlxl`` without colliding, so this repo no longer ships a
+Claude Code marketplace manifest. ``test_claude_code_package_is_plugin_only`` pins
+that invariant so the manifests cannot silently return.
 """
 
 from __future__ import annotations
@@ -19,10 +25,17 @@ from pathlib import Path
 from tests.qb_monorepo import REPO_ROOT
 
 # (root marketplace manifest, per-plugin manifest expected inside the source dir)
+# Claude Code is intentionally excluded: it is plugin-only and distributed via the
+# external eserlxl/marketplace aggregator. See the module docstring.
 ROOT_MARKETPLACES = [
-    (".claude-plugin/marketplace.json", ".claude-plugin/plugin.json"),
     (".agents/plugins/marketplace.json", ".codex-plugin/plugin.json"),
     (".cursor-plugin/marketplace.json", ".cursor-plugin/plugin.json"),
+]
+
+# Paths that must NOT exist: this repo no longer declares a Claude Code marketplace.
+CLAUDE_CODE_MARKETPLACE_MANIFESTS = [
+    ".claude-plugin/marketplace.json",
+    "platforms/claude-code/.claude-plugin/marketplace.json",
 ]
 
 
@@ -64,6 +77,23 @@ class RootMarketplaceTests(unittest.TestCase):
                     (src_dir / plugin_manifest_rel).is_file(),
                     f"{src}/{plugin_manifest_rel} not found (referenced by {manifest_rel})",
                 )
+
+    def test_claude_code_package_is_plugin_only(self) -> None:
+        # The Claude Code package ships NO marketplace manifest; it is distributed
+        # via the external eserlxl/marketplace aggregator. Re-introducing a manifest
+        # here would re-create the marketplace-name collision on "eserlxl".
+        for manifest_rel in CLAUDE_CODE_MARKETPLACE_MANIFESTS:
+            with self.subTest(manifest=manifest_rel):
+                self.assertFalse(
+                    (REPO_ROOT / manifest_rel).exists(),
+                    f"Claude Code is plugin-only; {manifest_rel} must not exist "
+                    f"(it would collide with the eserlxl/marketplace aggregator)",
+                )
+        # The plugin manifest itself must still be present.
+        self.assertTrue(
+            (REPO_ROOT / "platforms/claude-code/.claude-plugin/plugin.json").is_file(),
+            "Claude Code plugin manifest missing",
+        )
 
 
 if __name__ == "__main__":

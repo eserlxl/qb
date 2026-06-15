@@ -9,23 +9,25 @@ but is not a direct port.
 
 ## Install from a marketplace (recommended)
 
-QB ships its own repo-local marketplace manifest at
-`.claude-plugin/marketplace.json`, so you can add this repository as a
-marketplace and install the plugin from it.
+QB's Claude Code package is **plugin-only** — it ships no marketplace manifest of
+its own. It is published through the dedicated
+[`eserlxl/marketplace`](https://github.com/eserlxl/marketplace) aggregator repo,
+which references this package with a `git-subdir` source. That single marketplace
+also offers `planwright`.
 
 Run these in Claude Code:
 
 ```text
-/plugin marketplace add eserlxl/qb
+/plugin marketplace add eserlxl/marketplace
 /plugin install qb@eserlxl
 ```
 
-- From the **monorepo** (`eserlxl/qb`), the root `.claude-plugin/marketplace.json`
-  registers the `qb` plugin with `source: "./platforms/claude-code"`, so point the
-  marketplace at the repository, not a subfolder.
-- For a **local checkout**, point `/plugin marketplace add` at this package's
-  directory (`/absolute/path/to/qb/platforms/claude-code`) instead of the repo
-  reference.
+- Add **only** `eserlxl/marketplace`. Do not add `eserlxl/qb` as a marketplace —
+  this repo no longer declares one. A Claude Code marketplace is keyed by the
+  `name` inside its manifest, and `eserlxl/qb` previously claimed the same
+  `eserlxl` name as the aggregator, which made the two collide.
+- For **local development**, register this package's directory directly (see
+  *Manual install* below) instead of adding it as a marketplace.
 - After installation, start a fresh chat so the skills, commands, and subagents
   are loaded into context.
 

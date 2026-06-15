@@ -8,9 +8,11 @@ cd "$ROOT"
 python3 -m json.tool .claude-plugin/plugin.json >/dev/null
 
 # 2) Required files exist (Claude Code single-plugin-at-root layout).
+#    This package is plugin-only: it ships no marketplace manifest. It is
+#    distributed via the dedicated `eserlxl/marketplace` aggregator, which
+#    references it with a `git-subdir` source pointing at this directory.
 required_files=(
   ".claude-plugin/plugin.json"
-  ".claude-plugin/marketplace.json"
   "scripts/validate_planner_docs.py"
   "skills/qb-planner/SKILL.md"
   "skills/qb-planner/planners/first-planner.md"
