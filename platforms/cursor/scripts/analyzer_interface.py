@@ -56,10 +56,13 @@ from typing import Callable, Protocol, runtime_checkable
 # shared/scripts/ and in every platform's scripts dir), so resolve it by path
 # rather than relying on sys.path.
 def _load_finding_schema():
+    name = "qb_finding_schema"
+    if name in sys.modules:  # memoize: one shared Finding instance across modules
+        return sys.modules[name]
     path = Path(__file__).resolve().parent / "finding_schema.py"
-    spec = importlib.util.spec_from_file_location("qb_finding_schema", path)
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
-    sys.modules.setdefault(spec.name, module)
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 

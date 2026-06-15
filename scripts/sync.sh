@@ -111,6 +111,11 @@ MAP=(
   "scripts/analyzer_core.py|platforms/claude-code/scripts/analyzer_core.py"
   "scripts/analyzer_core.py|platforms/cursor/scripts/analyzer_core.py"
   "scripts/analyzer_core.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_core.py"
+
+  # shared/scripts/audit_runner.py
+  "scripts/audit_runner.py|platforms/claude-code/scripts/audit_runner.py"
+  "scripts/audit_runner.py|platforms/cursor/scripts/audit_runner.py"
+  "scripts/audit_runner.py|platforms/codex/plugins/qb/skills/qb/scripts/audit_runner.py"
 )
 
 # Number of distinct shared source files (for the summary line).

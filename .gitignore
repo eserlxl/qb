@@ -41,3 +41,6 @@ QB-sanitized.zip
 # Claude Code session scaffolding (not part of the project)
 .remember/
 .planwright/
+
+# Generated audit-engine output (reproducible; not source)
+QB-Audit/
