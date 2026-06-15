@@ -132,6 +132,16 @@ The implementation handoff tells Codex to use relevant skills/plugins by scope, 
 
 Step 4 should not stop after the first successful slice. It should continue to the next acceptance criterion or next eligible sub-plan until the queue is complete or a stop gate is hit, such as a P0/P1 finding, failing test, missing source file, required credential/live approval, unsafe external mutation, unrelated dirty worktree, or token/context budget pressure.
 
+## Step 5: Export to planwright (automatic)
+
+After Step 3, QB automatically projects the `.qb/` sub-plans into a flat, execution-ready `.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s 8-field checkbox item format — one item per "Planned Work Breakdown" entry, across all phases. Unlike Step 4 it never changes source code, so it runs without a gate or handoff prompt; it writes only `.qb/plan.md`. Validate it with the bundled validator, which mirrors the machine-checkable subset of planwright's plan linter:
+
+```bash
+python3 plugins/qb/skills/qb/scripts/validate_planwright_plan.py --root /path/to/project --strict
+```
+
+To run the plan with planwright: `cp .qb/plan.md .planwright/plan.md`, then run planwright `execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
+
 ## Direct Step Invocation
 
 You can invoke Step 2 or Step 3 directly:

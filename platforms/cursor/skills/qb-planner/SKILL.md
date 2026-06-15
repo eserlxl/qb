@@ -20,6 +20,7 @@ Step 3   qb-auditor     -> sub-planning-audit.md                (goal-backed)   
  Repair PASS_WITH_WARNINGS -> targeted fixes -> re-audit
  Step 4 gate: validator step4 (audit not BLOCKED, no P0/P1)
 Step 4   qb-implementer -> one reversible code slice           (goal-backed, gated)
+Step 5   Export-Planner -> .qb/plan.md (planwright format)      (automatic, closing)  [validator plan]
 ```
 
 ## Execution model and non-negotiable rules
@@ -49,8 +50,8 @@ Step 4   qb-implementer -> one reversible code slice           (goal-backed, gat
 - **Honor each prompt's guardrails.** Step 1 may only create/update `main-planning.md`; Step 1.5 may only
   create/update `assessment.md`; Step 2 may only change files under `.qb/`; Step 3 may only
   create/update `sub-planning-audit.md`; only Step 4 may change source code, and only after its gate
-  passes and the user approves. Never write secrets, tokens, or credentials. Never auto-commit, push, or
-  open PRs during planning.
+  passes and the user approves; the Step 5 export may only create/update `.qb/plan.md`. Never write
+  secrets, tokens, or credentials. Never auto-commit, push, or open PRs during planning.
 - **Always wait for explicit approval at each gate** before continuing.
 
 ## Step 0 - detect and brief
@@ -177,10 +178,29 @@ run the Step-4 gate validator:
 - **Gate fails on BLOCKED** -> report the blocker and the minimal next action from the audit; do not
   repair speculatively or start Step 4.
 
+## Step 5 - export to planwright (automatic closing step)
+
+After the audit (and after any Step 4 slice), automatically produce a flat, execution-ready
+planwright plan from the sub-plans so the QB plan can be handed to planwright's
+`execute` / `cycle` without re-planning. This runs on **every** planning run that produced
+sub-plans; it needs no gate or approval (it only writes `.qb/plan.md`).
+
+1. Skip only when Step 2 produced no sub-plans (no `.qb/phase-*-plans/`): say there was nothing
+   to export. Otherwise run regardless of audit status (note any unresolved blocker in the summary).
+2. Read `planners/export-planner.md` (relative to this skill) and follow it end to end. Read every
+   `.qb/phase-*-plans/phase-<n>.<m>-*.md` and emit one planwright item per `## 7. Planned Work
+   Breakdown` entry, across all phases, into `.qb/plan.md` in the exact 8-field item format.
+3. Run the bundled validator:
+   `python3 <plugin-root>/scripts/validate_planwright_plan.py --root . --strict`
+   (fallback: the manual checks the spec lists). Fix every flagged item and re-run until it passes.
+4. Tell the user the hand-off in their language: to run the plan with planwright, copy it into place
+   and execute, e.g. `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`).
+   QB does not write to `.planwright/` or invoke planwright itself.
+
 ## Stop rules
 
-- During planning (Steps 1-3) do not modify any file outside `.qb/`, and never modify the
-  bundled template prompts. Only Step 4 may change source code, after its gate passes and the user approves.
+- During planning (Steps 1-3) and the Step 5 export, do not modify any file outside `.qb/`, and never
+  modify the bundled template prompts. Only Step 4 may change source code, after its gate passes and the user approves.
 - Never write secrets, tokens, credentials, or private endpoints into any file.
 - Never auto-commit, push, merge, or open pull requests unless the user explicitly asks in a Step 4 run.
 - Always pause for explicit user approval at each gate.
@@ -190,6 +210,7 @@ run the Step-4 gate validator:
 
 On a successful planning run the user's workspace contains, under `.qb/`: `main-planning.md`,
 `assessment.md` (for existing projects), one `phase-<n>-plans/` folder per phase with `phase-<n>.<m>-*.md`
-sub-plans, `sub-planning-index.md`, and `sub-planning-audit.md`. If Step 4 ran, also one reversible code
-slice with a passing validation command. Close with a short summary and the single most important
+sub-plans, `sub-planning-index.md`, `sub-planning-audit.md`, and `plan.md` (the Step 5 planwright-format
+export). If Step 4 ran, also one reversible code slice with a passing validation command. Close with a
+short summary, the planwright hand-off command for `.qb/plan.md`, and the single most important
 recommended next action.

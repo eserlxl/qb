@@ -82,6 +82,11 @@ MAP=(
   "planners/assessment-planner.md|platforms/cursor/skills/qb-assess/assessment-planner.md"
   "planners/assessment-planner.md|platforms/codex/plugins/qb/skills/qb/references/Assessment-Planner.md"
 
+  # shared/planners/export-planner.md
+  "planners/export-planner.md|platforms/claude-code/skills/qb-planner/planners/export-planner.md"
+  "planners/export-planner.md|platforms/cursor/skills/qb-planner/planners/export-planner.md"
+  "planners/export-planner.md|platforms/codex/plugins/qb/skills/qb/references/Export-Planner.md"
+
   # shared/references/repo-aware-intake.md
   "references/repo-aware-intake.md|platforms/claude-code/references/repo-aware-intake.md"
   "references/repo-aware-intake.md|platforms/cursor/references/repo-aware-intake.md"
@@ -96,6 +101,11 @@ MAP=(
   "scripts/validate_planner_docs.py|platforms/claude-code/scripts/validate_planner_docs.py"
   "scripts/validate_planner_docs.py|platforms/cursor/scripts/validate_planner_docs.py"
   "scripts/validate_planner_docs.py|platforms/codex/plugins/qb/skills/qb/scripts/validate_planner_docs.py"
+
+  # shared/scripts/validate_planwright_plan.py
+  "scripts/validate_planwright_plan.py|platforms/claude-code/scripts/validate_planwright_plan.py"
+  "scripts/validate_planwright_plan.py|platforms/cursor/scripts/validate_planwright_plan.py"
+  "scripts/validate_planwright_plan.py|platforms/codex/plugins/qb/skills/qb/scripts/validate_planwright_plan.py"
 
   # shared/scripts/finding_schema.py
   "scripts/finding_schema.py|platforms/claude-code/scripts/finding_schema.py"

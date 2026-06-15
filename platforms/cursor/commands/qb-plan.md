@@ -13,6 +13,9 @@ Invoke the `qb-planner` skill and run its workflow from the beginning.
 - On approval, run Step 2 (`qb-subplanner`, goal-backed), pause at Gate 2, then run
   Step 3 (`qb-auditor`, goal-backed). Offer targeted repairs if the audit is
   `PASS_WITH_WARNINGS`.
+- As the automatic closing step (Step 5), export the sub-plans to `.qb/plan.md` in planwright's
+  plan format and validate it with `validate_planwright_plan.py`. Tell the user the hand-off:
+  `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`).
 
 Write all planning output under `.qb/` in the user's active workspace, in English.
 Follow every stop rule defined in the `qb-planner` skill.

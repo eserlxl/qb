@@ -75,6 +75,17 @@ target, and verifies before claiming done. It never commits, pushes, opens a PR,
 or mutates external systems unless you explicitly ask. Re-run
 `/qb-implement` for each subsequent slice.
 
+## Step 5: Export to planwright (automatic)
+
+After the audit, QB automatically projects the sub-plans into a flat,
+execution-ready `.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s
+8-field checkbox item format — one item per "Planned Work Breakdown" entry, across
+all phases. It writes only `.qb/plan.md` (no source changes, no gate) and validates
+it with `validate_planwright_plan.py`, which mirrors the machine-checkable subset of
+planwright's plan linter so the file is accepted by planwright on hand-off. To run the
+plan with planwright: `cp .qb/plan.md .planwright/plan.md`, then run planwright
+`execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
+
 ## Subagent delegation and the goal contract
 
 For each long autonomous step (1.5, 2, 3, and 4), the orchestrator delegates to
@@ -131,6 +142,7 @@ never in the plugin directory:
 ├── assessment.md              # repo health report for existing projects (Step 1.5)
 ├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
+├── plan.md                  # flat planwright-format export            (Step 5)
 └── phase-1-plans/            # detailed sub-plans, one folder per phase
     ├── phase-1.1-...md
     └── phase-1.2-...md

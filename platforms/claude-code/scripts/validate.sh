@@ -14,8 +14,10 @@ python3 -m json.tool .claude-plugin/plugin.json >/dev/null
 required_files=(
   ".claude-plugin/plugin.json"
   "scripts/validate_planner_docs.py"
+  "scripts/validate_planwright_plan.py"
   "skills/qb-planner/SKILL.md"
   "skills/qb-planner/planners/first-planner.md"
+  "skills/qb-planner/planners/export-planner.md"
   "skills/qb-assess/SKILL.md"
   "skills/qb-assess/assessment-planner.md"
   "skills/qb-subplanner/SKILL.md"

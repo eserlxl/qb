@@ -5,6 +5,19 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-15
+
+### Added
+
+- **Step 5 — automatic planwright-format plan export.** Every planning run now closes by
+  projecting the `.qb/` sub-plans into a flat, execution-ready `.qb/plan.md` in planwright's
+  8-field checkbox item format (one item per Planned Work Breakdown entry, across all phases),
+  so a QB plan can be handed to planwright's `execute` / `cycle` without re-planning. A new
+  bundled read-only validator, `scripts/validate_planwright_plan.py`, gates the export against
+  the machine-checkable subset of planwright's plan linter (a plan that passes it is accepted
+  by planwright on hand-off). New spec `export-planner.md`. Hand-off:
+  `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`).
+
 ## [0.6.0] - 2026-06-15
 
 ### Changed

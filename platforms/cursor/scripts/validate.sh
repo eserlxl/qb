@@ -53,6 +53,7 @@ commands/qb-assess.md
 commands/qb-audit.md
 commands/qb-implement.md
 skills/qb-planner/planners/first-planner.md
+skills/qb-planner/planners/export-planner.md
 skills/qb-assess/assessment-planner.md
 skills/qb-subplanner/second-planner.md
 skills/qb-auditor/third-planner.md
@@ -60,6 +61,7 @@ skills/qb-implementer/fourth-planner.md
 references/repo-aware-intake.md
 references/workflow-quality.md
 scripts/validate_planner_docs.py
+scripts/validate_planwright_plan.py
 README.md
 CHANGELOG.md
 LICENSE

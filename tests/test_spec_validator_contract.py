@@ -16,7 +16,9 @@ import unittest
 from tests.qb_monorepo import SHARED_DIR
 
 VALIDATOR_PATH = SHARED_DIR / "scripts/validate_planner_docs.py"
+PLANWRIGHT_VALIDATOR_PATH = SHARED_DIR / "scripts/validate_planwright_plan.py"
 PLANNERS = SHARED_DIR / "planners"
+EXPORT_SPEC = PLANNERS / "export-planner.md"
 
 # (validator heading-list attribute, planner spec that must emit those headings)
 CONTRACT = (
@@ -28,14 +30,18 @@ CONTRACT = (
 )
 
 
-def _load_validator():
-    spec = importlib.util.spec_from_file_location("qb_validator_under_test", VALIDATOR_PATH)
+def _load_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     # Register before exec so the validator's @dataclass type resolution
     # (which looks up sys.modules[cls.__module__]) succeeds.
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _load_validator():
+    return _load_module(VALIDATOR_PATH, "qb_validator_under_test")
 
 
 class SpecValidatorContractTests(unittest.TestCase):
@@ -59,6 +65,36 @@ class SpecValidatorContractTests(unittest.TestCase):
                     [],
                     f"{spec_name} is missing validator {attr} headings: {missing}",
                 )
+
+
+class ExportSpecValidatorContractTests(unittest.TestCase):
+    """The export spec must document the exact fields and modes its validator enforces.
+
+    validate_planwright_plan.py is the structural gate for the Step 5 export
+    (.qb/plan.md); export-planner.md is what instructs the model to produce that
+    format. If either side drifts, generated plans silently start failing the gate.
+    This pins the contract: every REQUIRED_FIELD (plus the optional New Surfaces) and
+    every VALID_MODE the validator checks must appear verbatim in the export spec.
+    """
+
+    def setUp(self) -> None:
+        if not PLANWRIGHT_VALIDATOR_PATH.exists() or not EXPORT_SPEC.exists():
+            self.skipTest("planwright-plan validator or export-planner spec not present")
+        self.validator = _load_module(
+            PLANWRIGHT_VALIDATOR_PATH, "qb_planwright_validator_under_test")
+        self.spec_text = EXPORT_SPEC.read_text(encoding="utf-8")
+
+    def test_export_spec_documents_validator_fields(self) -> None:
+        for field in tuple(self.validator.REQUIRED_FIELDS) + ("New Surfaces",):
+            with self.subTest(field=field):
+                self.assertIn(f"{field}:", self.spec_text,
+                              f"export-planner.md does not document the '{field}:' field")
+
+    def test_export_spec_documents_validator_modes(self) -> None:
+        for mode in self.validator.VALID_MODES:
+            with self.subTest(mode=mode):
+                self.assertIn(mode, self.spec_text,
+                              f"export-planner.md does not document the '{mode}' Mode")
 
 
 if __name__ == "__main__":

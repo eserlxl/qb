@@ -63,6 +63,16 @@ validation command first, makes a minimal change, runs focused tests plus the re
 target, and verifies before claiming done. It never commits, pushes, opens a PR, or mutates
 external systems unless you explicitly ask. Re-run `/qb-implement` for each subsequent slice.
 
+## Step 5: Export to planwright (automatic)
+
+After the audit, QB automatically projects the sub-plans into a flat, execution-ready
+`.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s 8-field checkbox item
+format - one item per "Planned Work Breakdown" entry, across all phases. It writes only
+`.qb/plan.md` (no source changes, no gate) and validates it with `validate_planwright_plan.py`,
+which mirrors the machine-checkable subset of planwright's plan linter so the file is accepted
+by planwright on hand-off. To run the plan with planwright: `cp .qb/plan.md .planwright/plan.md`,
+then run planwright `execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
+
 ## Direct step invocation
 
 - `/qb-assess` - run only the assessment on an existing `main-planning.md`.
@@ -92,4 +102,6 @@ checks its required heading order during Step 2/3 validation.
 ## Output location
 
 All planning artifacts land under `.qb/` in your active workspace - never in the plugin
-directory.
+directory: `main-planning.md`, `assessment.md` (existing projects), `sub-planning-index.md`,
+the `phase-<n>-plans/` sub-plans, `sub-planning-audit.md`, and `plan.md` (the Step 5
+planwright-format export).

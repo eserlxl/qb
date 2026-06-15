@@ -33,8 +33,9 @@ It pauses for your explicit approval at every gate. No CLI, no API key, no setup
 | **Gate 2** | Approve audit | Confirm you want the quality audit. | — |
 | **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `.qb/sub-planning-audit.md` |
 | **4** | Implement | One bounded, reversible code slice from a `READY` sub-plan — gated and approved. | code changes (gated) |
+| **5** | Export | Automatic closing step: project the sub-plans into a flat [planwright](https://github.com/eserlxl/planwright)-format plan. | `.qb/plan.md` |
 
-A bundled, dependency-free, **read-only** Python validator checks each step's output — required sections and heading order, phase-folder coverage, filename conventions, index consistency, length-bounded secret patterns, the audit status, and Step-4 readiness. P0/P1 audit findings block the implementation handoff.
+A bundled, dependency-free, **read-only** Python validator checks each step's output — required sections and heading order, phase-folder coverage, filename conventions, index consistency, length-bounded secret patterns, the audit status, and Step-4 readiness. P0/P1 audit findings block the implementation handoff. A second validator (`validate_planwright_plan.py`) gates the Step-5 export against the machine-checkable subset of planwright's plan linter, so `.qb/plan.md` is accepted by planwright on hand-off (`cp .qb/plan.md .planwright/plan.md`, then run planwright `execute` / `cycle`).
 
 ---
 
@@ -48,12 +49,13 @@ Every artifact lands under `.qb/` in **your** workspace — never inside the plu
 ├── assessment.md               # repo health report for existing projects (Step 1.5)
 ├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
+├── plan.md                  # flat planwright-format export            (Step 5)
 └── phase-1-plans/           # detailed sub-plans, one folder per phase
     ├── phase-1.1-...md
     └── phase-1.2-...md
 ```
 
-> These names — `main-planning.md`, `assessment.md`, `sub-planning-index.md`, `sub-planning-audit.md`, and the `phase-<n>-plans/` / `phase-<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English.
+> These names — `main-planning.md`, `assessment.md`, `sub-planning-index.md`, `sub-planning-audit.md`, `plan.md`, and the `phase-<n>-plans/` / `phase-<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validators and the index cross-references match exactly, so don't rename them. The document *content* is always English.
 
 ---
 
