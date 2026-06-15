@@ -1,245 +1,237 @@
-<div align="center">
-
 # QB
 
-**A zero-setup, in-session, gated, repo-aware planning and audit/harden workflow — for Claude Code, Cursor, and Codex.**
-
-Turn a fuzzy idea into a clear, reviewed, build-ready plan,
-then ship it one safe slice at a time — or run a conservative audit report —
-without leaving your AI coding host.
+Repo planning, plan export, and guarded repository hardening for AI coding hosts.
 
 [![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
 [![version](https://img.shields.io/badge/version-0.9.0-2563EB)](VERSION)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
-[![platforms](https://img.shields.io/badge/platforms-claude--code%20%C2%B7%20cursor%20%C2%B7%20codex-2563EB)](#platforms)
+[![platforms](https://img.shields.io/badge/platforms-claude--code%20%C2%B7%20cursor%20%C2%B7%20codex-2563EB)](#platform-packages)
 
-</div>
+QB is a shared workflow layer for Claude Code, Cursor, and Codex: one host-neutral core, three native packages and a separate audit/harden engine that can inspect a repository without taking write privileges by default.
 
----
+The project has two jobs:
 
-## What QB is
+- Turn unclear repository work into reviewed, staged planning files that can be
+  handed to [planwright](https://github.com/eserlxl/planwright).
+- Run a dependency-free repository audit, optionally test isolated fixes, and
+  promote only changes that pass policy, verification, and rollback gates.
 
-QB is a multi-platform AI coding workflow that runs **inside your chat session** and ships as native packages for Claude Code, Cursor, and Codex.
+Questions can follow the user's language. Generated planning documents are
+English for validator stability. QB does not write secrets, and it does not
+commit, push, open pull requests, deploy, or auto-apply hardening changes unless
+the caller explicitly raises the autonomy level and the local safety gates allow
+it.
 
-It has two related surfaces:
+## Operating Model
 
-- **Planning workflow** — QB asks a few short repo-aware questions, writes a staged planning package under `.qb/`, audits that package, exports `.qb/plan.md` for [planwright](https://github.com/eserlxl/planwright), and only after explicit approval hands off one bounded implementation slice.
-- **Audit/harden/report engine** — QB can run a dependency-free audit over a repository, emit findings and reports under `QB-Audit/`, and, when explicitly raised above A0, attempt fixes only through policy, git isolation, verification, and rollback gates.
+QB is built around fixed artifacts and explicit gates rather than chat-only
+memory. Long-running AI work can be reviewed as normal files, checked by scripts,
+and resumed by another host without changing the project contract.
 
-Planning output is always **English**; questions follow whatever language you write in. QB never writes secrets and never auto-commits, pushes, opens PRs, or deploys. This monorepo builds all platform packages from a single shared source of truth.
+| Area | What QB Owns | Files |
+|---|---|---|
+| Planning | Repo-aware intake, master plan, assessment, sub-plans, audit, and planwright export. | `.qb/` |
+| Hardening | Findings, reports, verification evidence, telemetry, and autonomy decisions. | `QB-Audit/` |
+| Packaging | Native host commands, skills, agents, manifests, and docs. | `platforms/` |
+| Shared core | Planner specs, validators, analyzers, reports, policy, isolation, and gates. | `shared/` |
 
----
+The root repository is the product source of truth. Platform packages are not
+forks; `scripts/sync.sh` copies the shared core into each host package and
+`make check` verifies those copies remain byte-equal.
 
-## Planning Workflow
+## Planning Path
 
-| Step | Name | What happens | Output |
-|:--:|---|---|---|
-| **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `.qb/main-planning.md` |
-| **1.5** | Assessment | For existing projects, a technical health report. | `.qb/assessment.md` |
-| **Gate 1** | Review | Review the plan (and assessment) together, give feedback, approve. | — |
-| **2** | Sub-plans | Every phase becomes detailed sub-plans plus a coverage index. | `.qb/phase-<n>-plans/` + `.qb/sub-planning-index.md` |
-| **Gate 2** | Approve audit | Confirm you want the quality audit. | — |
-| **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `.qb/sub-planning-audit.md` |
-| **3.5** | Export | Automatic step after the audit: project the sub-plans into a flat [planwright](https://github.com/eserlxl/planwright)-format plan. | `.qb/plan.md` |
-| **4** | Implement | One bounded, reversible code slice from a `READY` sub-plan — gated and approved. | code changes (gated) |
+The planning workflow is intentionally staged. Each stage leaves durable output
+behind, and implementation is only reached after the plan and audit are in a
+usable state.
 
-A bundled, dependency-free, **read-only** Python validator checks each step's output — required sections and heading order, phase-folder coverage, filename conventions, index consistency, length-bounded secret patterns, the audit status, and Step-4 readiness. P0/P1 audit findings block the implementation handoff. A second validator (`validate_planwright_plan.py`) gates the Step-3.5 export against the machine-checkable subset of planwright's plan linter, so `.qb/plan.md` is accepted by planwright on hand-off (`cp .qb/plan.md .planwright/plan.md`, then run planwright `execute` / `cycle`).
+| Stage | Purpose | Output |
+|---|---|---|
+| 1. Master plan | Establish repo context, project direction, constraints, and phases. | `.qb/main-planning.md` |
+| 1.5 Assessment | Summarize the current project's health, gaps, and readiness risks. | `.qb/assessment.md` |
+| Review gate | Let the user revise or approve the planning direction. | User approval |
+| 2. Sub-plans | Expand each phase into bounded implementation plans and an index. | `.qb/phase-<n>-plans/`, `.qb/sub-planning-index.md` |
+| Audit gate | Confirm the user wants the generated plan package audited. | User approval |
+| 3. Planning audit | Check coverage, ordering, structure, readiness, and blocking issues. | `.qb/sub-planning-audit.md` |
+| 3.5 Export | Convert READY sub-plans into planwright's flat checkbox plan format. | `.qb/plan.md` |
+| 4. Handoff | Implement one bounded, reversible slice from a READY item. | Code changes, gated |
 
----
+The validators are read-only and dependency-free. `validate_planner_docs.py`
+checks section order, required files, phase coverage, filenames, index
+references, audit status, secret-shaped values, and Step 4 readiness.
+`validate_planwright_plan.py` checks the Step 3.5 export against the
+machine-checkable subset of planwright's plan format.
 
-## Planning Artifacts
+The planning filenames are part of the public contract. Keep these names stable:
+`main-planning.md`, `assessment.md`, `sub-planning-index.md`,
+`sub-planning-audit.md`, `plan.md`, `phase-<n>-plans/`, and
+`phase-<n>.<m>-*.md`.
 
-Every artifact lands under `.qb/` in **your** workspace — never inside the plugin folder:
+## Hardening Path
 
-```text
-.qb/
-├── main-planning.md         # the master plan                          (Step 1)
-├── assessment.md               # repo health report for existing projects (Step 1.5)
-├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
-├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-├── plan.md                  # flat planwright-format export            (Step 3.5)
-└── phase-1-plans/           # detailed sub-plans, one folder per phase
-    ├── phase-1.1-...md
-    └── phase-1.2-...md
-```
-
-> These names — `main-planning.md`, `assessment.md`, `sub-planning-index.md`, `sub-planning-audit.md`, `plan.md`, and the `phase-<n>-plans/` / `phase-<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validators and the index cross-references match exactly, so don't rename them. The document *content* is always English.
-
----
-
-## Audit/Harden Engine
-
-QB also ships a host-neutral audit -> harden -> report engine under `shared/scripts/` and each platform package's `scripts/` directory. It is separate from the `.qb/` planning workflow.
-
-Default mode is **A0 report-only**:
+The audit/harden engine is separate from the `.qb/` planning workflow. It can be
+used directly from the shared script tree or through the installed host package.
 
 ```bash
 python3 shared/scripts/qb_headless.py --root /path/to/repo --out QB-Audit
 ```
 
-From an installed platform package, use that package's copied script path instead. Claude Code and Cursor expose `/qb-harden`; Codex routes audit-and-harden requests through `$qb`.
+Default operation is A0 report-only: no fix isolation, no writes to the target
+working tree, and no dependency downloads. Higher levels must be requested
+explicitly and are still capped by the earned safety ceiling for the current
+repository context.
 
-| Autonomy | Behavior |
+| Level | Behavior |
 |---|---|
-| **A0** | Report-only. No fix isolation and no working-tree writes. |
-| **A1** | Propose fixes in a disposable git worktree; the user's working tree stays unchanged. |
-| **A2** | Promote only fixes that pass policy, verification, and rollback gates. |
-| **A3** | A2 plus a reviewable changeset path, still explicit opt-in; commit, push, and PR remain policy-gated and default-off. |
+| A0 | Report findings only. |
+| A1 | Try proposed fixes in disposable git isolation; leave the working tree unchanged. |
+| A2 | Promote only verified fixes that satisfy policy and rollback requirements. |
+| A3 | A2 plus a reviewable delivery path; commit, push, and PR actions remain opt-in. |
 
-A declared autonomy level is **clamped by the earned ceiling**: auto-apply (A2) requires prior-run telemetry showing sufficient precision and fix safety, so a cold start with no telemetry isolates and verifies but promotes nothing above A1 (fail-closed).
+The built-in analyzers cover secret-shaped values, command injection, dynamic
+eval, path traversal, dependency manifests, lockfiles, repository license state,
+committed dotenv files, and local quality tools such as `ruff` or `pyflakes` when
+they already exist. Advisory enrichment is networked only when explicitly
+enabled.
 
-The built-in analyzers are dependency-free and offline by default:
-
-- secret hygiene using length-bounded token patterns (OpenAI, GitHub, AWS incl. STS, Stripe, Slack, private keys);
-- command injection, dynamic eval, and path-traversal sink detection;
-- local quality/correctness adapters such as `ruff` and `pyflakes` when those tools already exist;
-- dependency hygiene for manifests and lockfiles, with advisory enrichment only when networked analysis is explicitly enabled;
-- license hygiene: a missing or effectively empty repository-root license file;
-- config hygiene: a committed, non-template dotenv file (`.env` / `.env.<env>`).
-
-The fixed run store is:
+Each run writes a fixed store:
 
 ```text
 QB-Audit/
-├── findings.jsonl      # canonical graded findings
-├── evidence/           # per-fix verification + rollback evidence
-├── run-log.jsonl       # append-only orchestration events
+├── findings.jsonl
+├── evidence/
+├── run-log.jsonl
 ├── summary.json
 ├── report.json
 ├── report.sarif
 └── summary.txt
 ```
 
-Telemetry records are built by `telemetry.py` from findings, evidence, cost, and autonomy data; release and production gates consume those current signals when autonomous operation is being considered. Headless exit codes are stable: `0` clean, `1` findings present, `2` policy/budget boundary, `3` internal error. See [RUNBOOK.md](RUNBOOK.md) for operating, pausing, killing, recovering, and production-gating autonomous runs.
+Exit codes are stable: `0` clean, `1` findings present, `2` policy or budget
+boundary, and `3` internal error. Operational details for pausing, killing,
+recovering, rollback drills, release gates, and production gates live in
+[RUNBOOK.md](RUNBOOK.md).
 
----
+## Platform Packages
 
-## Monorepo Layout
+All hosts use the same `qb` identity and write the same planning artifacts. The
+host packages differ only where the host requires a different launch mechanism.
 
-One host-neutral source of truth lives in `shared/`; `scripts/sync.sh` materializes committed, byte-for-byte copies into each platform package.
-
-```text
-shared/                         # CANONICAL host-neutral IP — the single source of truth
-  planners/                     #   first / second / third / fourth / assessment planner specs
-  references/                   #   repo-aware-intake.md, workflow-quality.md
-  scripts/                      #   validators, analyzers, policy, isolation, reports, headless runner
-platforms/
-  claude-code/                  # Claude Code package: commands, skills, agents, .claude-plugin/
-  cursor/                       # Cursor package: commands, skills, .cursor-plugin/
-  codex/                        # Codex package: .agents marketplace + plugins/qb/.codex-plugin/
-scripts/sync.sh                 # materializes shared/ into every platform (committed copies)
-tests/                          # top-level unified cross-platform invariant tests
-Makefile  README.md  LICENSE  .gitignore  .github/workflows/validate.yml
-```
-
-The planner specs, reference docs, validators, analyzer contracts, engine modules, and report/runtime helpers are **host-neutral** — they refer to the product generically as "QB" and live only in `shared/`. Everything that carries a platform's brand or host mechanism — manifests, slash commands, skills/orchestration wrappers, agents, per-platform `validate.sh`, docs, README, CHANGELOG, and assets — is **hand-authored per platform**.
-
----
-
-## Platforms
-
-Each platform is correct *for its own host*: all three install under the plugin id `qb`, run the same planning workflow, write the same `.qb/` artifacts, share the same validators, and receive byte-equal copies of the shared engine. They differ only — intentionally — in how long autonomous work launches:
-
-| Platform | Planning long steps | Audit/harden runner |
-|---|---|
-| **Claude Code** | Task-tool subagents: `qb-assess`, `qb-subplanner`, `qb-auditor`, `qb-implementer`. | `/qb-harden` delegates to `qb-runner`. |
-| **Cursor** | Native `define-goal` goals for the matching skills. | `/qb-harden` launches the `qb-runner` goal. |
-| **Codex** | Text-only Goal-mode copy/paste prompt blocks through `$qb`. | `$qb` audit-and-harden flow, backed by `qb_headless.py`. |
-
-### User Entry Points
-
-| Host | Main planning | Direct planning steps | Audit/harden |
+| Host | Planning Entry | Direct Steps | Hardening Entry |
 |---|---|---|---|
-| **Claude Code** | `/qb-plan` (`/qb-plan auto` for non-interactive planning export) | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
-| **Cursor** | `/qb-plan` (`/qb-plan auto` for non-interactive planning export) | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
-| **Codex** | `Use $qb ...` (`Use $qb auto ...` for non-interactive planning export) | Ask `$qb` for Step 1.5, Step 2, Step 3, Step 3.5 export, or Step 4 handoff | Ask `$qb` to audit and harden the repository |
+| Claude Code | `/qb-plan` or `/qb-plan auto` | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
+| Cursor | `/qb-plan` or `/qb-plan auto` | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
+| Codex | `Use $qb ...` or `Use $qb auto ...` | Ask `$qb` for Step 1.5, Step 2, Step 3, Step 3.5, or Step 4 | Ask `$qb` to audit and harden |
 
-### Installing each platform
+Long-running work is launched through each host's native pattern:
 
-**Claude Code** — add the `eserlxl` marketplace, then install it:
+| Host | Long-Running Planning | Audit/Harden Runner |
+|---|---|---|
+| Claude Code | Task-tool subagents: `qb-assess`, `qb-subplanner`, `qb-auditor`, `qb-implementer`. | `/qb-harden` delegates to `qb-runner`. |
+| Cursor | Native `define-goal` goals for the matching skills. | `/qb-harden` launches the `qb-runner` goal. |
+| Codex | Text-only Goal-mode prompt blocks through `$qb`. | `$qb` flow backed by `qb_headless.py`. |
+
+### Install
+
+Claude Code:
 
 ```text
 /plugin marketplace add eserlxl/claude-marketplace
 /plugin install qb@eserlxl
 ```
 
-The Claude Code package is plugin-only; it is published through the dedicated
-[`eserlxl/claude-marketplace`](https://github.com/eserlxl/claude-marketplace) aggregator (which
-also offers `planwright`). For local development, register `platforms/claude-code`
-directly as a plugin — see `platforms/claude-code/docs/INSTALLATION.md`. Then run
-`/qb-plan` in your project.
+For local Claude Code development, register `platforms/claude-code` directly as
+a plugin. The package docs are in
+`platforms/claude-code/docs/INSTALLATION.md`.
 
-**Cursor** — clone the repo, symlink the platform package into Cursor's local plugins, reload Cursor, then run `/qb-plan`:
+Cursor:
 
 ```bash
 git clone https://github.com/eserlxl/qb.git
 ln -s "$(pwd)/qb/platforms/cursor" ~/.cursor/plugins/local/qb
 ```
 
-(Cursor can also import `eserlxl/qb` as a marketplace from its Plugins settings.)
+Cursor can also import `eserlxl/qb` as a marketplace from its Plugins settings.
 
-**Codex** — add the marketplace from GitHub, then invoke `$qb` in a new Codex thread:
+Codex:
 
 ```bash
 codex plugin marketplace add eserlxl/qb --ref main
 codex plugin add qb@eserlxl
 ```
 
-(For a local checkout, run `codex plugin marketplace add .` from the `platforms/codex` directory instead.)
+For a local checkout, run `codex plugin marketplace add .` from
+`platforms/codex`.
 
-Each platform directory ships its own README and `docs/` with host-specific install and usage details.
+## Repository Map
 
----
+```text
+shared/
+  planners/                 # host-neutral planning specs
+  references/               # repo intake and workflow quality guidance
+  scripts/                  # validators, analyzers, policy, reports, runner
+platforms/
+  claude-code/              # Claude Code plugin package
+  cursor/                   # Cursor plugin package
+  codex/                    # Codex plugin package
+scripts/
+  sync.sh                   # shared-core fan-out
+  bump-version.sh           # version metadata maintenance
+tests/                      # cross-platform invariant tests
+Makefile
+RUNBOOK.md
+VERSION
+```
+
+Anything in `shared/` must stay host-neutral and refer to the product as QB.
+Anything that depends on a host's command syntax, agent model, manifest format,
+docs, changelog, or assets belongs under that host's `platforms/<host>/`
+directory.
 
 ## Development
 
-The shared specs and engine modules are the single source of truth; platform copies are generated. After editing anything under `shared/`, re-sync and validate:
+After editing shared planner specs, references, validators, or engine modules,
+sync the generated platform copies and run the invariant suite:
 
 ```bash
-make sync    # copy shared/ files into every platform's expected location
-make check   # verify sync is clean, run each platform's validate.sh, then the top-level tests
-make test    # run the top-level cross-platform invariant tests only
-make export-sanitized   # git archive the committed tree to QB-sanitized.zip
+make sync
+make check
 ```
 
-`scripts/sync.sh --check` (run by `make check`) exits non-zero and lists the drifting paths if any platform copy no longer byte-matches its `shared/` source — so a forgotten `make sync` is caught by the GitHub Actions workflow at `.github/workflows/validate.yml`, which runs `make check` on every pull request and on pushes to `main`.
+Useful targets:
 
-Versioning is anchored by the root [VERSION](VERSION) file. Use `scripts/bump-version.sh` to bump or re-sync versions across platform manifests, `SKILL.md` frontmatter, and platform changelogs:
+```bash
+make test               # top-level cross-platform tests
+make export-sanitized   # archive the committed tree as QB-sanitized.zip
+```
+
+Version metadata is anchored by [VERSION](VERSION):
 
 ```bash
 scripts/bump-version.sh patch -m "Describe the change"
 scripts/bump-version.sh --sync
 ```
 
-### Invariants enforced
+`make check` enforces the main repository contracts:
 
-- **Sync is clean** — every platform copy byte-matches its `shared/` source.
-- **Every shared file is mapped** — `scripts/sync.sh --check` fails if a new `shared/` file is not wired to the platform fan-out map.
-- **Every shared engine module ships everywhere** — analyzer, policy, isolation, report, telemetry, and headless modules are byte-equal in all packages.
-- **Version is lockstep** — root `VERSION`, all platform manifests, and all platform `SKILL.md` metadata versions match.
-- **Manifest name == platform id** — `qb` on every platform.
-- **Frontmatter name == location** — skills match their directory; commands/agents match their filename stem.
-- **No cross-host residue** — each platform's hand-authored host files mention only its own host (the synced neutral specs/references/validator, which say only "QB", are exempt); READMEs, CHANGELOGs, and docs may mention all three platforms.
-- **Preserved artifact names** — the fixed `.qb/` identifiers above stay stable across the workflow and the validator.
-- **No committed secrets** — tracked text is scanned for known credential-shaped values.
-- **Dependency-free core** — shared engine modules import only Python standard-library modules and sibling files.
-- **Autonomy is enforced** — A0/A1/A2/A3 side effects, budget stops, kill-switch behavior, rollback drills, cross-review, release gates, and the production gate are covered by tests.
-
----
+- platform copies match their `shared/` sources;
+- every shared file is mapped into the fan-out;
+- version fields and skill frontmatter are lockstep;
+- each package uses the `qb` manifest identity;
+- host-authored files do not leak another host's launch syntax;
+- fixed `.qb/` artifact names stay stable;
+- tracked text passes secret hygiene checks;
+- shared Python modules remain standard-library-only plus sibling imports;
+- autonomy, policy, isolation, rollback, verification, release, and production
+  gates stay covered by tests.
 
 ## Attribution
 
-QB is an independent, multi-platform project **inspired by** two projects by **[Alican Kiraz](https://github.com/alicankiraz1)**:
+QB is an independent project inspired by Alican Kiraz's
+[CursorQB](https://github.com/alicankiraz1/CursorQB) and
+[CodexQB](https://github.com/alicankiraz1/CodexQB). It now diverges in scope and
+architecture: native Claude Code support, a unified `qb` identity across three
+hosts, `.qb/` artifacts, planwright export, a shared host-neutral core, and a
+policy-gated audit/harden engine.
 
-- **[CursorQB](https://github.com/alicankiraz1/CursorQB)** — the Cursor plugin
-- **[CodexQB](https://github.com/alicankiraz1/CodexQB)** — the Codex plugin
-
-QB **is not a direct port** of either. It builds on their ideas while standing on its own: a native Claude Code platform the originals never had, a unified `qb` identity across hosts, and reworked planner prompts, repo-aware intake, workflow-quality guidance, and a read-only validator — each platform's launch mechanism adapted to its native host. Released under the **MIT** license.
-
----
-
-<div align="center">
-
-**[MIT](LICENSE)** · inspired by Alican Kiraz's CursorQB & CodexQB · QB © Eser KUBALI
-
-</div>
+Released under the [MIT](LICENSE) license.
