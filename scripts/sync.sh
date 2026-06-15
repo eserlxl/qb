@@ -141,6 +141,11 @@ MAP=(
   "scripts/isolation.py|platforms/claude-code/scripts/isolation.py"
   "scripts/isolation.py|platforms/cursor/scripts/isolation.py"
   "scripts/isolation.py|platforms/codex/plugins/qb/skills/qb/scripts/isolation.py"
+
+  # shared/scripts/verification_gate.py
+  "scripts/verification_gate.py|platforms/claude-code/scripts/verification_gate.py"
+  "scripts/verification_gate.py|platforms/cursor/scripts/verification_gate.py"
+  "scripts/verification_gate.py|platforms/codex/plugins/qb/skills/qb/scripts/verification_gate.py"
 )
 
 # Number of distinct shared source files (for the summary line).
