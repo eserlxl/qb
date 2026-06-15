@@ -40,9 +40,11 @@ _ai = _load_sibling("qb_analyzer_interface", "analyzer_interface.py")
 AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
+validate_finding = _ai.validate_finding
 
-# A dotenv file: ".env" or ".env.<suffix>" (e.g. .env.local, .env.production).
-_ENV_NAME_RE = re.compile(r"^\.env(?:\.[A-Za-z0-9_-]+)?$")
+# A dotenv file: ".env" or ".env.<seg>[.<seg>...]" (e.g. .env.local, .env.production,
+# .env.production.local -- Next.js/CRA layer their secrets across multiple segments).
+_ENV_NAME_RE = re.compile(r"^\.env(?:\.[A-Za-z0-9_-]+)*$")
 # Legitimate, commit-safe templates -- never flagged.
 _TEMPLATE_SUFFIXES = frozenset({"example", "sample", "template", "dist", "defaults"})
 # Directories an audit should never descend into for this check.
@@ -75,29 +77,37 @@ class ConfigHygieneAnalyzer:
         if not root.is_dir():
             return findings
         for path in sorted(root.rglob("*")):
-            if any(part in _SKIP_DIRS for part in path.parts):
+            rel_path = path.relative_to(root)
+            # Skip vendored/VCS dirs by their position WITHIN the repo, not the
+            # absolute path: a repo checked out under an ancestor named e.g. "build"
+            # must not silence the whole scan.
+            if any(part in _SKIP_DIRS for part in rel_path.parts):
                 continue
             if not path.is_file() or not _is_committed_env(path):
                 continue
-            rel = path.relative_to(root).as_posix()
+            rel = rel_path.as_posix()
             evidence = f"{rel}:1"
-            findings.append(
-                Finding(
-                    id=compute_finding_id("config", evidence, self._RULE),
-                    category="config",
-                    severity="P2",
-                    confidence="medium",
-                    evidence=evidence,
-                    rationale=(
-                        f"A dotenv-style config file ({rel}) is present in the tree; "
-                        "environment files commonly carry deployment config or secrets "
-                        "and should be gitignored, not committed."
-                    ),
-                    suggested_fix=(
-                        "Move real values into the deployment environment or a secret "
-                        "manager and gitignore this file; keep only a .env.example template."
-                    ),
-                    fix_strategy="manual",
-                )
+            finding = Finding(
+                id=compute_finding_id("config", evidence, self._RULE),
+                category="config",
+                severity="P2",
+                confidence="medium",
+                evidence=evidence,
+                rationale=(
+                    f"A dotenv-style config file ({rel}) is present in the tree; "
+                    "environment files commonly carry deployment config or secrets "
+                    "and should be gitignored, not committed."
+                ),
+                suggested_fix=(
+                    "Move real values into the deployment environment or a secret "
+                    "manager and gitignore this file; keep only a .env.example template."
+                ),
+                fix_strategy="manual",
             )
+            # A locator with whitespace (a spaced directory in the path) is not
+            # schema-conformant; emit only conformant findings so the store never
+            # carries a record that downstream validation would reject.
+            if validate_finding(finding):
+                continue
+            findings.append(finding)
         return findings

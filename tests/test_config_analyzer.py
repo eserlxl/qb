@@ -77,6 +77,42 @@ class ConfigAnalyzerTests(unittest.TestCase):
         ids = {a.descriptor.id for a in runner.build_default_registry().analyzers()}
         self.assertIn("config-hygiene", ids)
 
+    def test_named_multi_segment_dotenv_is_flagged(self) -> None:
+        # Next.js/CRA layer secrets across segments (.env.production.local).
+        findings = self._analyze({".env.production.local": "DB=prod\n"})
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].evidence, ".env.production.local:1")
+
+    def test_skip_dirs_are_relative_to_root_not_ancestors(self) -> None:
+        # A repo checked out under an ancestor named "build" must NOT be silenced.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "build" / "repo"   # ancestor is a _SKIP_DIRS name
+            root.mkdir(parents=True)
+            (root / ".env").write_text("API_KEY=x\n", encoding="utf-8")
+            findings = self.mod.ConfigHygieneAnalyzer().analyze(str(root), self.cfg)
+            self.assertEqual(len(findings), 1, "ancestor-named skip dir must not silence the scan")
+            self.assertEqual(findings[0].evidence, ".env:1")
+
+    def test_internal_vendor_dirs_are_still_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "node_modules").mkdir()
+            (root / "node_modules" / ".env").write_text("X=1\n", encoding="utf-8")
+            self.assertEqual(self.mod.ConfigHygieneAnalyzer().analyze(str(root), self.cfg), [])
+
+    def test_every_finding_is_schema_conformant(self) -> None:
+        # Even with a spaced subdirectory (whose locator would be non-conformant),
+        # the analyzer never emits a malformed finding.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / ".env").write_text("A=1\n", encoding="utf-8")
+            (root / "weird dir").mkdir()
+            (root / "weird dir" / ".env").write_text("B=2\n", encoding="utf-8")
+            findings = self.mod.ConfigHygieneAnalyzer().analyze(str(root), self.cfg)
+            for f in findings:
+                self.assertEqual(self.ai.validate_finding(f), [], f"non-conformant: {f.evidence}")
+            self.assertIn(".env:1", [f.evidence for f in findings])
+
     def test_analyzer_is_read_only(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
