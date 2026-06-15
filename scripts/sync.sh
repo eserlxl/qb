@@ -176,6 +176,11 @@ MAP=(
   "scripts/report.py|platforms/claude-code/scripts/report.py"
   "scripts/report.py|platforms/cursor/scripts/report.py"
   "scripts/report.py|platforms/codex/plugins/qb/skills/qb/scripts/report.py"
+
+  # shared/scripts/qb_headless.py
+  "scripts/qb_headless.py|platforms/claude-code/scripts/qb_headless.py"
+  "scripts/qb_headless.py|platforms/cursor/scripts/qb_headless.py"
+  "scripts/qb_headless.py|platforms/codex/plugins/qb/skills/qb/scripts/qb_headless.py"
 )
 
 # Number of distinct shared source files (for the summary line).

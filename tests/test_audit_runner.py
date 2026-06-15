@@ -77,10 +77,11 @@ class AuditRunnerTests(unittest.TestCase):
 
             for f in findings:
                 self.assertEqual(self.runner.validate_finding(f), [], f"non-conformant: {f}")
-            self.assertTrue(any(f.category == "config" and f.evidence == ".:1" for f in findings),
-                            "reference analyzer finding missing")
             self.assertTrue(any(f.category == "secret" and f.evidence.startswith("leak.txt:") for f in findings),
                             "secret-hygiene finding missing")
+            # the no-op reference analyzer is not in the real default registry
+            self.assertFalse(any(f.evidence == ".:1" for f in findings),
+                             "reference no-op finding should not appear in a real audit")
             findings_text = (out / self.runner.FINDINGS_FILENAME).read_text(encoding="utf-8")
             self.assertNotIn(token, findings_text, "secret value must be redacted from output")
 

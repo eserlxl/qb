@@ -84,8 +84,10 @@ def _sort_key(finding):
 
 def build_default_registry():
     """QB's built-in analyzers: the reference no-op plus the secret-hygiene scan."""
+    # The ReferenceAnalyzer is a Phase-1.2 interface-wiring proof (it always emits one
+    # informational finding); it is intentionally NOT in the real default registry so a
+    # clean repo audits to zero findings. It remains available for interface tests.
     registry = AnalyzerRegistry()
-    registry.register(ReferenceAnalyzer())
     registry.register(SecretHygieneAnalyzer())
     registry.register(CommandInjectionAnalyzer())
     registry.register(QualityAnalyzer())
