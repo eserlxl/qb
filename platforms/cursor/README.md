@@ -212,8 +212,8 @@ Further reading: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) ·
 
 <div align="center">
 
-**[MIT](LICENSE)** © Alican Kiraz
+**[MIT](LICENSE)** · QB © Eser KUBALI
 
-Ported from the upstream CursorQB / CodexQB workflow by Alican Kiraz.
+Inspired by Alican Kiraz's CursorQB / CodexQB workflow — not a direct port.
 
 </div>

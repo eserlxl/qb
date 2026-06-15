@@ -16,32 +16,13 @@ then ship it one safe slice at a time — without leaving your AI coding host.
 
 ## What QB is
 
-QB is a guided, multi-step planning workflow that runs **inside your chat session**. You answer a few short questions in your own language, and QB:
+QB is a guided, multi-step planning workflow that runs **inside your chat session**. You answer a few short questions in your own language; QB inspects your repository, plans it in gated stages, and — only after you approve — implements one bounded, reversible slice. The stages and their outputs are listed in [The workflow](#the-workflow) below.
 
-1. **Inspects** your repository (repo-aware intake),
-2. writes a senior-architect **master plan**,
-3. runs an **autopsy** of an existing project's real state,
-4. breaks the plan into detailed **phase sub-plans**,
-5. **audits** them for coverage and quality, and
-6. — only if you approve — **implements** one bounded, reversible slice.
-
-It pauses for your explicit approval at every gate. No CLI, no API key, no setup. All planning output is **English**; questions follow whatever language you write in. QB never writes secrets and never auto-commits, pushes, or opens PRs during planning.
-
-This monorepo ships QB as three native packages — one per host — built from a single shared source of truth.
+It pauses for your explicit approval at every gate. No CLI, no API key, no setup. Planning output is always **English**; questions follow whatever language you write in. QB never writes secrets and never auto-commits, pushes, or opens PRs during planning. This monorepo ships QB as three native packages — one per host — built from a single shared source of truth.
 
 ---
 
 ## The workflow
-
-```text
-Step 1   repo-aware intake     -> Planner-docs/Main-Planning.md           (interactive)
-Step 1.5 autopsy               -> Planner-docs/Autopsy.md                (existing projects only)
- Gate 1  review the plan (+ autopsy) and approve
-Step 2   phase decomposition   -> Planner-docs/Phase-<n>-Plans/ + Sub-Planning-Index.md
- Gate 2  approve the audit
-Step 3   audit                 -> Planner-docs/Sub-Planning-Audit.md
-Step 4   gated implementation of ONE slice  (code changes, only after the Step-4 gate passes)
-```
 
 | Step | Name | What happens | Output |
 |:--:|---|---|---|
@@ -53,7 +34,7 @@ Step 4   gated implementation of ONE slice  (code changes, only after the Step-4
 | **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `Planner-docs/Sub-Planning-Audit.md` |
 | **4** | Implement | One bounded, reversible code slice from a `READY` sub-plan — gated and approved. | code changes (gated) |
 
-A bundled, dependency-free, **read-only** Python validator checks each step's output (required sections and heading order, phase-folder coverage, filename conventions, index consistency, length-bounded secret patterns, the audit status, and Step-4 readiness). P0/P1 audit findings block the implementation handoff.
+A bundled, dependency-free, **read-only** Python validator checks each step's output — required sections and heading order, phase-folder coverage, filename conventions, index consistency, length-bounded secret patterns, the audit status, and Step-4 readiness. P0/P1 audit findings block the implementation handoff.
 
 ---
 
@@ -64,21 +45,21 @@ Every artifact lands under `Planner-docs/` in **your** workspace — never insid
 ```text
 Planner-docs/
 ├── Main-Planning.md         # the master plan                          (Step 1)
-├── Autopsy.md              # repo health report for existing projects (Step 1.5)
+├── Autopsy.md               # repo health report for existing projects (Step 1.5)
 ├── Sub-Planning-Index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── Sub-Planning-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-└── Phase-1-Plans/            # detailed sub-plans, one folder per phase
+└── Phase-1-Plans/           # detailed sub-plans, one folder per phase
     ├── Phase1.1-...md
     └── Phase1.2-...md
 ```
 
-> The artifact names — `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English.
+> These names — `Main-Planning.md`, `Autopsy.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English.
 
 ---
 
 ## Monorepo layout
 
-QB keeps one host-neutral source of truth in `shared/` and materializes committed copies into each platform package with `scripts/sync.sh`.
+One host-neutral source of truth lives in `shared/`; `scripts/sync.sh` materializes committed, byte-for-byte copies into each platform package.
 
 ```text
 shared/                         # CANONICAL host-neutral IP — the single source of truth
@@ -86,29 +67,27 @@ shared/                         # CANONICAL host-neutral IP — the single sourc
   references/                   #   repo-aware-intake.md, workflow-quality.md
   scripts/validate_planner_docs.py
 platforms/
-  claude-code/                  # plugin id "qb"  — subagents via the Task tool
-  cursor/                       # plugin id "qb"  — Cursor goals via define-goal
-  codex/                        # plugin id "qb"   — Goal-mode copy/paste handoff
+  claude-code/                  # subagents via the Task tool
+  cursor/                       # Cursor goals via define-goal
+  codex/                        # Goal-mode copy/paste handoff
 scripts/sync.sh                 # materializes shared/ into every platform (committed copies)
 tests/                          # top-level unified cross-platform invariant tests
 Makefile  README.md  LICENSE  .gitignore  .github/workflows/validate.yml
 ```
 
-**Shared vs. platform-specific.** The five planner specs, the two reference docs, and the validator are **host-neutral** (they refer to the product generically as "QB") and live only in `shared/`; `sync.sh` copies them byte-for-byte into each platform. Everything that carries a platform's brand or host mechanism — the manifest, slash commands, each skill's orchestration, subagents/agents, per-platform `validate.sh`, docs, README, CHANGELOG, and assets — is **hand-authored per platform**.
+The planner specs, reference docs, and validator are **host-neutral** — they refer to the product generically as "QB" and live only in `shared/`. Everything that carries a platform's brand or host mechanism — the manifest, slash commands, each skill's orchestration, agents, per-platform `validate.sh`, docs, README, CHANGELOG, and assets — is **hand-authored per platform**.
 
 ---
 
 ## Platforms
 
-Each platform is correct *for its own host*; they intentionally use different launch mechanisms for the long autonomous steps (1.5, 2, 3, 4):
+Each platform is correct *for its own host*: all three install under the plugin id `qb`, run the same workflow, write the same `Planner-docs/` artifacts, and share the same validator behavior. They differ only — intentionally — in how the long autonomous steps (1.5, 2, 3, 4) launch:
 
-| Platform | Plugin id | How long steps launch |
-|---|---|---|
-| **Claude Code** (`platforms/claude-code`) | `qb` | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-autopsy`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
-| **Cursor** (`platforms/cursor`) | `qb` | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
-| **Codex** (`platforms/codex`) | `qb` | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
-
-All three run the identical workflow, write the identical `Planner-docs/` artifacts, and share the identical validator behavior.
+| Platform | How long steps launch |
+|---|---|
+| **Claude Code** (`platforms/claude-code`) | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-autopsy`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
+| **Cursor** (`platforms/cursor`) | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
+| **Codex** (`platforms/codex`) | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
 
 ### Installing each platform
 
@@ -119,11 +98,11 @@ claude plugin marketplace add /absolute/path/to/qb/platforms/claude-code
 claude plugin install qb@qb
 ```
 
-Then run `/qb-plan` in your project. See `platforms/claude-code/docs/INSTALLATION.md`.
+Then run `/qb-plan` in your project.
 
-**Cursor** — install the package at `platforms/cursor` per its README, then run `/qb-plan`. See `platforms/cursor/docs/`.
+**Cursor** — install the package at `platforms/cursor`, then run `/qb-plan`.
 
-**Codex** — install the package at `platforms/codex/plugins/qb` per its README, then invoke `$qb`. See `platforms/codex/docs/`.
+**Codex** — install the package at `platforms/codex/plugins/qb`, then invoke `$qb`.
 
 Each platform directory ships its own README and `docs/` with host-specific install and usage details.
 
@@ -137,39 +116,34 @@ The shared specs are the single source of truth; the platform copies are generat
 make sync    # copy shared/ files into every platform's expected location
 make check   # verify sync is clean, run each platform's validate.sh, then the top-level tests
 make test    # run the top-level cross-platform invariant tests only
-```
-
-`scripts/sync.sh --check` (run by `make check`) exits non-zero and prints the drifting paths if any platform copy no longer byte-matches its `shared/` source — so a forgotten `make sync` is caught in CI.
-
-The repository ships GitHub Actions at `.github/workflows/validate.yml`, which runs `make check` on pushes and pull requests.
-
-```bash
 make export-sanitized   # git archive the committed tree to QB-sanitized.zip
 ```
+
+`scripts/sync.sh --check` (run by `make check`) exits non-zero and lists the drifting paths if any platform copy no longer byte-matches its `shared/` source — so a forgotten `make sync` is caught by the GitHub Actions workflow at `.github/workflows/validate.yml`, which runs `make check` on every pull request and on pushes to `main`.
 
 ### Invariants enforced
 
 - **Sync is clean** — every platform copy byte-matches its `shared/` source.
-- **Manifest name == platform id** — `qb` / `qb` / `qb`.
+- **Manifest name == platform id** — `qb` on every platform.
 - **Frontmatter name == location** — skills match their directory; commands/agents match their filename stem.
-- **No cross-host residue** — each platform's hand-authored host files mention only its own host (the synced neutral specs/references/validator, which say only "QB", are exempt). READMEs, CHANGELOGs, and docs may mention all three platforms and the upstream attribution.
-- **Preserved artifact names** — `Main-Planning.md`, `Autopsy.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are stable across the workflow and the validator.
+- **No cross-host residue** — each platform's hand-authored host files mention only its own host (the synced neutral specs/references/validator, which say only "QB", are exempt); READMEs, CHANGELOGs, and docs may mention all three platforms.
+- **Preserved artifact names** — the fixed `Planner-docs/` identifiers above stay stable across the workflow and the validator.
 
 ---
 
 ## Attribution
 
-QB is derived from two projects by **[Alican Kiraz](https://github.com/alicankiraz1)** — it is an attributed, multi-platform port of:
+QB is an independent, multi-platform project **inspired by** two projects by **[Alican Kiraz](https://github.com/alicankiraz1)**:
 
 - **[CursorQB](https://github.com/alicankiraz1/CursorQB)** — the Cursor plugin
 - **[CodexQB](https://github.com/alicankiraz1/CodexQB)** — the Codex plugin
 
-The planner prompts, repo-aware intake, workflow-quality guidance, and read-only validator are ported faithfully into the shared source of truth; each platform's launch mechanism is adapted to its native host (Claude Code subagents via the Task tool, Cursor `define-goal` goals, Codex Goal-mode handoff). Released under the **MIT** license.
+QB **is not a direct port** of either. It builds on their ideas while standing on its own: a native Claude Code platform the originals never had, a unified `qb` identity across hosts, and reworked planner prompts, repo-aware intake, workflow-quality guidance, and a read-only validator — each platform's launch mechanism adapted to its native host. Released under the **MIT** license.
 
 ---
 
 <div align="center">
 
-**[MIT](LICENSE)** · original © Alican Kiraz · port © Eser KUBALI
+**[MIT](LICENSE)** · inspired by Alican Kiraz's CursorQB & CodexQB · QB © Eser KUBALI
 
 </div>

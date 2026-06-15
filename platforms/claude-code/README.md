@@ -34,7 +34,7 @@ QB is a **Claude Code plugin** that runs a guided, multi-step planning workflow 
 
 It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/qb-plan`.
 
-> QB is one of three platform packages in the QB monorepo (Claude Code / Cursor / Codex) and is a Claude Code port of **CursorQB** and **CodexQB** by **Alican Kiraz**.
+> QB is one of three platform packages in the QB monorepo (Claude Code / Cursor / Codex), an independent project inspired by — not a direct port of — **CursorQB** and **CodexQB** by **Alican Kiraz**.
 
 ---
 
@@ -252,7 +252,7 @@ Further reading: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) ·
 
 ## Attribution
 
-QB is a Claude Code port of **CursorQB** (the Cursor plugin) and **CodexQB** (the Codex plugin) by **Alican Kiraz**. The planner prompts, specs, repo-aware intake, workflow-quality guidance, and validator are ported faithfully; the Cursor/Codex goal mechanism is adapted to native Claude Code subagents invoked through the Task tool. Released under the **MIT** license.
+QB is an independent project **inspired by** **CursorQB** (the Cursor plugin) and **CodexQB** (the Codex plugin) by **Alican Kiraz** — it **is not a direct port** of either. It reworks the planner prompts, specs, repo-aware intake, workflow-quality guidance, and validator into a host-neutral shared source of truth, and adapts the goal mechanism to native Claude Code subagents invoked through the Task tool. Released under the **MIT** license.
 
 ---
 

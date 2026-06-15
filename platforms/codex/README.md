@@ -8,7 +8,7 @@
 
 QB is a Codex plugin that installs the `$qb` skill. It is built for software, AI, infrastructure, security, and automation projects where planning needs to be evidence-backed, reviewable, and ready for step-by-step execution.
 
-This package is the Codex platform build of QB. The planner prompts, reference docs, and the read-only `validate_planner_docs.py` are host-neutral shared sources maintained once in the QB monorepo and materialized into this plugin by the repository sync step. The plugin manifest, `SKILL.md`, `agents/openai.yaml`, docs, and `scripts/validate.sh` are the Codex-specific host files. QB is an attributed port of the original CursorQB/CodexQB planning workflow by Alican Kiraz (MIT).
+This package is the Codex platform build of QB. The planner prompts, reference docs, and the read-only `validate_planner_docs.py` are host-neutral shared sources maintained once in the QB monorepo and materialized into this plugin by the repository sync step. The plugin manifest, `SKILL.md`, `agents/openai.yaml`, docs, and `scripts/validate.sh` are the Codex-specific host files. QB is an independent project inspired by the original CursorQB/CodexQB planning workflow by Alican Kiraz — not a direct port (MIT).
 
 ## Why QB
 
@@ -172,7 +172,7 @@ QB currently uses repository marketplace distribution. Public directory or works
 
 ## Attribution
 
-QB is part of the QB monorepo, an attributed port of the original CursorQB and CodexQB planning workflow by Alican Kiraz, distributed under the MIT License.
+QB is part of the QB monorepo, an independent project inspired by — not a direct port of — the original CursorQB and CodexQB planning workflow by Alican Kiraz, distributed under the MIT License.
 
 ## License
 
