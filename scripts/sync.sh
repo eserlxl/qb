@@ -151,6 +151,11 @@ MAP=(
   "scripts/policy.py|platforms/claude-code/scripts/policy.py"
   "scripts/policy.py|platforms/cursor/scripts/policy.py"
   "scripts/policy.py|platforms/codex/plugins/qb/skills/qb/scripts/policy.py"
+
+  # shared/scripts/orchestrator.py
+  "scripts/orchestrator.py|platforms/claude-code/scripts/orchestrator.py"
+  "scripts/orchestrator.py|platforms/cursor/scripts/orchestrator.py"
+  "scripts/orchestrator.py|platforms/codex/plugins/qb/skills/qb/scripts/orchestrator.py"
 )
 
 # Number of distinct shared source files (for the summary line).
