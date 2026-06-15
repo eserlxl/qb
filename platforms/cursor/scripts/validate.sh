@@ -3,7 +3,7 @@
 #
 # Validates the hand-authored Cursor host package plus the synced shared assets:
 #   1) the manifest .cursor-plugin/plugin.json parses and declares name == "qb";
-#   2) every required component file exists (manifest, the 5 SKILL.md, the 4 commands,
+#   2) every required component file exists (manifest, the 6 SKILL.md, the 5 commands,
 #      and the synced planner-spec / reference / validator paths);
 #   3) each skill's frontmatter name == its directory and each command's name == its stem;
 #   4) no cross-host residue in the HAND-AUTHORED host files (skills SKILL.md + commands).
@@ -48,10 +48,12 @@ skills/qb-assess/SKILL.md
 skills/qb-subplanner/SKILL.md
 skills/qb-auditor/SKILL.md
 skills/qb-implementer/SKILL.md
+skills/qb-runner/SKILL.md
 commands/qb-plan.md
 commands/qb-assess.md
 commands/qb-audit.md
 commands/qb-implement.md
+commands/qb-harden.md
 skills/qb-planner/planners/first-planner.md
 skills/qb-planner/planners/export-planner.md
 skills/qb-assess/assessment-planner.md
@@ -101,7 +103,7 @@ done
 
 # ---------------------------------------------------------------------------
 # 4) No cross-host residue in the HAND-AUTHORED host files only.
-#    Scan the 5 SKILL.md and the 4 commands; do NOT scan the synced neutral
+#    Scan the 6 SKILL.md and the 5 commands; do NOT scan the synced neutral
 #    planner specs, references, or the validator (those say only "QB").
 # ---------------------------------------------------------------------------
 host_files="
@@ -110,10 +112,12 @@ skills/qb-assess/SKILL.md
 skills/qb-subplanner/SKILL.md
 skills/qb-auditor/SKILL.md
 skills/qb-implementer/SKILL.md
+skills/qb-runner/SKILL.md
 commands/qb-plan.md
 commands/qb-assess.md
 commands/qb-audit.md
 commands/qb-implement.md
+commands/qb-harden.md
 "
 
 # Forbidden cross-host needles for the Cursor platform.
