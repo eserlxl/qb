@@ -85,9 +85,9 @@ Each platform is correct *for its own host*: all three install under the plugin 
 
 | Platform | How long steps launch |
 |---|---|
-| **Claude Code** (`platforms/claude-code`) | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-autopsy`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
-| **Cursor** (`platforms/cursor`) | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
-| **Codex** (`platforms/codex`) | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
+| **Claude Code** | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-autopsy`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
+| **Cursor** | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
+| **Codex** | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
 
 ### Installing each platform
 
