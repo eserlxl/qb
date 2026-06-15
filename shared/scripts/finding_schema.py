@@ -107,8 +107,11 @@ CATEGORIES: frozenset[str] = frozenset({
 })
 FIX_STRATEGIES: frozenset[str] = frozenset({"autofix", "propose", "manual", "none"})
 
-# Repository-relative locator: "path:line" or "path:start-end".
-EVIDENCE_RE = re.compile(r"^\S+:\d+(?:-\d+)?$")
+# Repository-relative locator: "path:line" or "path:start-end". Line numbers are
+# 1-based positive integers (SARIF 2.1.0 region.startLine must be >= 1), so a
+# leading zero / line 0 is non-conformant; an inverted range (start > end) is
+# caught in validate_finding.
+EVIDENCE_RE = re.compile(r"^\S+:[1-9]\d*(?:-[1-9]\d*)?$")
 
 # Serialized (on-disk) key names for the underscore-named Python attributes.
 _DISK_KEYS = {
@@ -181,6 +184,13 @@ def validate_finding(finding: "Finding | dict[str, str]") -> list[str]:
         errors.append(f"invalid_fix_strategy={finding.fix_strategy}")
     if not EVIDENCE_RE.match(finding.evidence or ""):
         errors.append(f"invalid_evidence={finding.evidence}")
+    else:
+        # Non-inverted range: "path:start-end" requires start <= end.
+        locator = finding.evidence.rsplit(":", 1)[-1]
+        if "-" in locator:
+            start_s, end_s = locator.split("-", 1)
+            if int(start_s) > int(end_s):
+                errors.append(f"invalid_evidence={finding.evidence}")
     if not _ID_RE.match(finding.id or ""):
         errors.append(f"invalid_id={finding.id}")
 

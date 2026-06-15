@@ -112,6 +112,19 @@ class FindingSchemaConformanceTests(unittest.TestCase):
         )
         self.assertEqual(self.mod.validate_finding(self.mod.Finding(**kwargs)), [])
 
+    def test_line_zero_evidence_is_rejected(self) -> None:
+        # SARIF region.startLine must be >= 1, so line 0 is non-conformant.
+        kwargs = _valid_kwargs(self.mod)
+        kwargs["evidence"] = "shared/scripts/validate_planner_docs.py:0"
+        errors = self.mod.validate_finding(self.mod.Finding(**kwargs))
+        self.assertTrue(any("evidence" in e for e in errors), errors)
+
+    def test_inverted_line_range_is_rejected(self) -> None:
+        kwargs = _valid_kwargs(self.mod)
+        kwargs["evidence"] = "shared/scripts/validate_planner_docs.py:20-5"
+        errors = self.mod.validate_finding(self.mod.Finding(**kwargs))
+        self.assertTrue(any("evidence" in e for e in errors), errors)
+
     # --- deterministic identity --------------------------------------------
     def test_identity_is_deterministic_and_location_sensitive(self) -> None:
         a1 = self.mod.compute_finding_id("secret", "config/app.py:42", "hardcoded-secret")
