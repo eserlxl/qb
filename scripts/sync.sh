@@ -96,6 +96,11 @@ MAP=(
   "scripts/validate_planner_docs.py|platforms/claude-code/scripts/validate_planner_docs.py"
   "scripts/validate_planner_docs.py|platforms/cursor/scripts/validate_planner_docs.py"
   "scripts/validate_planner_docs.py|platforms/codex/plugins/qb/skills/qb/scripts/validate_planner_docs.py"
+
+  # shared/scripts/finding_schema.py
+  "scripts/finding_schema.py|platforms/claude-code/scripts/finding_schema.py"
+  "scripts/finding_schema.py|platforms/cursor/scripts/finding_schema.py"
+  "scripts/finding_schema.py|platforms/codex/plugins/qb/skills/qb/scripts/finding_schema.py"
 )
 
 # Number of distinct shared source files (for the summary line).
