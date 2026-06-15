@@ -57,7 +57,7 @@ When changing the validator, test at least:
 - a normal filename containing `sk-` such as `task-spec.yaml`;
 - a fake long secret token that should be detected;
 - roadmap table extraction with historical phase references such as `Phase 0B-10` or `Phase 11`;
-- optional `autopsy.md` validation when present, and no failure when it is absent;
+- optional `assessment.md` validation when present, and no failure when it is absent;
 - Step 4 readiness gating for missing audit, `BLOCKED`, `PASS`, `PASS_WITH_WARNINGS`, and prose such as `no P0/P1 findings`.
 
 ## Validate Skill Prompt Content
@@ -66,11 +66,11 @@ When changing Step 1 behavior, verify that:
 
 - `SKILL.md` references `references/repo-aware-intake.md`;
 - the intake reference still asks only the four stable fields;
-- `SKILL.md` references `references/Autopsy-Planner.md` for Step 1.5;
-- `Second-Planner.md` reads `.qb/autopsy.md` as an optional supporting source;
+- `SKILL.md` references `references/Assessment-Planner.md` for Step 1.5;
+- `Second-Planner.md` reads `.qb/assessment.md` as an optional supporting source;
 - `First-Planner.md` still accepts the same four required placeholders.
 
-The planner prompts and reference docs (`First-Planner.md`, `Second-Planner.md`, `Third-Planner.md`, `Fourth-Planner.md`, `Autopsy-Planner.md`, `repo-aware-intake.md`, `workflow-quality.md`) are shared, host-neutral sources. They are maintained in the monorepo's `shared/` tree and materialized into this plugin by `sync.sh`; edit the shared source, not the synced copy.
+The planner prompts and reference docs (`First-Planner.md`, `Second-Planner.md`, `Third-Planner.md`, `Fourth-Planner.md`, `Assessment-Planner.md`, `repo-aware-intake.md`, `workflow-quality.md`) are shared, host-neutral sources. They are maintained in the monorepo's `shared/` tree and materialized into this plugin by `sync.sh`; edit the shared source, not the synced copy.
 
 ## Optional Local Skill Copy Parity
 
@@ -110,7 +110,7 @@ This writes `QB-sanitized.zip` with `git archive`.
 1. Update `plugins/qb/.codex-plugin/plugin.json`.
 2. Update `plugins/qb/skills/qb/SKILL.md` and references as needed.
 3. Update the shared `repo-aware-intake.md` source if Step 1 intake behavior changes, then re-sync.
-4. Update the shared `Autopsy-Planner.md` source if Step 1.5 autopsy behavior changes, then re-sync.
+4. Update the shared `Assessment-Planner.md` source if Step 1.5 assessment behavior changes, then re-sync.
 5. Update the shared `Fourth-Planner.md` source if implementation handoff behavior changes, then re-sync.
 6. Update the shared `validate_planner_docs.py` source if planner structure or readiness gates change, then re-sync.
 7. Run `make check`.

@@ -44,16 +44,16 @@ manifest_name="$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' 
 required_files="
 .cursor-plugin/plugin.json
 skills/qb-planner/SKILL.md
-skills/qb-autopsy/SKILL.md
+skills/qb-assess/SKILL.md
 skills/qb-subplanner/SKILL.md
 skills/qb-auditor/SKILL.md
 skills/qb-implementer/SKILL.md
 commands/qb-plan.md
-commands/qb-autopsy.md
+commands/qb-assess.md
 commands/qb-audit.md
 commands/qb-implement.md
 skills/qb-planner/planners/first-planner.md
-skills/qb-autopsy/autopsy-planner.md
+skills/qb-assess/assessment-planner.md
 skills/qb-subplanner/second-planner.md
 skills/qb-auditor/third-planner.md
 skills/qb-implementer/fourth-planner.md
@@ -104,12 +104,12 @@ done
 # ---------------------------------------------------------------------------
 host_files="
 skills/qb-planner/SKILL.md
-skills/qb-autopsy/SKILL.md
+skills/qb-assess/SKILL.md
 skills/qb-subplanner/SKILL.md
 skills/qb-auditor/SKILL.md
 skills/qb-implementer/SKILL.md
 commands/qb-plan.md
-commands/qb-autopsy.md
+commands/qb-assess.md
 commands/qb-audit.md
 commands/qb-implement.md
 "

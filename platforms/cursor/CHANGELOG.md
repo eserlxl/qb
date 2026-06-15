@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Claude Code, Cursor, and Codex packages now share one product name (`QB`), one plugin
   `id` (`qb`), and one command/skill namespace. Upstream attribution to Alican Kiraz's
   original CursorQB and CodexQB projects is preserved verbatim.
-  - Commands: `cursorqb-{plan,autopsy,audit,implement}` → `qb-{plan,autopsy,audit,implement}`
-  - Skills: `cursorqb-{planner,subplanner,auditor,implementer,autopsy}` → `qb-*`
+  - Commands: `cursorqb-{plan,assessment,audit,implement}` → `qb-{plan,assessment,audit,implement}`
+  - Skills: `cursorqb-{planner,subplanner,auditor,implementer,assessment}` → `qb-*`
   - Plugin `name` / display name: `cursorqb` / `CursorQB` → `qb` / `QB`
   - Existing installs must reinstall and update any saved command invocations.
 
@@ -43,14 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Output language is now English.** All generated planning documents (`Main-Planing.md`, `Autopsy.md`,
+- **Output language is now English.** All generated planning documents (`Main-Planing.md`, `Assessment.md`,
   sub-plans, `Sub-Planing-Index.md`, `Sub-Planing-Audit.md`) and their section headings are produced in
-  English. The bundled planner prompts (`first-planner.md`, `autopsy-planner.md`, `second-planner.md`,
+  English. The bundled planner prompts (`first-planner.md`, `assessment-planner.md`, `second-planner.md`,
   `third-planner.md`) now mandate English output with English section headings.
 - Translated all remaining in-product Turkish to English: the orchestrator's canonical `define-goal`
   texts and the Gate 2 audit confirmation, the repo-aware intake question templates (`Question N / 4`),
   and every skill's section-name references and language notes.
-- Retargeted the validator (`STEP1`/`AUTOPSY`/`INDEX`/`SUBPLAN`/`AUDIT` heading constants,
+- Retargeted the validator (`STEP1`/`ASSESSMENT`/`INDEX`/`SUBPLAN`/`AUDIT` heading constants,
   `ROADMAP_HEADING`, and the `## 13. Prioritized Fix List` severity scan) and both test suites to the
   English headings. Stable identifiers are unchanged: `Main-Planing.md`, `Sub-Planing-Index.md`,
   `Sub-Planing-Audit.md`, `Faz-<n>-Plans/`, `Faz<n>.<m>-*.md`, and the intentional `Planing` spelling.
@@ -60,12 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `qb-autopsy` skill (Step 1.5) + `/qb-autopsy` command + bundled `autopsy-planner.md`:
-  an existing-project autopsy that writes a 13-section `Planner-docs/Autopsy.md` technical feedback
+- `qb-assess` skill (Step 1.5) + `/qb-assess` command + bundled `assessment-planner.md`:
+  an existing-project assessment that writes a 13-section `Planner-docs/Assessment.md` technical feedback
   report, run automatically after Step 1 for existing/non-empty repositories and skipped for empty ones.
-- Validator Autopsy support: `AUTOPSY_HEADINGS` and `validate_autopsy_optional` (reports `autopsy_exists`
-  and checks `Autopsy.md` heading order during Step 2/3 validation).
-- Test suite under `tests/`: `test_validate_planner_docs.py` (validator behavior, including autopsy and
+- Validator Assessment support: `ASSESSMENT_HEADINGS` and `validate_assessment_optional` (reports `assessment_exists`
+  and checks `Assessment.md` heading order during Step 2/3 validation).
+- Test suite under `tests/`: `test_validate_planner_docs.py` (validator behavior, including assessment and
   Step-4 severity gating) and `test_skill_content.py` (skill-content and Cursor-native invariants).
 - Repo quality infrastructure: `scripts/validate.sh`, `Makefile` (`make check` / `make test`),
   `.github/workflows/validate.yml`, and `.gitignore`.
@@ -74,8 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Reframed the workflow as five steps (1, 1.5, 2, 3, 4); the orchestrator runs Step 1.5 for existing
-  projects and Gate 1 feedback covers both `Main-Planing.md` and `Autopsy.md`.
-- `qb-subplanner` and the bundled `second-planner.md` now read `Planner-docs/Autopsy.md` as an
+  projects and Gate 1 feedback covers both `Main-Planing.md` and `Assessment.md`.
+- `qb-subplanner` and the bundled `second-planner.md` now read `Planner-docs/Assessment.md` as an
   optional supporting source (not a replacement for the master plan).
 - `qb-auditor` `## 13` findings now use single-line `- AUDIT-FIX-NN | PX | <title>` headers, and the
   validator counts severities via `AUDIT_FIX_RE` (precise; never miscounts negative prose).

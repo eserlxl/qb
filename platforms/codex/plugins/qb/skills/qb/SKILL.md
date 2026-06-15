@@ -1,18 +1,18 @@
 ---
 name: qb
-description: Repo-aware Codex planning with autopsy, phase sub-plans, QA audit, and gated handoff.
+description: Repo-aware Codex planning with assessment, phase sub-plans, QA audit, and gated handoff.
 ---
 
 # QB
 
 ## Overview
 
-Run the bundled planning workflow for a project repository. Keep Step 1 conversational and repo-aware, run Step 1.5 Autopsy for existing projects, and hand off Step 2 and Step 3 as text-only Goal mode prompts unless the user explicitly asks for a different flow. After Step 3, provide a gated Step 4 implementation handoff prompt only when the audit says implementation can begin.
+Run the bundled planning workflow for a project repository. Keep Step 1 conversational and repo-aware, run Step 1.5 Assessment for existing projects, and hand off Step 2 and Step 3 as text-only Goal mode prompts unless the user explicitly asks for a different flow. After Step 3, provide a gated Step 4 implementation handoff prompt only when the audit says implementation can begin.
 
 The bundled prompts are:
 
 - `references/First-Planner.md` for Step 1 main planning.
-- `references/Autopsy-Planner.md` for Step 1.5 existing-project autopsy.
+- `references/Assessment-Planner.md` for Step 1.5 existing-project assessment.
 - `references/Second-Planner.md` for Step 2 phase sub-planning.
 - `references/Third-Planner.md` for Step 3 sub-plan QA and coverage audit.
 - `references/Fourth-Planner.md` for the Step 4 implementation Goal handoff prompt template.
@@ -26,7 +26,7 @@ Bundled support files:
 ## Workflow Selection
 
 1. If the user asks for normal planner startup, run Step 1.
-2. If the user directly asks for Step 1.5 or Autopsy, read `references/Autopsy-Planner.md` and execute it.
+2. If the user directly asks for Step 1.5 or Assessment, read `references/Assessment-Planner.md` and execute it.
 3. If the user directly asks for Step 2, read `references/Second-Planner.md` and execute it.
 4. If the user directly asks for Step 3, read `references/Third-Planner.md` and execute it.
 5. If the user asks only for the Goal mode prompt text, print the matching Step 2, Step 3, or gated Step 4 copy block without modifying files.
@@ -73,24 +73,24 @@ After all four values are available:
 2. Substitute the four collected values into the matching placeholders.
 3. Follow the substituted Step 1 prompt exactly.
 4. Create or update only `.qb/main-planning.md`, as required by the Step 1 prompt.
-5. After completing Step 1, decide whether Step 1.5 Autopsy applies.
+5. After completing Step 1, decide whether Step 1.5 Assessment applies.
 6. Run Step 1.5 automatically only when the repository is an existing or partially built project: it is not empty and contains meaningful evidence such as README, manifests, source/service/package directories, tests, docs, configs, or CI.
-7. Skip Step 1.5 for new or nearly empty projects; do not create `.qb/autopsy.md` in that case.
-8. After Step 1 and any Step 1.5 Autopsy work, ask the user in plain text whether they have feedback for the main plan and autopsy.
-9. If feedback is provided, apply it under the same file boundary: update only `.qb/main-planning.md` for main plan feedback and only `.qb/autopsy.md` for autopsy feedback.
+7. Skip Step 1.5 for new or nearly empty projects; do not create `.qb/assessment.md` in that case.
+8. After Step 1 and any Step 1.5 Assessment work, ask the user in plain text whether they have feedback for the main plan and assessment.
+9. If feedback is provided, apply it under the same file boundary: update only `.qb/main-planning.md` for main plan feedback and only `.qb/assessment.md` for assessment feedback.
 
-## Step 1.5 Autopsy
+## Step 1.5 Assessment
 
 Step 1.5 is for existing or partially built projects. It should not run for genuinely new or nearly empty repositories.
 
 When Step 1.5 applies:
 
-1. Read `references/Autopsy-Planner.md`.
+1. Read `references/Assessment-Planner.md`.
 2. Read `.qb/main-planning.md`.
 3. Inspect the repository with read-only commands.
-4. Create or update only `.qb/autopsy.md`.
+4. Create or update only `.qb/assessment.md`.
 5. Do not modify source files, `.qb/main-planning.md`, or any Step 2/3 files.
-6. Treat `autopsy.md` as Step 2 feedback, not as a replacement for the main plan.
+6. Treat `assessment.md` as Step 2 feedback, not as a replacement for the main plan.
 
 ## Step 2 Handoff
 
@@ -99,14 +99,14 @@ After Step 1 feedback is handled, ask whether the user wants to continue to Step
 ```text
 Use $qb. Run Step 2 according to references/Second-Planner.md.
 
-Read all main phases in .qb/main-planning.md. If .qb/autopsy.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
+Read all main phases in .qb/main-planning.md. If .qb/assessment.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
 ```
 
 When executing Step 2 directly:
 
 1. Read `references/Second-Planner.md`.
 2. Read `references/workflow-quality.md`.
-3. Read `.qb/autopsy.md` when it exists; do not block Step 2 when it is absent.
+3. Read `.qb/assessment.md` when it exists; do not block Step 2 when it is absent.
 4. Follow repository inspection, file-boundary, naming, all-file validation, and stopping rules exactly.
 5. Run the bundled validator after generation when available. When manually validating from a QB repository checkout, use:
    `python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root . --mode step2 --strict`
@@ -166,7 +166,7 @@ When Step 3 completes:
 - Do not implement product features, refactor source code, install dependencies, commit, push, deploy, or open pull requests.
 - Do not write secrets, tokens, credentials, private keys, or local sensitive environment values into planning files.
 - Preserve the exact required filenames: `main-planning.md`, `sub-planning-index.md`, and `sub-planning-audit.md`.
-- Preserve `.qb/autopsy.md` as the Step 1.5 autopsy filename.
+- Preserve `.qb/assessment.md` as the Step 1.5 assessment filename.
 - If a required source file is missing, follow the blocker behavior in the active planner prompt instead of inventing speculative output.
 
 ## Completion Reporting

@@ -27,8 +27,8 @@ It pauses for your explicit approval at every gate. No CLI, no API key, no setup
 | Step | Name | What happens | Output |
 |:--:|---|---|---|
 | **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `.qb/main-planning.md` |
-| **1.5** | Autopsy | For existing projects, a technical health report. | `.qb/autopsy.md` |
-| **Gate 1** | Review | Review the plan (and autopsy) together, give feedback, approve. | — |
+| **1.5** | Assessment | For existing projects, a technical health report. | `.qb/assessment.md` |
+| **Gate 1** | Review | Review the plan (and assessment) together, give feedback, approve. | — |
 | **2** | Sub-plans | Every phase becomes detailed sub-plans plus a coverage index. | `.qb/phase-<n>-plans/` + `.qb/sub-planning-index.md` |
 | **Gate 2** | Approve audit | Confirm you want the quality audit. | — |
 | **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `.qb/sub-planning-audit.md` |
@@ -45,7 +45,7 @@ Every artifact lands under `.qb/` in **your** workspace — never inside the plu
 ```text
 .qb/
 ├── main-planning.md         # the master plan                          (Step 1)
-├── autopsy.md               # repo health report for existing projects (Step 1.5)
+├── assessment.md               # repo health report for existing projects (Step 1.5)
 ├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
 └── phase-1-plans/           # detailed sub-plans, one folder per phase
@@ -53,7 +53,7 @@ Every artifact lands under `.qb/` in **your** workspace — never inside the plu
     └── phase-1.2-...md
 ```
 
-> These names — `main-planning.md`, `autopsy.md`, `sub-planning-index.md`, `sub-planning-audit.md`, and the `phase-<n>-plans/` / `phase-<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English.
+> These names — `main-planning.md`, `assessment.md`, `sub-planning-index.md`, `sub-planning-audit.md`, and the `phase-<n>-plans/` / `phase-<n>.<m>-*.md` patterns — are fixed identifiers that the bundled validator and the index cross-references match exactly, so don't rename them. The document *content* is always English.
 
 ---
 
@@ -63,7 +63,7 @@ One host-neutral source of truth lives in `shared/`; `scripts/sync.sh` materiali
 
 ```text
 shared/                         # CANONICAL host-neutral IP — the single source of truth
-  planners/                     #   first / second / third / fourth / autopsy planner specs
+  planners/                     #   first / second / third / fourth / assessment planner specs
   references/                   #   repo-aware-intake.md, workflow-quality.md
   scripts/validate_planner_docs.py
 platforms/
@@ -85,7 +85,7 @@ Each platform is correct *for its own host*: all three install under the plugin 
 
 | Platform | How long steps launch |
 |---|---|
-| **Claude Code** | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-autopsy`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
+| **Claude Code** | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-assess`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
 | **Cursor** | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
 | **Codex** | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
 

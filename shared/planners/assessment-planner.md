@@ -1,10 +1,10 @@
 You are acting as a senior staff software architect, repository auditor, and planning-quality analyst.
 
-Your job is Step 1.5 of the QB planning workflow: Project Autopsy.
+Your job is Step 1.5 of the QB planning workflow: Project Assessment.
 
 IMPORTANT:
 - This is a planning and repository-analysis task.
-- The only file you may create or update is .qb/autopsy.md; create the .qb directory if
+- The only file you may create or update is .qb/assessment.md; create the .qb directory if
   it does not exist.
 - Do not implement features, refactor or modify source code, install dependencies, run
   destructive or networked-mutation commands, commit, push, or open pull requests.
@@ -16,9 +16,9 @@ Purpose:
 Step 1 created:
 .qb/main-planning.md
 
-Step 1.5 must read that main plan and inspect the current repository in detail. The output is an autopsy-style technical feedback report that helps Step 2 create better phase sub-plans.
+Step 1.5 must read that main plan and inspect the current repository in detail. The output is an assessment-style technical feedback report that helps Step 2 create better phase sub-plans.
 
-This step is intended for existing or partially built projects. If the repository is empty or has no meaningful project evidence, do not create or update `.qb/autopsy.md`. Report that Step 1.5 was skipped because there is not enough repository evidence for an autopsy, then stop.
+This step is intended for existing or partially built projects. If the repository is empty or has no meaningful project evidence, do not create or update `.qb/assessment.md`. Report that Step 1.5 was skipped because there is not enough repository evidence for an assessment, then stop.
 
 Source of truth:
 
@@ -75,7 +75,7 @@ Output file requirements:
 
 Create or update:
 
-.qb/autopsy.md
+.qb/assessment.md
 
 The document must be written in English.
 
@@ -83,11 +83,11 @@ Use clear headings and a professional engineering-audit tone.
 
 The file must include exactly these top-level sections, in this order:
 
-# Project Autopsy
+# Project Assessment
 
 ## 1. Executive Summary
 
-Summarize the autopsy findings in 5-10 concise paragraphs.
+Summarize the assessment findings in 5-10 concise paragraphs.
 
 Include:
 - whether this is an existing/partially built project;
@@ -205,7 +205,7 @@ Include:
 - roadmap phases that need stronger evidence;
 - risks Step 2 must not ignore.
 
-## 12. Autopsy Feedback for Step 2
+## 12. Assessment Feedback for Step 2
 
 Provide direct feedback for Step 2.
 
@@ -213,7 +213,7 @@ Use bullets grouped by main phase if possible.
 
 Each bullet should explain:
 - what Step 2 should incorporate;
-- which Autopsy finding supports it;
+- which Assessment finding supports it;
 - which type of sub-plan should include it.
 
 ## 13. Prioritized Remediation and Planning Signals
@@ -221,7 +221,7 @@ Each bullet should explain:
 List prioritized signals.
 
 Use this format:
-- AUTOPSY-P0-01 — <title>
+- ASSESS-P0-01 — <title>
   - Impact: <why this matters>
   - Evidence: <file/path or repo evidence, redacted if sensitive>
   - Step 2 impact: <how sub-plans should account for it>
@@ -234,21 +234,21 @@ Use priorities:
 
 Validation after writing:
 
-After creating/updating .qb/autopsy.md: confirm the file exists, read it back, and verify
+After creating/updating .qb/assessment.md: confirm the file exists, read it back, and verify
 all required headings exist in order. Run a length-bounded secret check and, if any match
 is found, replace the value with `<redacted>` and report the redaction (never print
 secret values):
-   rg -n "sk-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA|OPENSSH|DSA|EC|PRIVATE) KEY|xox[baprs]-[A-Za-z0-9-]{20,}" .qb/autopsy.md
-Then run `git diff -- .qb/autopsy.md` and `git status --short -- .qb` and confirm only
-.qb/autopsy.md was modified.
+   rg -n "sk-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA|OPENSSH|DSA|EC|PRIVATE) KEY|xox[baprs]-[A-Za-z0-9-]{20,}" .qb/assessment.md
+Then run `git diff -- .qb/assessment.md` and `git status --short -- .qb` and confirm only
+.qb/assessment.md was modified.
 
 Final response requirements:
 
 After completion, give a concise English summary: whether Step 1.5 succeeded, was
-skipped, or was blocked; whether .qb/autopsy.md was created or updated; the
-highest-priority Autopsy signals; how Step 2 should use the report; and confirmation that
-only .qb/autopsy.md was modified (or a list of unexpected modifications).
+skipped, or was blocked; whether .qb/assessment.md was created or updated; the
+highest-priority Assessment signals; how Step 2 should use the report; and confirmation that
+only .qb/assessment.md was modified (or a list of unexpected modifications).
 
-Remember: when Step 1.5 is not skipped, only create or update .qb/autopsy.md — never
+Remember: when Step 1.5 is not skipped, only create or update .qb/assessment.md — never
 modify source code, .qb/main-planning.md, or create implementation files, and do not
 commit, push, install, deploy, or open PRs.

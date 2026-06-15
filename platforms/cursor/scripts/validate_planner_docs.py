@@ -50,8 +50,8 @@ STEP1_HEADINGS = [
     "## 10. Repository Inspection Notes",
 ]
 
-AUTOPSY_HEADINGS = [
-    "# Project Autopsy",
+ASSESSMENT_HEADINGS = [
+    "# Project Assessment",
     "## 1. Executive Summary",
     "## 2. Inspected Sources",
     "## 3. Project Areas and Responsibility Boundaries",
@@ -63,7 +63,7 @@ AUTOPSY_HEADINGS = [
     "## 9. Security, Secret, and Governance Findings",
     "## 10. Operational Readiness and Observability",
     "## 11. Alignment with the Main Plan",
-    "## 12. Autopsy Feedback for Step 2",
+    "## 12. Assessment Feedback for Step 2",
     "## 13. Prioritized Remediation and Planning Signals",
 ]
 
@@ -327,17 +327,17 @@ def validate_step1(state: ValidationState) -> list[int]:
     return phases
 
 
-def validate_autopsy_optional(state: ValidationState) -> None:
-    autopsy_path = state.planner_docs / "autopsy.md"
-    state.metrics["autopsy_exists"] = "true" if autopsy_path.exists() else "false"
-    if not autopsy_path.exists():
+def validate_assessment_optional(state: ValidationState) -> None:
+    assessment_path = state.planner_docs / "assessment.md"
+    state.metrics["assessment_exists"] = "true" if assessment_path.exists() else "false"
+    if not assessment_path.exists():
         return
 
-    text = read_text(autopsy_path, state)
+    text = read_text(assessment_path, state)
     if text is None:
         return
 
-    validate_heading_order(text, AUTOPSY_HEADINGS, autopsy_path, state)
+    validate_heading_order(text, ASSESSMENT_HEADINGS, assessment_path, state)
 
 
 def validate_index(state: ValidationState) -> set[str]:
@@ -408,7 +408,7 @@ def validate_subplan_structure(
 
 def validate_step2(state: ValidationState) -> None:
     main_phases = validate_step1(state)
-    validate_autopsy_optional(state)
+    validate_assessment_optional(state)
     index_refs = validate_index(state)
     folders = collect_phase_folders(state)
     subplans = collect_subplans(state)

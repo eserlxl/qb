@@ -4,7 +4,7 @@ Canonical host-neutral QB IP under ``shared/`` (Python standard library only).
 Wraps locally-available linters / static-analysis tools as Phase-1.2 analyzers,
 normalizing their heterogeneous output into the unified Finding schema.
 
-Design guarantees (per main-planning sections 5/7 and the autopsy offline-core
+Design guarantees (per main-planning sections 5/7 and the assessment offline-core
 rule):
   * Every tool is launched through the Phase-2.2 structured argv convention
     (``command_safety.run_command``), never a shell string.

@@ -1,6 +1,6 @@
 """Phase 6.4 -- manifest version consistency + structural invariants.
 
-Resolves AUTOPSY-P2-01. The root VERSION file is the single source of version
+Resolves ASSESS-P2-01. The root VERSION file is the single source of version
 truth; all three plugin manifests must equal it, so version drift fails make check
 (the prior semver-only check missed this). The structural-invariant test pins the
 deliberately-accepted per-host shapes -- including the codex nested

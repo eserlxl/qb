@@ -24,7 +24,7 @@ validator are authored once in `shared/` and copied into this platform by `scrip
 copies land at their normal co-located paths:
 
 - `skills/qb-planner/planners/first-planner.md` (Step 1)
-- `skills/qb-autopsy/autopsy-planner.md` (Step 1.5)
+- `skills/qb-assess/assessment-planner.md` (Step 1.5)
 - `skills/qb-subplanner/second-planner.md` (Step 2)
 - `skills/qb-auditor/third-planner.md` (Step 3)
 - `skills/qb-implementer/fourth-planner.md` (Step 4)
@@ -46,7 +46,7 @@ python3 scripts/validate_planner_docs.py --root /path/to/project --mode step2 --
 ```
 
 Modes: `step1` (main-planning.md sections + phase roadmap), `step2` (phase folders, sub-plan
-structure, full-path index references, optional `autopsy.md` heading order, duplicate/gap
+structure, full-path index references, optional `assessment.md` heading order, duplicate/gap
 numbering), `step3` (audit heading order), `step4` (audit status + `AUDIT-FIX-NN | PX` severity
 gating). It also runs a length-bounded secret scan in every mode. `--strict` turns quality
 warnings (repeated/generic sections) into failures.
@@ -55,7 +55,7 @@ Key invariants the tests guard (`tests/`):
 
 - Step-4 severity counting is driven by `AUDIT-FIX-NN | PX` finding headers, so negative prose like "P0/P1 none" is never miscounted.
 - The roadmap phase count comes from the `## 6` table, ignoring historical phase mentions.
-- Optional `autopsy.md` is validated only when present.
+- Optional `assessment.md` is validated only when present.
 - Index references must be full relative paths.
 
 ## Editing the bundled prompts

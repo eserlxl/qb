@@ -21,7 +21,7 @@ required_files=(
   "plugins/qb/skills/qb/agents/openai.yaml"
   "plugins/qb/skills/qb/scripts/validate_planner_docs.py"
   "plugins/qb/skills/qb/references/First-Planner.md"
-  "plugins/qb/skills/qb/references/Autopsy-Planner.md"
+  "plugins/qb/skills/qb/references/Assessment-Planner.md"
   "plugins/qb/skills/qb/references/Second-Planner.md"
   "plugins/qb/skills/qb/references/Third-Planner.md"
   "plugins/qb/skills/qb/references/Fourth-Planner.md"

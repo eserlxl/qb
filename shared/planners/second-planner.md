@@ -25,14 +25,14 @@ The primary source of truth for this step is:
 Optional supporting source:
 If it exists, read this file fully before generating sub-plans:
 
-.qb/autopsy.md
+.qb/assessment.md
 
-autopsy.md is not a replacement for main-planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when autopsy.md is absent.
+assessment.md is not a replacement for main-planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when assessment.md is absent.
 
 Do not invent or replace the master plan, and do not change the phase order unless the
 main plan is internally inconsistent — even then, preserve the original order and
 document the inconsistency in the generated index. Step 2 decomposes the Step 1 master
-plan into detailed sub-plans, incorporating autopsy.md feedback when that file exists.
+plan into detailed sub-plans, incorporating assessment.md feedback when that file exists.
 
 Expected output structure:
 

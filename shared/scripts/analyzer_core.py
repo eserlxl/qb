@@ -12,7 +12,7 @@ single implementation with two callers:
     runs the same secret scan over an arbitrary repository and returns Phase 1.1
     Findings with redacted ``path:line`` evidence (never the secret value).
 
-This retires the AUTOPSY-P2-02 coupling (the validator was the sole owner of the
+This retires the ASSESS-P2-02 coupling (the validator was the sole owner of the
 secret/severity logic) without duplicating it.
 """
 

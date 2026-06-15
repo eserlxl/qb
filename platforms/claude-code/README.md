@@ -82,7 +82,7 @@ flowchart TD
     subgraph PLAN["Planning &nbsp;·&nbsp; writes only inside .qb/"]
         direction TB
         S1["<b>Step 1 · Master plan</b><br/><i>you answer 4 questions</i>"]:::step
-        S15["<b>Step 1.5 · Repo autopsy</b><br/><i>existing projects only</i>"]:::step
+        S15["<b>Step 1.5 · Repo assessment</b><br/><i>existing projects only</i>"]:::step
         G1{{"Gate 1 &nbsp;·&nbsp; review &amp; approve"}}:::gate
         S2["<b>Step 2 · Phase sub-plans</b><br/><i>+ coverage index</i>"]:::step
         G2{{"Gate 2 &nbsp;·&nbsp; approve the audit"}}:::gate
@@ -108,8 +108,8 @@ flowchart TD
 | Step | Name | What happens | Output | Your part |
 |:--:|---|---|---|---|
 | **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `.qb/main-planning.md` | Answer 4 questions |
-| **1.5** | Autopsy | For existing projects, a technical health report. | `.qb/autopsy.md` | — (auto / skipped) |
-| **Gate 1** | Review | Review the plan (and autopsy) together. | — | Feedback + approve |
+| **1.5** | Assessment | For existing projects, a technical health report. | `.qb/assessment.md` | — (auto / skipped) |
+| **Gate 1** | Review | Review the plan (and assessment) together. | — | Feedback + approve |
 | **2** | Sub-plans | Every phase becomes detailed sub-plans plus an index. | `.qb/phase-<n>-plans/` + `sub-planning-index.md` | — |
 | **Gate 2** | Approve audit | Confirm you want the quality audit. | — | Approve |
 | **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `.qb/sub-planning-audit.md` | Approve repairs if needed |
@@ -123,7 +123,7 @@ QB stays fully in-session. The `qb-planner` orchestrator runs the interactive St
 
 | Step | Subagent |
 |:--:|---|
-| **1.5** | `qb-autopsy` |
+| **1.5** | `qb-assess` |
 | **2** | `qb-subplanner` |
 | **3** | `qb-auditor` |
 | **4** | `qb-implementer` |
@@ -139,7 +139,7 @@ Every artifact lands under `.qb/` in **your** workspace — never in the plugin 
 ```text
 .qb/
 ├── main-planning.md         # the master plan                          (Step 1)
-├── autopsy.md              # repo health report for existing projects (Step 1.5)
+├── assessment.md              # repo health report for existing projects (Step 1.5)
 ├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
 └── phase-1-plans/            # detailed sub-plans, one folder per phase
@@ -156,7 +156,7 @@ Every artifact lands under `.qb/` in **your** workspace — never in the plugin 
 | Command | What it does |
 |---|---|
 | `/qb-plan` | Run the full multi-step workflow from the start. |
-| `/qb-autopsy` | Analyze an existing repository only (Step 1.5). |
+| `/qb-assess` | Analyze an existing repository only (Step 1.5). |
 | `/qb-audit` | Re-run the quality audit only (Step 3). |
 | `/qb-implement` | Implement one reviewed slice (Step 4, gated). |
 
@@ -215,7 +215,7 @@ Not during planning. Only Step 4 touches code, and only with your explicit appro
 <details>
 <summary><strong>What if my repo is brand new or empty?</strong></summary>
 
-The autopsy is skipped automatically — you still get a full master plan and sub-plans.
+The assessment is skipped automatically — you still get a full master plan and sub-plans.
 </details>
 
 <details>

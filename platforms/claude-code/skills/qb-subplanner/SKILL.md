@@ -14,7 +14,7 @@ working until that contract is satisfied or a blocking condition is hit.
 - **In-session, zero-setup.** Read the full Step-2 specification from `second-planner.md`
   (next to this skill) and follow it end to end. Do not inline its full text into chat.
 - **Source of truth:** `.qb/main-planning.md` in the user's active workspace (cwd).
-- **Optional supporting source:** if `.qb/autopsy.md` exists (from Step 1.5), read it fully
+- **Optional supporting source:** if `.qb/assessment.md` exists (from Step 1.5), read it fully
   first and weave its findings (technical debt, placeholder/stub, broken integrations, test/security/
   readiness gaps) into sub-plan evidence, work breakdowns, acceptance criteria, and risk sections. It is
   **not** a replacement for `main-planning.md`; do not block Step 2 when it is absent.
@@ -64,7 +64,7 @@ hands-free - there is no copy/paste handoff and no external trigger to press.
 ## Continuation loop (this is what prevents early exit)
 
 1. Read `main-planning.md` fully and extract the ordered list of main phases (preserve their order). If
-   `.qb/autopsy.md` exists, read it fully too and treat it as supporting feedback.
+   `.qb/assessment.md` exists, read it fully too and treat it as supporting feedback.
 2. For each phase, in order, create its `phase-<n>-plans/` folder and its sub-plan files following
    the `second-planner.md` sizing rules (prefer 3-7 sub-phases; small phases 1-3; large 6-9; avoid
    over-fragmentation) and the exact 13-section structure.

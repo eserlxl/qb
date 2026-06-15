@@ -1,4 +1,4 @@
 interface:
   display_name: "QB"
-  short_description: "Repo-aware planning, autopsy, and audit handoff"
-  default_prompt: "Use $qb to plan a repo (main plan, autopsy, sub-plans, QA audit, gated handoff) or to run the autonomous audit-and-harden engine over it."
+  short_description: "Repo-aware planning, assessment, and audit handoff"
+  default_prompt: "Use $qb to plan a repo (main plan, assessment, sub-plans, QA audit, gated handoff) or to run the autonomous audit-and-harden engine over it."

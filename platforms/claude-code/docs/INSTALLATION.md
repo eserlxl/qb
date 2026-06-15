@@ -34,7 +34,7 @@ Run these in Claude Code:
 Once installed, these commands become available:
 
 - `/qb-plan` - start the full five-step workflow.
-- `/qb-autopsy` - run only the Step 1.5 existing-project autopsy.
+- `/qb-assess` - run only the Step 1.5 existing-project assessment.
 - `/qb-audit` - run only the Step 3 audit.
 - `/qb-implement` - run only the gated Step 4 implementation.
 

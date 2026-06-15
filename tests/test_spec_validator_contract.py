@@ -21,7 +21,7 @@ PLANNERS = SHARED_DIR / "planners"
 # (validator heading-list attribute, planner spec that must emit those headings)
 CONTRACT = (
     ("STEP1_HEADINGS", "first-planner.md"),
-    ("AUTOPSY_HEADINGS", "autopsy-planner.md"),
+    ("ASSESSMENT_HEADINGS", "assessment-planner.md"),
     ("INDEX_HEADINGS", "second-planner.md"),
     ("SUBPLAN_HEADINGS", "second-planner.md"),
     ("AUDIT_HEADINGS", "third-planner.md"),

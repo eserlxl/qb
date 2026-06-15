@@ -23,8 +23,8 @@ STEP1_HEADINGS = [
     "## 10. Repository Inspection Notes",
 ]
 
-AUTOPSY_HEADINGS = [
-    "# Project Autopsy",
+ASSESSMENT_HEADINGS = [
+    "# Project Assessment",
     "## 1. Executive Summary",
     "## 2. Inspected Sources",
     "## 3. Project Areas and Responsibility Boundaries",
@@ -36,7 +36,7 @@ AUTOPSY_HEADINGS = [
     "## 9. Security, Secret, and Governance Findings",
     "## 10. Operational Readiness and Observability",
     "## 11. Alignment with the Main Plan",
-    "## 12. Autopsy Feedback for Step 2",
+    "## 12. Assessment Feedback for Step 2",
     "## 13. Prioritized Remediation and Planning Signals",
 ]
 
@@ -116,11 +116,11 @@ def write_main_plan(docs: Path) -> None:
     (docs / "main-planning.md").write_text("\n".join(lines), encoding="utf-8")
 
 
-def write_autopsy(docs: Path, headings: list[str] | None = None) -> None:
+def write_assessment(docs: Path, headings: list[str] | None = None) -> None:
     lines: list[str] = []
-    for heading in headings or AUTOPSY_HEADINGS:
+    for heading in headings or ASSESSMENT_HEADINGS:
         lines += [heading, "", body(heading), ""]
-    (docs / "autopsy.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "assessment.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_subplan(path: Path, phase: int, subphase: int) -> None:
@@ -178,30 +178,30 @@ def write_valid_step2_fixture(root: Path, relative_refs: bool = False) -> Path:
 
 
 class ValidatePlannerDocsTests(unittest.TestCase):
-    def test_step2_passes_when_autopsy_is_absent(self) -> None:
+    def test_step2_passes_when_assessment_is_absent(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             write_valid_step2_fixture(Path(temp_dir))
             result = run_validator(Path(temp_dir), "step2", strict=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("autopsy_exists=false", result.stdout)
+            self.assertIn("assessment_exists=false", result.stdout)
 
-    def test_step2_validates_optional_autopsy_when_present(self) -> None:
+    def test_step2_validates_optional_assessment_when_present(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             docs = write_valid_step2_fixture(Path(temp_dir))
-            write_autopsy(docs)
+            write_assessment(docs)
             result = run_validator(Path(temp_dir), "step2", strict=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("autopsy_exists=true", result.stdout)
+            self.assertIn("assessment_exists=true", result.stdout)
 
-    def test_step2_rejects_autopsy_heading_order_errors(self) -> None:
+    def test_step2_rejects_assessment_heading_order_errors(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             docs = write_valid_step2_fixture(Path(temp_dir))
-            bad_headings = AUTOPSY_HEADINGS.copy()
+            bad_headings = ASSESSMENT_HEADINGS.copy()
             bad_headings[3], bad_headings[4] = bad_headings[4], bad_headings[3]
-            write_autopsy(docs, headings=bad_headings)
+            write_assessment(docs, headings=bad_headings)
             result = run_validator(Path(temp_dir), "step2", strict=True)
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("heading_out_of_order=.qb/autopsy.md", result.stdout)
+            self.assertIn("heading_out_of_order=.qb/assessment.md", result.stdout)
 
     def test_roadmap_table_ignores_historical_phase_mentions(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

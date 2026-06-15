@@ -14,7 +14,7 @@ SYNC_SCRIPT = REPO_ROOT / "scripts/sync.sh"
 # dash-corrected filenames; must be preserved verbatim).
 PRESERVED_LITERALS = (
     "main-planning.md",
-    "autopsy.md",
+    "assessment.md",
     "sub-planning-index.md",
     "sub-planning-audit.md",
 )

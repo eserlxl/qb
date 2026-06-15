@@ -28,27 +28,27 @@ confirm or edit:
 
 It writes `.qb/main-planning.md` and validates it (`--mode step1`).
 
-## Step 1.5: Existing-Project Autopsy (automatic for existing repos)
+## Step 1.5: Existing-Project Assessment (automatic for existing repos)
 
 For an existing or partially built project, QB then delegates to the
-`qb-autopsy` subagent (or runs the `qb-autopsy` skill in-session as
-the fallback) and writes `.qb/autopsy.md` - a 13-section technical
+`qb-assess` subagent (or runs the `qb-assess` skill in-session as
+the fallback) and writes `.qb/assessment.md` - a 13-section technical
 feedback report (modules, feature inventory, placeholders/stubs, technical debt,
 broken integrations, test/CI gaps, security, and alignment with the main plan).
-For empty or nearly empty repositories this step is skipped and `autopsy.md` is
+For empty or nearly empty repositories this step is skipped and `assessment.md` is
 not created.
 
 ## Gate 1
 
-You review the master plan (and the autopsy, when present), give feedback, and
+You review the master plan (and the assessment, when present), give feedback, and
 approve moving on. Main-plan feedback is applied to `main-planning.md` only;
-autopsy feedback to `autopsy.md` only.
+assessment feedback to `assessment.md` only.
 
 ## Step 2: Phase Sub-Plans (subagent-delegated)
 
 The `qb-subplanner` subagent decomposes every phase into detailed
 sub-plans under `.qb/phase-<n>-plans/`, plus a full-path
-`.qb/sub-planning-index.md`. When `autopsy.md` exists, it is read as
+`.qb/sub-planning-index.md`. When `assessment.md` exists, it is read as
 supporting feedback (not a replacement for the main plan). It runs until every
 phase is covered, then validates all files (`--mode step2 --strict`).
 
@@ -78,7 +78,7 @@ or mutates external systems unless you explicitly ask. Re-run
 ## Subagent delegation and the goal contract
 
 For each long autonomous step (1.5, 2, 3, and 4), the orchestrator delegates to
-the matching subagent via the Task tool — `qb-autopsy`,
+the matching subagent via the Task tool — `qb-assess`,
 `qb-subplanner`, `qb-auditor`, and `qb-implementer` — passing
 that step's goal contract as the task brief:
 
@@ -95,7 +95,7 @@ zero-setup, and gated at every step.
 
 ## Direct step invocation
 
-- `/qb-autopsy` - run only the autopsy on an existing `main-planning.md`.
+- `/qb-assess` - run only the assessment on an existing `main-planning.md`.
 - `/qb-audit` - re-run only the audit (for example after repairs).
 - `/qb-implement` - run only the gated implementation for one `READY` sub-plan.
 
@@ -108,7 +108,7 @@ planner_docs_validation=passed
 mode=step2
 phase_folder_count=9
 subplan_count=35
-autopsy_exists=true
+assessment_exists=true
 warning_count=0
 error_count=0
 ```
@@ -117,7 +117,7 @@ It exits nonzero on structural failures. With `--strict`, repeated or generic
 section warnings become failures. Secret scanning uses length-bounded token
 patterns so normal filenames such as `task-spec.yaml` are not flagged. In
 `--mode step4`, P0/P1 audit findings block implementation readiness while P2/P3
-findings are warnings. When `.qb/autopsy.md` exists, the validator
+findings are warnings. When `.qb/assessment.md` exists, the validator
 checks its required heading order during Step 2/3 validation.
 
 ## Output location
@@ -128,7 +128,7 @@ never in the plugin directory:
 ```text
 .qb/
 ├── main-planning.md         # the master plan                          (Step 1)
-├── autopsy.md              # repo health report for existing projects (Step 1.5)
+├── assessment.md              # repo health report for existing projects (Step 1.5)
 ├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
 └── phase-1-plans/            # detailed sub-plans, one folder per phase

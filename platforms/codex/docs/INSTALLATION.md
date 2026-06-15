@@ -59,7 +59,7 @@ Expected behavior:
 4. It asks for `TARGET_END_STATE`, ideally across product, engineering, operations, security, and user value.
 5. It asks for `KNOWN_CONSTRAINTS`, including detected stack, infra, validation, security, and unknown constraints.
 6. It uses the confirmed values to create or update `.qb/main-planning.md`.
-7. For existing or partially built repositories, it may create or update `.qb/autopsy.md` as Step 1.5.
+7. For existing or partially built repositories, it may create or update `.qb/assessment.md` as Step 1.5.
 
 ## Troubleshooting
 
@@ -71,4 +71,4 @@ If `$qb` is not recognized:
 - confirm the repository or local clone is accessible;
 - if installed from a private repository, confirm Codex has GitHub access to that repository.
 
-If Step 2, Step 3, or the gated Step 4 implementation handoff does not run automatically, that is expected. QB prints text-only Goal mode prompts so you can explicitly launch long-running decomposition, audit, or implementation runs. Step 1.5 Autopsy is local to the initial planning thread and runs only when the repository has meaningful existing-project evidence.
+If Step 2, Step 3, or the gated Step 4 implementation handoff does not run automatically, that is expected. QB prints text-only Goal mode prompts so you can explicitly launch long-running decomposition, audit, or implementation runs. Step 1.5 Assessment is local to the initial planning thread and runs only when the repository has meaningful existing-project evidence.

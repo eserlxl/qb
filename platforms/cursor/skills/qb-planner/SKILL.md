@@ -1,6 +1,6 @@
 ---
 name: qb-planner
-description: Guided five-step (1, 1.5, 2, 3, 4), goal-backed project planning orchestrator with a repo-aware intake. Use when the user runs /qb-plan or asks QB to plan a project end to end - master plan, existing-project autopsy, phase decomposition, coverage audit, then optional implementation. Runs a repo-aware Step 1 intake, produces .qb/main-planning.md, runs a Step 1.5 autopsy (qb-autopsy) for existing projects, then gates into phase decomposition (qb-subplanner), a coverage/quality audit (qb-auditor), and a gated implementation step (qb-implementer) - launched automatically as Cursor goals via define-goal. Validates each step with the bundled validator.
+description: Guided five-step (1, 1.5, 2, 3, 4), goal-backed project planning orchestrator with a repo-aware intake. Use when the user runs /qb-plan or asks QB to plan a project end to end - master plan, existing-project assessment, phase decomposition, coverage audit, then optional implementation. Runs a repo-aware Step 1 intake, produces .qb/main-planning.md, runs a Step 1.5 assessment (qb-assess) for existing projects, then gates into phase decomposition (qb-subplanner), a coverage/quality audit (qb-auditor), and a gated implementation step (qb-implementer) - launched automatically as Cursor goals via define-goal. Validates each step with the bundled validator.
 ---
 
 # QB Planner (orchestrator)
@@ -8,12 +8,12 @@ description: Guided five-step (1, 1.5, 2, 3, 4), goal-backed project planning or
 Drive the QB planning workflow inside the current chat session, with an explicit
 user-approval gate between every step. This skill owns the conversation, the repo-aware
 Step-1 intake, and the gates; it delegates the long autonomous steps to the goal-backed
-`qb-autopsy`, `qb-subplanner`, `qb-auditor`, and `qb-implementer` skills.
+`qb-assess`, `qb-subplanner`, `qb-auditor`, and `qb-implementer` skills.
 
 ```text
 Step 1   repo-aware intake -> First-Planner -> main-planning.md       (interactive)   [validator step1]
-Step 1.5 qb-autopsy  -> autopsy.md (existing projects only)    (goal-backed)    [validator step2 autopsy]
- Gate 1 feedback (main-planning + Autopsy) + approve
+Step 1.5 qb-assess  -> assessment.md (existing projects only)    (goal-backed)    [validator step2 assessment]
+ Gate 1 feedback (main-planning + Assessment) + approve
 Step 2   qb-subplanner -> phase-*-plans/ + sub-planning-index.md  (goal-backed)    [validator step2]
  Gate 2 audit approval
 Step 3   qb-auditor     -> sub-planning-audit.md                (goal-backed)    [validator step3]
@@ -42,12 +42,12 @@ Step 4   qb-implementer -> one reversible code slice           (goal-backed, gat
   (`.qb/...`) into the user's **active workspace / current working directory**. Never write
   planning output into this plugin's directory.
 - **Never mutate the templates.** Do placeholder substitution in memory only. The bundled prompts
-  (`planners/first-planner.md` and the specs inside `qb-autopsy` / `qb-subplanner` /
+  (`planners/first-planner.md` and the specs inside `qb-assess` / `qb-subplanner` /
   `qb-auditor` / `qb-implementer`) must stay byte-for-byte pristine for the next run.
 - **Language.** Ask every question in the **language the user is writing in**. Produce all planning
   documents in **English** (the bundled prompts enforce English output).
 - **Honor each prompt's guardrails.** Step 1 may only create/update `main-planning.md`; Step 1.5 may only
-  create/update `autopsy.md`; Step 2 may only change files under `.qb/`; Step 3 may only
+  create/update `assessment.md`; Step 2 may only change files under `.qb/`; Step 3 may only
   create/update `sub-planning-audit.md`; only Step 4 may change source code, and only after its gate
   passes and the user approves. Never write secrets, tokens, or credentials. Never auto-commit, push, or
   open PRs during planning.
@@ -93,18 +93,18 @@ all four are confirmed, echo a compact summary, then continue (Gate 1 comes afte
 5. Run the bundled validator: `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step1 --strict`
    (fallback: manual checks). Fix any structural errors before Step 1.5 / Gate 1.
 
-## Step 1.5 - existing-project autopsy (auto for existing repos)
+## Step 1.5 - existing-project assessment (auto for existing repos)
 
 After Step 1, decide whether Step 1.5 applies:
 
 - **Run** when the workspace is an existing or partially built project: it is not empty and has
   meaningful evidence (README, manifests, source/service/package dirs, tests, docs, configs, or CI).
-- **Skip** for new or nearly empty repositories; do not create `.qb/autopsy.md`.
+- **Skip** for new or nearly empty repositories; do not create `.qb/assessment.md`.
 
 When it applies, launch Step 1.5 via the define-goal procedure below (Canonical Step-1.5 goal text) and
-follow the **`qb-autopsy`** skill. It writes only `.qb/autopsy.md` (a 13-section technical
+follow the **`qb-assess`** skill. It writes only `.qb/assessment.md` (a 13-section technical
 feedback report) which Step 2 uses as supporting feedback. No separate approval is needed before Step 1.5;
-the user reviews both `main-planning.md` and `autopsy.md` together at Gate 1.
+the user reviews both `main-planning.md` and `assessment.md` together at Gate 1.
 
 ## Goal-backed step launch via define-goal
 
@@ -114,7 +114,7 @@ procedure before handing off to the step skill:
 
 1. Follow the Cursor `define-goal` skill: call `get_goal`, and if no matching active goal exists, call
    `create_goal` with the step's objective. Use the goal contract declared in the step's own skill
-   (`qb-autopsy` for Step 1.5, `qb-subplanner` for Step 2, `qb-auditor` for Step 3,
+   (`qb-assess` for Step 1.5, `qb-subplanner` for Step 2, `qb-auditor` for Step 3,
    `qb-implementer` for Step 4) as the objective, including its success evidence and scope bounds.
    The user has explicitly opted into goal-backed execution for these steps, which satisfies define-goal's
    "only when the user asked" gate.
@@ -126,23 +126,23 @@ procedure before handing off to the step skill:
 
 Canonical goal text, referencing the bundled spec by its real co-located path:
 
-- Step 1.5 (`qb-autopsy`, spec `autopsy-planner.md`):
-  > Run Step 1.5 Autopsy per the qb-autopsy skill's autopsy-planner.md spec. Read .qb/main-planning.md and inspect the current repository read-only; create or update only .qb/autopsy.md (a 14-heading technical feedback report). Skip for an empty or nearly empty repository and do not create autopsy.md. Do not modify source code or main-planning.md.
+- Step 1.5 (`qb-assess`, spec `assessment-planner.md`):
+  > Run Step 1.5 Assessment per the qb-assess skill's assessment-planner.md spec. Read .qb/main-planning.md and inspect the current repository read-only; create or update only .qb/assessment.md (a 14-heading technical feedback report). Skip for an empty or nearly empty repository and do not create assessment.md. Do not modify source code or main-planning.md.
 - Step 2 (`qb-subplanner`, spec `second-planner.md`):
-  > Run Step 2 per the qb-subplanner skill's second-planner.md spec. Read all main phases in .qb/main-planning.md; if .qb/autopsy.md exists, read it fully as supporting feedback and account for it in the sub-plans. For each phase, create phase-<n>-plans folders under .qb and phase-<n>.<m>-*.md detailed sub-plan files. Do not stop until all phases are covered. Change only files under .qb.
+  > Run Step 2 per the qb-subplanner skill's second-planner.md spec. Read all main phases in .qb/main-planning.md; if .qb/assessment.md exists, read it fully as supporting feedback and account for it in the sub-plans. For each phase, create phase-<n>-plans folders under .qb and phase-<n>.<m>-*.md detailed sub-plan files. Do not stop until all phases are covered. Change only files under .qb.
 - Step 3 (`qb-auditor`, spec `third-planner.md`):
   > Run Step 3 per the qb-auditor skill's third-planner.md spec. Audit .qb/main-planning.md, sub-planning-index.md, and all phase-*-plans/*.md files; analyze main-phase coverage, file naming, ordering, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan file; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans are reviewed.
 
 ## Gate 1 - feedback, then approve Step 2
 
 1. Present a concise summary of `main-planning.md` (current-state conclusion, number of high-level phases,
-   most important next action) and, if Step 1.5 ran, the top `autopsy.md` signals.
+   most important next action) and, if Step 1.5 ran, the top `assessment.md` signals.
 2. Ask the user (in their language) whether they have any feedback on the master plan and (if present) the
-   autopsy. Apply main-plan feedback to `main-planning.md` only, and autopsy feedback to `autopsy.md` only
-   (via the `qb-autopsy` skill); re-validate (`--mode step1`, and `--mode step2` for the autopsy
+   assessment. Apply main-plan feedback to `main-planning.md` only, and assessment feedback to `assessment.md` only
+   (via the `qb-assess` skill); re-validate (`--mode step1`, and `--mode step2` for the assessment
    heading check), then re-summarize. Repeat until the user is satisfied.
 3. Use `AskQuestion` to confirm proceeding to Step 2. Describe Step 2 plainly: "Read every main phase in
-   `.qb/main-planning.md` (and `autopsy.md` when present) and, for each phase, create
+   `.qb/main-planning.md` (and `assessment.md` when present) and, for each phase, create
    `.qb/phase-<n>-plans/` folders and `phase-<n>.<m>-*.md` detailed sub-plan files. Do not stop until
    all phases are covered. Only change files under `.qb/`."
    - Decline -> stop gracefully; the user can resume with `/qb-plan` or the `qb-subplanner` skill.
@@ -189,7 +189,7 @@ run the Step-4 gate validator:
 ## Output
 
 On a successful planning run the user's workspace contains, under `.qb/`: `main-planning.md`,
-`autopsy.md` (for existing projects), one `phase-<n>-plans/` folder per phase with `phase-<n>.<m>-*.md`
+`assessment.md` (for existing projects), one `phase-<n>-plans/` folder per phase with `phase-<n>.<m>-*.md`
 sub-plans, `sub-planning-index.md`, and `sub-planning-audit.md`. If Step 4 ran, also one reversible code
 slice with a passing validation command. Close with a short summary and the single most important
 recommended next action.

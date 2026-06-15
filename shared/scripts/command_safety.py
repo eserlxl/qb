@@ -1,7 +1,7 @@
 """QB command-safety convention + injection analyzer (Phase 2.2).
 
 Canonical host-neutral QB IP under ``shared/`` (Python standard library only).
-This module addresses AUTOPSY-P1-03 (the untrusted-repo command-execution surface)
+This module addresses ASSESS-P1-03 (the untrusted-repo command-execution surface)
 with two halves:
 
 1. A tool-wide STRUCTURED ARGV CONVENTION. Every external process QB launches is

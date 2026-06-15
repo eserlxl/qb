@@ -7,7 +7,7 @@
     {
       "name": "qb",
       "source": "./platforms/cursor",
-      "description": "Five-step, goal-backed, repo-aware project planning workflow for Cursor: master plan, autopsy, phase decomposition, coverage/quality audit, and gated implementation. Produces English .qb/; in-session and zero-setup."
+      "description": "Five-step, goal-backed, repo-aware project planning workflow for Cursor: master plan, assessment, phase decomposition, coverage/quality audit, and gated implementation. Produces English .qb/; in-session and zero-setup."
     }
   ]
 }

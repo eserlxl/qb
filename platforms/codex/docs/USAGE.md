@@ -1,6 +1,6 @@
 # Usage
 
-QB runs a repo-aware planning workflow with an optional Step 1.5 Autopsy for existing projects.
+QB runs a repo-aware planning workflow with an optional Step 1.5 Assessment for existing projects.
 
 ## Step 1: Main Plan
 
@@ -31,19 +31,19 @@ After the answers are collected, QB loads `First-Planner.md`, substitutes the va
 
 Step 1 is allowed to modify only that file.
 
-## Step 1.5: Existing Project Autopsy
+## Step 1.5: Existing Project Assessment
 
-When the target repository is an existing or partially built project, QB runs `Autopsy-Planner.md` after Step 1.
+When the target repository is an existing or partially built project, QB runs `Assessment-Planner.md` after Step 1.
 
 Expected output:
 
 ```text
-.qb/autopsy.md
+.qb/assessment.md
 ```
 
-The Autopsy report analyzes project sections, feature inventory, placeholders/stubs/skeletons, technical debt, missing or broken integrations, test and CI gaps, security/governance issues, operational readiness, and alignment with `.qb/main-planning.md`.
+The Assessment report analyzes project sections, feature inventory, placeholders/stubs/skeletons, technical debt, missing or broken integrations, test and CI gaps, security/governance issues, operational readiness, and alignment with `.qb/main-planning.md`.
 
-Step 1.5 is skipped for empty or nearly empty repositories. In that case, `autopsy.md` is not required and Step 2 should continue without it.
+Step 1.5 is skipped for empty or nearly empty repositories. In that case, `assessment.md` is not required and Step 2 should continue without it.
 
 ## Step 2: Phase Sub-Plans
 
@@ -54,7 +54,7 @@ The prompt is:
 ```text
 Use $qb. Run Step 2 according to references/Second-Planner.md.
 
-Read all main phases in .qb/main-planning.md. If .qb/autopsy.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
+Read all main phases in .qb/main-planning.md. If .qb/assessment.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
 ```
 
 Expected outputs:
@@ -66,7 +66,7 @@ Expected outputs:
 
 Step 2 is allowed to modify only files under `.qb/`.
 
-`.qb/main-planning.md` remains the primary source of truth. `.qb/autopsy.md`, when present, is supporting feedback that should influence sub-plan evidence, work breakdowns, acceptance criteria, and risk sections.
+`.qb/main-planning.md` remains the primary source of truth. `.qb/assessment.md`, when present, is supporting feedback that should influence sub-plan evidence, work breakdowns, acceptance criteria, and risk sections.
 
 At the end of Step 2, QB should run the bundled validator or an equivalent all-file validation, summarize the result, and print the Step 3 Goal mode handoff block. Do not rely on sampled reads alone for Step 2 structure checks.
 
@@ -149,7 +149,7 @@ QB skips the Step 1 repo-aware intake when the requested step is explicit.
 You can also invoke Step 1.5 directly when a main plan already exists:
 
 ```text
-Use $qb to run Step 1.5 Autopsy for this existing project.
+Use $qb to run Step 1.5 Assessment for this existing project.
 ```
 
 You can also ask for the Step 4 prompt text after a completed audit:
@@ -173,7 +173,7 @@ error_count=0
 
 It exits nonzero on structural failures. With `--strict`, repeated or generic section warnings are treated as failures. Secret scanning uses length-bounded token patterns so normal filenames such as `task-spec.yaml` are not flagged. In `--mode step4`, P0/P1 audit findings block implementation readiness while P2/P3 findings are warnings.
 
-If `.qb/autopsy.md` exists, the validator checks its required heading order during Step 2/3 validation. If it does not exist, Step 2/3 validation continues without treating Autopsy as required.
+If `.qb/assessment.md` exists, the validator checks its required heading order during Step 2/3 validation. If it does not exist, Step 2/3 validation continues without treating Assessment as required.
 
 ## Safety Expectations
 

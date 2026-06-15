@@ -77,10 +77,10 @@ MAP=(
   "planners/fourth-planner.md|platforms/cursor/skills/qb-implementer/fourth-planner.md"
   "planners/fourth-planner.md|platforms/codex/plugins/qb/skills/qb/references/Fourth-Planner.md"
 
-  # shared/planners/autopsy-planner.md
-  "planners/autopsy-planner.md|platforms/claude-code/skills/qb-autopsy/autopsy-planner.md"
-  "planners/autopsy-planner.md|platforms/cursor/skills/qb-autopsy/autopsy-planner.md"
-  "planners/autopsy-planner.md|platforms/codex/plugins/qb/skills/qb/references/Autopsy-Planner.md"
+  # shared/planners/assessment-planner.md
+  "planners/assessment-planner.md|platforms/claude-code/skills/qb-assess/assessment-planner.md"
+  "planners/assessment-planner.md|platforms/cursor/skills/qb-assess/assessment-planner.md"
+  "planners/assessment-planner.md|platforms/codex/plugins/qb/skills/qb/references/Assessment-Planner.md"
 
   # shared/references/repo-aware-intake.md
   "references/repo-aware-intake.md|platforms/claude-code/references/repo-aware-intake.md"

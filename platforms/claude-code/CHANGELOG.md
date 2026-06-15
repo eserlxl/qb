@@ -33,9 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Claude Code, Cursor, and Codex packages now share one product name (`QB`), one plugin
   `id` (`qb`), and one command/skill namespace. Upstream attribution to Alican Kiraz's
   original CursorQB and CodexQB projects is preserved verbatim.
-  - Commands: `/claudeqb-{plan,autopsy,audit,implement}` → `/qb-{plan,autopsy,audit,implement}`
-  - Skills: `claudeqb-{planner,subplanner,auditor,implementer,autopsy}` → `qb-*`
-  - Agents: `claudeqb-{subplanner,auditor,implementer,autopsy}` → `qb-*`
+  - Commands: `/claudeqb-{plan,assessment,audit,implement}` → `/qb-{plan,assessment,audit,implement}`
+  - Skills: `claudeqb-{planner,subplanner,auditor,implementer,assessment}` → `qb-*`
+  - Agents: `claudeqb-{subplanner,auditor,implementer,assessment}` → `qb-*`
   - Plugin `name` / display name: `claudeqb` / `ClaudeQB` → `qb` / `QB`
   - Existing installs must reinstall and update any saved command invocations.
 
@@ -74,13 +74,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `qb-planner` orchestrator skill (`skills/qb-planner/`): language detection, repo-aware
   Step-1 Q&A for the four planning fields, in-context placeholder substitution, Gate 1 (feedback +
   approval), Gate 2 (audit confirmation), and the `PASS_WITH_WARNINGS` repair loop. It runs Step 1.5 for
-  existing projects and Gate 1 feedback covers both `Main-Planing.md` and `Autopsy.md`.
-- `qb-autopsy` skill + `/qb-autopsy` command (Step 1.5): an existing-project autopsy that
-  writes a 13-section `Planner-docs/Autopsy.md` technical feedback report, run automatically after Step 1
+  existing projects and Gate 1 feedback covers both `Main-Planing.md` and `Assessment.md`.
+- `qb-assess` skill + `/qb-assess` command (Step 1.5): an existing-project assessment that
+  writes a 13-section `Planner-docs/Assessment.md` technical feedback report, run automatically after Step 1
   for existing/non-empty repositories and skipped for empty ones.
 - `qb-subplanner` skill (Step 2): phase decomposition into `Planner-docs/Faz-<n>-Plans/` sub-plans
   plus `Sub-Planing-Index.md`, requiring full relative-path index references and all-file validation. It
-  reads `Planner-docs/Autopsy.md` as an optional supporting source.
+  reads `Planner-docs/Assessment.md` as an optional supporting source.
 - `qb-auditor` skill + `/qb-audit` command (Step 3): a coverage/quality audit producing
   `Planner-docs/Sub-Planing-Audit.md` with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status; safe to run
   standalone for re-audits.
@@ -89,12 +89,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   findings.
 - `/qb-plan` command to run the full multi-step workflow from the start.
 - Goal-backed steps adapted to Claude Code: the orchestrator delegates each long autonomous step
-  (Step 1.5, 2, 3, 4) to a matching subagent — `qb-autopsy`, `qb-subplanner`,
+  (Step 1.5, 2, 3, 4) to a matching subagent — `qb-assess`, `qb-subplanner`,
   `qb-auditor`, `qb-implementer` under `agents/` — via the Task tool, passing the step's goal
   contract (objective / success evidence / scope bounds / stop condition) and the absolute path to the
   bundled spec. If subagents or the Task tool are unavailable, it falls back to running the step's skill
   in-session under the identical in-context goal contract.
-- Bundled planner prompts co-located with their skills: `planners/first-planner.md`, `autopsy-planner.md`,
+- Bundled planner prompts co-located with their skills: `planners/first-planner.md`, `assessment-planner.md`,
   `second-planner.md`, `third-planner.md`, and `fourth-planner.md`.
 - Shared references: `references/repo-aware-intake.md` (a bounded read-only repository scan that proposes
   evidence-backed drafts for the four intake fields) and `references/workflow-quality.md` (reliability
@@ -109,6 +109,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   suite under `tests/`, and `.github/workflows/validate.yml` for CI on pushes and pull requests.
 - Output language is English. All generated planning documents and their section headings are produced in
   English; setup questions are asked in the user's language. Stable identifiers are preserved exactly:
-  `Planner-docs/`, `Main-Planing.md`, `Autopsy.md`, `Sub-Planing-Index.md`, `Sub-Planing-Audit.md`,
+  `Planner-docs/`, `Main-Planing.md`, `Assessment.md`, `Sub-Planing-Index.md`, `Sub-Planing-Audit.md`,
   `Faz-<n>-Plans/`, and `Faz<n>.<m>-*.md`, including the intentional `Planing` spelling.
 - Documentation: `README.md`, `docs/INSTALLATION.md`, `docs/USAGE.md`, and `docs/MAINTAINING.md`.

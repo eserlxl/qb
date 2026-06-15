@@ -4,7 +4,7 @@
 [![version](https://img.shields.io/badge/version-0.3.0-2563EB)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 
-**Repo-aware planning for Codex.** QB turns a project repository into a durable planning package: main plan, existing-project autopsy, phase sub-plans, QA audit, and a gated implementation handoff.
+**Repo-aware planning for Codex.** QB turns a project repository into a durable planning package: main plan, existing-project assessment, phase sub-plans, QA audit, and a gated implementation handoff.
 
 ![QB workflow and release validation](docs/assets/qb-workflow.png)
 
@@ -16,8 +16,8 @@ This package is the Codex platform build of QB. The planner prompts, reference d
 
 - **Repo-aware intake:** QB inspects the current repository before asking questions, then proposes evidence-backed defaults for project name, intent, target end state, and constraints.
 - **Durable planning docs:** Output is written under `.qb/` so long planning work survives context changes and can be reviewed like normal project documentation.
-- **Project Autopsy:** Existing projects get a focused `autopsy.md` report covering modules, features, placeholders, technical debt, integration gaps, validation gaps, and readiness risks.
-- **Full phase decomposition:** The main plan can be expanded into ordered phase folders and detailed sub-plan files, using Autopsy feedback when available.
+- **Project Assessment:** Existing projects get a focused `assessment.md` report covering modules, features, placeholders, technical debt, integration gaps, validation gaps, and readiness risks.
+- **Full phase decomposition:** The main plan can be expanded into ordered phase folders and detailed sub-plan files, using Assessment feedback when available.
 - **QA before implementation:** The audit step checks coverage, naming, ordering, section structure, readiness, security/governance, and implementation preparedness.
 - **Gated execution handoff:** QB does not implement product changes itself. It prints a separate Goal mode prompt only when the audit says implementation can begin, then guides that run through the READY queue in small verified slices.
 
@@ -26,7 +26,7 @@ This package is the Codex platform build of QB. The planner prompts, reference d
 | Step | What QB Does | Output |
 | --- | --- | --- |
 | 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `.qb/main-planning.md` |
-| 1.5 Autopsy | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `.qb/autopsy.md` |
+| 1.5 Assessment | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `.qb/assessment.md` |
 | 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `.qb/sub-planning-index.md`, `.qb/phase-*-plans/*.md` |
 | 3. QA Audit | Audits coverage, structure, quality, readiness, and governance without repairing files. | `.qb/sub-planning-audit.md` |
 | 4. Gated Handoff | Prints a copy-ready implementation Goal prompt when Step 3 passes. | Text-only Goal mode prompt |
@@ -74,7 +74,7 @@ QB writes planning artifacts under the target project's `.qb/` directory:
 ```text
 .qb/
   main-planning.md
-  autopsy.md
+  assessment.md
   sub-planning-index.md
   sub-planning-audit.md
   phase-0-plans/
@@ -155,7 +155,7 @@ plugins/qb/
     scripts/validate_planner_docs.py
     references/
       First-Planner.md
-      Autopsy-Planner.md
+      Assessment-Planner.md
       Second-Planner.md
       Third-Planner.md
       Fourth-Planner.md

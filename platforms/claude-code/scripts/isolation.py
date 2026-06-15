@@ -1,7 +1,7 @@
 """QB isolation & rollback runtime (Phase 3.2, net-new).
 
 Canonical host-neutral QB IP under ``shared/`` (Python standard library + git).
-Implements the safety primitive AUTOPSY-P0-02 flagged as the top unattended-write
+Implements the safety primitive ASSESS-P0-02 flagged as the top unattended-write
 risk: every autonomous write happens inside a dedicated, disposable git worktree
 (never the operator's checked-out tree), and every state is reversible via a
 captured git ref (the rollback handle).
