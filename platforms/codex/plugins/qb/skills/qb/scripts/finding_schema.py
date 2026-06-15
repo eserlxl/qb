@@ -160,7 +160,7 @@ def validate_finding(finding: "Finding | dict[str, str]") -> list[str]:
     """Return a list of conformance error codes (empty list == conformant)."""
     if isinstance(finding, dict):
         finding = Finding.from_dict(finding)
-    elif not isinstance(finding, Finding):
+    elif not hasattr(finding, "category"):  # duck-type: accept a Finding from any module instance
         return [f"not_a_finding={type(finding).__name__}"]
 
     errors: list[str] = []
@@ -196,7 +196,7 @@ def validate_finding(finding: "Finding | dict[str, str]") -> list[str]:
 
 def serialize_finding(finding: "Finding | dict[str, str]") -> str:
     """One canonical, std-lib JSON line: sorted keys, hyphenated, no newline."""
-    if isinstance(finding, Finding):
+    if hasattr(finding, "to_dict"):  # Finding (from any module instance)
         data = finding.to_dict()
     else:
         data = Finding.from_dict(finding).to_dict()
