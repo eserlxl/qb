@@ -18,6 +18,7 @@ secret/severity logic) without duplicating it.
 
 from __future__ import annotations
 
+import bisect
 import importlib.util
 import re
 import sys
@@ -70,9 +71,13 @@ def scan_text_for_secrets(text: str) -> list[tuple[str, int]]:
     patterns, inner over matches) so callers produce byte-identical output.
     """
     results: list[tuple[str, int]] = []
+    # Precompute newline offsets once; the line of a match is 1 + the count of
+    # newlines before it, found by bisect (O(n + m log L) vs the old O(n*m) of a
+    # per-match prefix count). Byte-identical results, same enumeration order.
+    newline_offsets = [index for index, char in enumerate(text) if char == "\n"]
     for name, pattern in SECRET_PATTERNS:
         for match in pattern.finditer(text):
-            line = text.count("\n", 0, match.start()) + 1
+            line = bisect.bisect_left(newline_offsets, match.start()) + 1
             results.append((name, line))
     return results
 

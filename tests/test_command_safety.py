@@ -126,6 +126,20 @@ class CommandSafetyTests(unittest.TestCase):
         offenders = [f"{f.category}:{f.evidence}" for f in findings]
         self.assertEqual(offenders, [], f"QB engine code must obey the argv convention: {offenders}")
 
+    def test_line_counting_is_correct_and_linear(self) -> None:
+        import time
+        # NOTE: the strings below are INPUT DATA fed to the static scanner (it searches
+        # text for injection sinks); nothing here is executed. Correct line numbers
+        # across a multi-line, multi-match input.
+        text = "import os\nos.system('a')\n\neval('b')\nos.system('c')\n"
+        lines = [line for *_rest, line in self.cs.scan_text_for_command_risks(text)]
+        self.assertEqual(sorted(lines), [2, 4, 5])
+        # Linear time: a file with many matches must not blow up (old code was O(n*m)).
+        big = "os.system('x')\n" * 40000
+        start = time.monotonic()
+        self.cs.scan_text_for_command_risks(big)
+        self.assertLess(time.monotonic() - start, 2.0)
+
 
 if __name__ == "__main__":
     unittest.main()

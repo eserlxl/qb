@@ -27,6 +27,7 @@ with two halves:
 
 from __future__ import annotations
 
+import bisect
 import importlib.util
 import os
 import re
@@ -152,9 +153,12 @@ _FIX_STRATEGY = {"high": "propose", "medium": "manual", "low": "manual"}
 def scan_text_for_command_risks(text: str):
     """Return ``[(rule_key, category, severity, confidence, line), ...]`` -- redacted."""
     results = []
+    # Precompute newline offsets once and bisect per match (O(n + m log L) vs the
+    # old O(n*m) per-match prefix count); byte-identical results, same order.
+    newline_offsets = [index for index, char in enumerate(text) if char == "\n"]
     for rule_key, category, severity, confidence, pattern in _RULES:
         for match in pattern.finditer(text):
-            line = text.count("\n", 0, match.start()) + 1
+            line = bisect.bisect_left(newline_offsets, match.start()) + 1
             results.append((rule_key, category, severity, confidence, line))
     return results
 
