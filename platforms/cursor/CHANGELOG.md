@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-15
+
+### Changed
+- Complete analyzer coverage with license-hygiene and config-hygiene analyzers (every producible finding category now has a producer); enforce the earned-autonomy ceiling at the run chokepoint (cold start promotes nothing above A1); minimize the verification subprocess environment so repo code never inherits QB secrets; linear-time secret/command line scanning; plus fail-closed engine hardening (findings redaction, promotion correctness, gate coercion, broadened secret patterns) and per-platform CI-gate parity.
+
 ## [0.9.0] - 2026-06-15
 
 ### Changed

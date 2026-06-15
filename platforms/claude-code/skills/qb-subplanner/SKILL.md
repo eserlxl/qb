@@ -2,7 +2,7 @@
 name: qb-subplanner
 description: Step 2 of the QB planning workflow. Use to decompose every main phase in .qb/main-planning.md into detailed sub-plans under .qb/phase-<n>-plans/ plus sub-planning-index.md. Runs under an explicit goal contract until ALL phases are covered - it does not stop after one phase. Invoke from qb-planner Gate 1 (the orchestrator delegates this step to the qb-subplanner subagent), or run directly to (re)generate sub-plans. Only changes files under .qb/.
 metadata:
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 # QB Sub-Planner (Step 2)
