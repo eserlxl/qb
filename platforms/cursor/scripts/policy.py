@@ -26,7 +26,7 @@ A0, A1, A2, A3 = "A0", "A1", "A2", "A3"
 _LEVELS = (A0, A1, A2, A3)
 _CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # The CLOSED set of permitted top-level policy keys. Unknown key => parse error.
 CLOSED_KEYS = frozenset({
@@ -40,6 +40,12 @@ CLOSED_KEYS = frozenset({
     "allow_commit",
     "allow_push",
     "allow_pr",
+    "budgets",
+})
+
+# Closed set of budget ceiling keys (Phase 4.3 reads these from the policy).
+BUDGET_KEYS = frozenset({
+    "max_findings", "max_fixes", "max_iterations", "max_wall_seconds", "max_tokens",
 })
 
 
@@ -75,6 +81,7 @@ class Policy:
     allow_commit: bool = False
     allow_push: bool = False
     allow_pr: bool = False
+    budgets: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -128,6 +135,16 @@ def parse_policy(data: dict) -> Policy:
         if flag in data and not isinstance(data[flag], bool):
             raise PolicyError(f"{flag} must be a boolean")
 
+    budgets = data.get("budgets", {})
+    if not isinstance(budgets, dict):
+        raise PolicyError("budgets must be a mapping")
+    unknown_budget = set(budgets) - BUDGET_KEYS
+    if unknown_budget:
+        raise PolicyError(f"unknown budget key(s): {sorted(unknown_budget)}")
+    for bkey, bval in budgets.items():
+        if not isinstance(bval, (int, float)) or isinstance(bval, bool) or bval < 0:
+            raise PolicyError(f"budget {bkey} must be a non-negative number")
+
     return Policy(
         schema_version=int(data.get("schema_version", SCHEMA_VERSION)),
         autonomy_level=level,
@@ -139,6 +156,7 @@ def parse_policy(data: dict) -> Policy:
         allow_commit=bool(data.get("allow_commit", False)),
         allow_push=bool(data.get("allow_push", False)),
         allow_pr=bool(data.get("allow_pr", False)),
+        budgets=dict(budgets),
     )
 
 
