@@ -54,9 +54,12 @@ SECRET_PATTERNS = [
     ("openai_api_key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
     ("github_pat", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b")),
     ("github_legacy_pat", re.compile(r"\bghp_[A-Za-z0-9]{20,}\b")),
-    ("aws_access_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    # AWS key IDs share the 16-char [0-9A-Z] body but vary in prefix: AKIA (long-term)
+    # plus ASIA (STS temporary), AGPA/AIDA/ANPA/AROA/AIPA/ANVA (other identity types).
+    ("aws_access_key", re.compile(r"\b(?:AKIA|ASIA|AGPA|AIDA|ANPA|AROA|AIPA|ANVA)[0-9A-Z]{16}\b")),
     ("private_key", re.compile(r"BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY")),
     ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b")),
+    ("stripe_secret_key", re.compile(r"\bsk_(?:live|test)_[A-Za-z0-9]{20,}\b")),
 ]
 
 

@@ -47,12 +47,12 @@ class ValidatorRefactorNonRegressionTests(unittest.TestCase):
     def test_validator_reuses_core_secret_patterns(self) -> None:
         self.assertIs(self.validator.SECRET_PATTERNS, self.core.SECRET_PATTERNS)
 
-    def test_secret_pattern_set_is_the_canonical_six(self) -> None:
+    def test_secret_pattern_set_is_canonical(self) -> None:
         names = [name for name, _ in self.core.SECRET_PATTERNS]
         self.assertEqual(
             names,
             ["openai_api_key", "github_pat", "github_legacy_pat",
-             "aws_access_key", "private_key", "slack_token"],
+             "aws_access_key", "private_key", "slack_token", "stripe_secret_key"],
         )
 
     def test_severity_counter_is_delegated_and_correct(self) -> None:
