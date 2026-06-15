@@ -81,3 +81,23 @@ def frontmatter_name(text: str) -> str | None:
         if line.startswith("name:"):
             return line.split(":", 1)[1].strip()
     return None
+
+
+def frontmatter_version(text: str) -> str | None:
+    """Return the ``metadata: version:`` value from a component's frontmatter, or None.
+
+    Mirrors ``frontmatter_name``'s discipline: only the leading ``---`` block is
+    consulted, and the version is read from the indented ``version:`` line that
+    ``scripts/bump-version.sh`` writes under ``metadata:``. Surrounding quotes are
+    stripped so ``version: "0.8.0"`` and ``version: 0.8.0`` both parse.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        # Indented version line (nested under metadata:); ignore a top-level one.
+        if line[:1] in (" ", "\t") and line.strip().startswith("version:"):
+            return line.split(":", 1)[1].strip().strip('"').strip("'")
+    return None

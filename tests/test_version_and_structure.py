@@ -17,7 +17,15 @@ from __future__ import annotations
 
 import unittest
 
-from tests.qb_monorepo import ALL_PLATFORMS, CLAUDE_CODE, CODEX, CURSOR, REPO_ROOT, load_manifest
+from tests.qb_monorepo import (
+    ALL_PLATFORMS,
+    CLAUDE_CODE,
+    CODEX,
+    CURSOR,
+    REPO_ROOT,
+    frontmatter_version,
+    load_manifest,
+)
 
 VERSION_FILE = REPO_ROOT / "VERSION"
 
@@ -40,6 +48,23 @@ class VersionConsistencyTests(unittest.TestCase):
     def test_manifest_versions_do_not_diverge(self) -> None:
         versions = {load_manifest(p)["version"] for p in ALL_PLATFORMS if p["manifest"].exists()}
         self.assertEqual(len(versions), 1, f"plugin manifest versions diverge: {sorted(versions)}")
+
+    def test_every_skill_frontmatter_version_matches_the_version_file(self) -> None:
+        # scripts/bump-version.sh keeps `metadata: version:` in every platform
+        # SKILL.md in lockstep with VERSION; pin that so frontmatter drift -- a
+        # new skill added without a bump, or a stale value -- fails make check.
+        declared = VERSION_FILE.read_text(encoding="utf-8").strip()
+        skills = sorted((REPO_ROOT / "platforms").rglob("SKILL.md"))
+        if not skills:
+            self.skipTest("no platform SKILL.md files built yet")
+        for skill in skills:
+            with self.subTest(skill=skill):
+                self.assertEqual(
+                    frontmatter_version(skill.read_text(encoding="utf-8")),
+                    declared,
+                    f"{skill} metadata.version != VERSION ({declared}); "
+                    f"run scripts/bump-version.sh --sync",
+                )
 
 
 class StructuralInvariantTests(unittest.TestCase):

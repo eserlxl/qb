@@ -1,6 +1,8 @@
 ---
 name: qb-assess
 description: Subagent-backed Step 1.5 of the QB planning workflow - an existing-project assessment. Use after Step 1 (or directly) to inspect an existing/partially built repository and write .qb/assessment.md, a 13-section technical feedback report that enriches Step 2 sub-plans. Runs automatically for existing/non-empty repositories and is skipped for empty or nearly empty ones. This skill is the spec that the qb-assess subagent follows; only creates/updates .qb/assessment.md.
+metadata:
+  version: "0.8.0"
 ---
 
 # QB Assessment (Step 1.5, subagent-backed)
