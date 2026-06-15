@@ -131,6 +131,11 @@ MAP=(
   "scripts/analyzer_dependency.py|platforms/claude-code/scripts/analyzer_dependency.py"
   "scripts/analyzer_dependency.py|platforms/cursor/scripts/analyzer_dependency.py"
   "scripts/analyzer_dependency.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_dependency.py"
+
+  # shared/scripts/fixer.py
+  "scripts/fixer.py|platforms/claude-code/scripts/fixer.py"
+  "scripts/fixer.py|platforms/cursor/scripts/fixer.py"
+  "scripts/fixer.py|platforms/codex/plugins/qb/skills/qb/scripts/fixer.py"
 )
 
 # Number of distinct shared source files (for the summary line).
