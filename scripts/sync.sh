@@ -181,6 +181,11 @@ MAP=(
   "scripts/qb_headless.py|platforms/claude-code/scripts/qb_headless.py"
   "scripts/qb_headless.py|platforms/cursor/scripts/qb_headless.py"
   "scripts/qb_headless.py|platforms/codex/plugins/qb/skills/qb/scripts/qb_headless.py"
+
+  # shared/scripts/telemetry.py
+  "scripts/telemetry.py|platforms/claude-code/scripts/telemetry.py"
+  "scripts/telemetry.py|platforms/cursor/scripts/telemetry.py"
+  "scripts/telemetry.py|platforms/codex/plugins/qb/skills/qb/scripts/telemetry.py"
 )
 
 # Number of distinct shared source files (for the summary line).
