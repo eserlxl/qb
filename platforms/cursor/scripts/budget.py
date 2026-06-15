@@ -127,8 +127,12 @@ class BudgetMeter:
 
 
 def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
-                enable_a3=False, clock=time.monotonic):
-    """Run findings under budget + kill-switch control. items: [(fix_plan, apply_fn), ...]."""
+                enable_a3=False, telemetry=None, clock=time.monotonic):
+    """Run findings under budget + kill-switch control. items: [(fix_plan, apply_fn), ...].
+
+    ``telemetry`` (prior-run quality record) is threaded to each ``run_finding`` so the
+    declared autonomy level is clamped by the earned ceiling; with no telemetry, the
+    session promotes nothing above A1 (fail-closed)."""
     meter = BudgetMeter(Budget.from_policy(policy), clock=clock)
     results = []
     trigger = "completed"
@@ -146,7 +150,8 @@ def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
         meter.iterations += 1
         meter.findings_considered += 1
         result = _orch.run_finding(policy, repo_root, fix_plan, apply_fn,
-                                   run_id=f"{run_id}-{index}", enable_a3=enable_a3)
+                                   run_id=f"{run_id}-{index}", enable_a3=enable_a3,
+                                   telemetry=telemetry)
         results.append(result)
         if result["outcome"] == "kept":
             meter.fixes_applied += 1

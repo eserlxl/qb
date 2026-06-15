@@ -51,9 +51,23 @@ _policy = _load_sibling("qb_policy", "policy.py")
 _isolation = _load_sibling("qb_isolation", "isolation.py")
 _gate = _load_sibling("qb_verification_gate", "verification_gate.py")
 _cs = _load_sibling("qb_command_safety", "command_safety.py")
+_release = _load_sibling("qb_release_gate", "release_gate.py")
 
 ActionDescriptor = _policy.ActionDescriptor
 evaluate = _policy.evaluate
+
+_LEVEL_RANK = {A0: 0, A1: 1, A2: 2, A3: 3}
+
+
+def _clamp_level(declared: str, earned: str) -> str:
+    """The effective level: a declared level capped by what telemetry has EARNED.
+
+    ``release_gate.permitted_autonomy`` returns A1 or A2 (A2 only with sufficient
+    precision + fix safety; no/insufficient telemetry => A1). So a declared A2/A3 is
+    clamped to A1 until promotion is earned. A3's *deliver* capability is gated
+    separately by the explicit ``enable_a3`` flag, not by telemetry.
+    """
+    return declared if _LEVEL_RANK.get(declared, 0) <= _LEVEL_RANK.get(earned, 1) else earned
 
 
 def _evidence_path(finding) -> str:
@@ -109,9 +123,19 @@ def _promote(isolation, repo_root):
     return promoted
 
 
-def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a3=False, review=None) -> dict:
-    """The single enforcement chokepoint for one finding's fix attempt."""
-    level = policy.autonomy_level
+def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a3=False,
+                review=None, telemetry=None) -> dict:
+    """The single enforcement chokepoint for one finding's fix attempt.
+
+    The declared ``policy.autonomy_level`` is clamped by the EARNED ceiling
+    (``release_gate.permitted_autonomy`` over prior-run ``telemetry``): promotion to
+    the working tree requires the level to be earned, not merely declared. With no
+    telemetry the ceiling is A1, so a cold-start A2/A3 run isolates and verifies but
+    promotes nothing.
+    """
+    declared = policy.autonomy_level
+    earned = _release.permitted_autonomy(telemetry or {})
+    level = _clamp_level(declared, earned)
     finding = fix_plan.finding
     action = ActionDescriptor(
         action_kind="fix",
@@ -120,10 +144,11 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         confidence=getattr(finding, "confidence", "low"),
         target_path=_evidence_path(finding),
     )
-    result = {"level": level, "outcome": None, "reason": None,
-              "promoted": [], "changeset": None, "evidence": None}
+    result = {"level": level, "declared_level": declared, "earned_ceiling": earned,
+              "outcome": None, "reason": None, "promoted": [], "changeset": None, "evidence": None}
 
-    # A0 is report-only: never open isolation, never write.
+    # A0 is report-only: never open isolation, never write. (Only a declared A0 lands
+    # here; the earned ceiling is never below A1, so it never forces report-only.)
     if level == A0:
         result["outcome"] = "report-only"
         result["reason"] = "autonomy-report-only"
@@ -135,7 +160,10 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         result["reason"] = verdict.reason
         return result
 
+    # Promotion caps come from the EFFECTIVE (clamped) level; the A3 deliver/changeset
+    # capability is an explicit declaration (declared A3 + enable_a3), not telemetry-earned.
     caps = SIDE_EFFECT_MATRIX.get(level, SIDE_EFFECT_MATRIX[A0])
+    changeset_capable = SIDE_EFFECT_MATRIX.get(declared, SIDE_EFFECT_MATRIX[A0])["changeset"]
     isolation = _isolation.Isolation(
         repo_root, level=level, run_id=run_id,
         allowlist=list(policy.write_allowlist) or None,
@@ -153,7 +181,7 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
             else:
                 result["outcome"] = "blocked"          # demoted by review; isolation discarded on teardown
                 result["reason"] = decision["reason"]
-        if result["outcome"] == "kept" and caps["changeset"] and enable_a3:
+        if result["outcome"] == "kept" and caps["promote"] and changeset_capable and enable_a3:
             result["changeset"] = {"files": list(result["promoted"]),
                                    "commit_permitted": bool(policy.allow_commit)}
     finally:

@@ -124,6 +124,9 @@ class CrossReviewOrchestratorTests(unittest.TestCase):
             "autonomy_level": "A2", "auto_fixable_categories": ["quality"],
             "default_min_confidence": "medium", "write_allowlist": ["*.txt"]})
 
+    # Telemetry that has earned A2 auto-apply, so the promotion seam is reachable.
+    _EARNED_A2 = {"quality": {"precision_estimate": 0.95, "fix_safety_ok": True}}
+
     def test_review_denied_demotes_at_promotion_seam(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
@@ -131,7 +134,8 @@ class CrossReviewOrchestratorTests(unittest.TestCase):
             result = self.orch.run_finding(
                 self._policy(), repo, self._plan(repo),
                 apply_fn=lambda iso: iso.write_file("style.txt", "clean\n"),
-                run_id="rev-deny", review=lambda finding: {"promote": False, "reason": "cross-review-revert"})
+                run_id="rev-deny", telemetry=self._EARNED_A2,
+                review=lambda finding: {"promote": False, "reason": "cross-review-revert"})
             self.assertEqual(result["outcome"], "blocked")
             self.assertEqual(result["reason"], "cross-review-revert")
             self.assertEqual((repo / "style.txt").read_text(), "messy\n")  # not promoted
@@ -146,7 +150,7 @@ class CrossReviewOrchestratorTests(unittest.TestCase):
             result = self.orch.run_finding(
                 self._policy(), repo, self._plan(repo),
                 apply_fn=lambda iso: iso.write_file("style.txt", "clean\n"),
-                run_id="rev-allow", review=hook)
+                run_id="rev-allow", telemetry=self._EARNED_A2, review=hook)
             self.assertEqual(result["outcome"], "kept")
             self.assertIn("style.txt", result["promoted"])
             self.assertEqual((repo / "style.txt").read_text(), "clean\n")

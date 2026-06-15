@@ -81,12 +81,17 @@ class AutonomyLevelTests(unittest.TestCase):
             "write_allowlist": ["*.txt"],
         })
 
-    def _run(self, level, repo, apply_value="clean\n", enable_a3=False, categories=("quality",)):
+    # Telemetry whose precision + fix-safety have EARNED auto-apply (A2). Promotion
+    # at A2/A3 now requires this; a cold start (telemetry=None) is clamped to A1.
+    _EARNED_A2 = {"quality": {"precision_estimate": 0.95, "fix_safety_ok": True}}
+
+    def _run(self, level, repo, apply_value="clean\n", enable_a3=False,
+             categories=("quality",), telemetry=None):
         plan = self.fixer.plan_fix(self._quality_finding(), repo)
         return self.orch.run_finding(
             self._policy(level, categories), repo, plan,
             apply_fn=lambda iso: iso.write_file("style.txt", apply_value),
-            run_id=level.lower(), enable_a3=enable_a3,
+            run_id=level.lower(), enable_a3=enable_a3, telemetry=telemetry,
         )
 
     def test_a0_reports_and_never_writes(self) -> None:
@@ -112,7 +117,7 @@ class AutonomyLevelTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
             _build_fixture(repo)
-            result = self._run("A2", repo)
+            result = self._run("A2", repo, telemetry=self._EARNED_A2)
             self.assertEqual(result["outcome"], "kept")
             self.assertIn("style.txt", result["promoted"])
             self.assertEqual((repo / "style.txt").read_text(), "clean\n")  # promoted to tree
@@ -121,22 +126,46 @@ class AutonomyLevelTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
             _build_fixture(repo)
-            result = self._run("A2", repo, apply_value="still-messy\n")
+            result = self._run("A2", repo, apply_value="still-messy\n", telemetry=self._EARNED_A2)
             self.assertEqual(result["outcome"], "reverted")
             self.assertEqual(result["promoted"], [])
             self.assertEqual((repo / "style.txt").read_text(), "messy\n")  # unchanged
+
+    def test_unearned_autonomy_is_clamped_to_a1(self) -> None:
+        # A declared A2 whose telemetry has NOT earned auto-apply promotes nothing:
+        # the fix verifies green in isolation (kept) but the working tree is untouched.
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _build_fixture(repo)
+            unearned = {"quality": {"precision_estimate": 0.10, "fix_safety_ok": True}}
+            result = self._run("A2", repo, telemetry=unearned)
+            self.assertEqual(result["outcome"], "kept")
+            self.assertEqual(result["promoted"], [])              # clamped: nothing promoted
+            self.assertEqual(result["earned_ceiling"], "A1")
+            self.assertEqual((repo / "style.txt").read_text(), "messy\n")  # tree untouched
+
+    def test_first_run_with_no_telemetry_is_clamped_to_a1(self) -> None:
+        # No telemetry at all (cold start) is fail-closed: A2 declared, A1 effective.
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _build_fixture(repo)
+            result = self._run("A2", repo, telemetry=None)
+            self.assertEqual(result["outcome"], "kept")
+            self.assertEqual(result["promoted"], [])
+            self.assertEqual(result["earned_ceiling"], "A1")
+            self.assertEqual((repo / "style.txt").read_text(), "messy\n")
 
     def test_a3_changeset_only_when_enabled(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
             _build_fixture(repo)
-            off = self._run("A3", repo, enable_a3=False)
+            off = self._run("A3", repo, enable_a3=False, telemetry=self._EARNED_A2)
             self.assertEqual(off["outcome"], "kept")
             self.assertIsNone(off["changeset"])         # default-off: no changeset
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
             _build_fixture(repo)
-            on = self._run("A3", repo, enable_a3=True)
+            on = self._run("A3", repo, enable_a3=True, telemetry=self._EARNED_A2)
             self.assertIsNotNone(on["changeset"])
             self.assertFalse(on["changeset"]["commit_permitted"])  # commit still gated by policy
 
