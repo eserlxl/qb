@@ -91,14 +91,14 @@ Each platform is correct *for its own host*: all three install under the plugin 
 
 ### Installing each platform
 
-**Claude Code** — add the platform package as a Claude Code marketplace, then install it:
+**Claude Code** — add the marketplace from GitHub, then install it:
 
 ```text
-/plugin marketplace add /absolute/path/to/qb/platforms/claude-code
-/plugin install qb
+/plugin marketplace add eserlxl/qb
+/plugin install qb@eserlxl
 ```
 
-Then run `/qb-plan` in your project.
+(For a local checkout, point `/plugin marketplace add` at the `platforms/claude-code` directory instead.) Then run `/qb-plan` in your project.
 
 **Cursor** — symlink or copy the platform package, reload Cursor, then run `/qb-plan`:
 

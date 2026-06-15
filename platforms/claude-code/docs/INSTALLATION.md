@@ -16,14 +16,16 @@ marketplace and install the plugin from it.
 Run these in Claude Code:
 
 ```text
-/plugin marketplace add <path-or-repo>
-/plugin install qb
+/plugin marketplace add eserlxl/qb
+/plugin install qb@eserlxl
 ```
 
-- `<path-or-repo>` is either a local checkout directory (for example
-  `/absolute/path/to/QB`) or a Git repository reference. The plugin lives
-  at the repository root (`"source": "./"`), so point the marketplace at the
-  repository, not a subfolder.
+- From the **monorepo** (`eserlxl/qb`), the root `.claude-plugin/marketplace.json`
+  registers the `qb` plugin with `source: "./platforms/claude-code"`, so point the
+  marketplace at the repository, not a subfolder.
+- For a **local checkout**, point `/plugin marketplace add` at this package's
+  directory (`/absolute/path/to/qb/platforms/claude-code`) instead of the repo
+  reference.
 - After installation, start a fresh chat so the skills, commands, and subagents
   are loaded into context.
 

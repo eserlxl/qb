@@ -52,14 +52,14 @@ It pauses for your explicit approval at every step. No CLI, no API key, no setup
 
 ## Quick start
 
-**1. Install** — add this platform package to Claude Code from its marketplace manifest:
+**1. Install** — add the marketplace from GitHub, then install it:
 
 ```text
-/plugin marketplace add /absolute/path/to/qb/platforms/claude-code
-/plugin install qb
+/plugin marketplace add eserlxl/qb
+/plugin install qb@eserlxl
 ```
 
-If you are using a standalone Claude Code package checkout instead of this monorepo, point `/plugin marketplace add` at that package root.
+To install from a local checkout instead, point `/plugin marketplace add` at this package's `platforms/claude-code` directory (or, for a standalone package checkout, at that package root).
 
 **2. Plan** — open Claude Code in your project and run:
 
