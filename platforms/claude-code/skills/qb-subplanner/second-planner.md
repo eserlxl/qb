@@ -5,17 +5,10 @@ You are executing Step 2 of a multi-step project planning workflow.
 Your job:
 Read .qb/main-planning.md in detail, extract the main phase roadmap from it, and create detailed sub-planning documents for each main phase.
 
-This is a planning-only task.
-Do not implement product features.
-Do not refactor code.
-Do not modify source code.
-Do not install dependencies.
-Do not run destructive commands.
-Do not run networked mutation commands.
-Do not commit changes.
-Do not push branches.
-Do not open pull requests.
-Do not write secrets, credentials, tokens, private keys, local environment values, or sensitive machine-specific data into any planning file.
+This is a planning-only task. Do not implement features, refactor or modify source
+code, install dependencies, run destructive or networked-mutation commands, commit,
+push, or open pull requests. Never write secrets, credentials, tokens, private keys,
+local environment values, or sensitive machine-specific data into any planning file.
 
 Allowed file changes:
 You may only create or update files under:
@@ -36,13 +29,10 @@ If it exists, read this file fully before generating sub-plans:
 
 autopsy.md is not a replacement for main-planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when autopsy.md is absent.
 
-You must not invent a new master plan.
-You must not replace the main plan.
-You must not change the phase order unless the main plan is internally inconsistent, and even then you must preserve the original order while documenting the inconsistency in the generated index.
-
-Step 1 produced the high-level master plan.
-Step 1.5 may have produced an existing-project autopsy report.
-Step 2 must now decompose that master plan into detailed sub-plans, incorporating autopsy.md feedback when that file exists.
+Do not invent or replace the master plan, and do not change the phase order unless the
+main plan is internally inconsistent — even then, preserve the original order and
+document the inconsistency in the generated index. Step 2 decomposes the Step 1 master
+plan into detailed sub-plans, incorporating autopsy.md feedback when that file exists.
 
 Expected output structure:
 
@@ -112,8 +102,8 @@ Run only safe read-only commands such as:
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, test files, config examples, service skeletons, package skeletons, and policy files if present
 
-You may use ripgrep/grep for discovery:
-- rg "Phase|Phase|roadmap|plan|architecture|maturity|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|API|database|Postgres|queue|artifact|approval|review|risk|acceptance|Linear|GitHub|Temporal|LangGraph|LiteLLM|Codex|OpenCode|Claude|Gemini" .
+You may use ripgrep/grep for discovery, e.g. searching for phase/roadmap/architecture,
+readiness/production, security/policy, API/database/queue, and test/CI/artifact terms.
 
 If .qb/main-planning.md is missing:
 - Do not attempt full Step 2 decomposition.
@@ -418,18 +408,10 @@ Include:
 
 Quality requirements:
 
-The generated sub-plans must be:
-- grounded in main-planning.md;
-- grounded in repository evidence where available;
-- sequential and realistic;
-- detailed enough for Step 3 implementation-task decomposition;
-- not generic templates;
-- not over-fragmented;
-- not implementation code;
-- explicit about uncertainty;
-- explicit about local vs live readiness;
-- explicit about security and operational boundaries;
-- useful for a senior engineering team.
+Generated sub-plans must be grounded in main-planning.md and repository evidence,
+sequential and realistic, detailed enough for Step 3 task decomposition, explicit about
+uncertainty and about local-vs-live readiness and security/operational boundaries — not
+generic templates, not over-fragmented, and not implementation code.
 
 Important planning principles:
 
@@ -483,51 +465,21 @@ If blocked:
 
 Validation after writing:
 
-After generating all files:
-
-1. Run:
-   find .qb -maxdepth 3 -type f | sort
-
-2. Verify all generated folders and files exist.
-
-3. Read back:
-   .qb/sub-planning-index.md
-
-4. Sample-read at least one generated sub-plan per phase.
-
-5. Check that all required section headings exist in each sampled sub-plan.
-
-6. Run:
-   git diff -- .qb
-
-7. Run:
-   git status --short
-
-8. Confirm no files outside .qb were modified.
-
-9. Check generated docs for obvious secret leakage:
-   - do not print secret values;
-   - do not include tokens;
-   - do not include local private endpoint credentials;
-   - do not include private keys.
+After generating all files: list `.qb` (`find .qb -maxdepth 3 -type f | sort`) and
+confirm every folder/file exists; read back .qb/sub-planning-index.md; sample-read at
+least one sub-plan per phase and confirm all required section headings are present; run
+`git diff -- .qb` and `git status --short` to confirm only .qb/ changed; and check that
+no secret values, tokens, private endpoint credentials, or private keys leaked into any
+generated doc.
 
 Final response requirements:
 
-After completion, provide a concise final summary in English.
+After completion, give a concise English summary: whether Step 2 succeeded or was
+blocked; main phases detected; sub-plan files created/updated and folders created; the
+index location; the recommended first sub-plan to execute next; any blockers,
+ambiguities, or assumptions; and confirmation that only .qb/ was modified (or a list of
+any unexpected modifications).
 
-Include:
-- whether Step 2 succeeded or was blocked;
-- how many main phases were detected;
-- how many sub-plan files were created or updated;
-- which folders were created;
-- where the index file is;
-- the recommended first sub-plan to execute next;
-- any blockers, ambiguities, or assumptions;
-- confirmation that only .qb/ was modified, or explicitly list any unexpected modifications.
-
-Remember:
-Only create or modify files under .qb/.
-Do not modify source code.
-Do not modify main-planning.md unless absolutely necessary, and by default do not change it.
-Do not create implementation files.
-Do not commit, push, install, deploy, or open PRs.
+Remember: only create or update files under .qb/, never modify source code or create
+implementation files, by default do not change main-planning.md, and do not commit,
+push, install, deploy, or open PRs.

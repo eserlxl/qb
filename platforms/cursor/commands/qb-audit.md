@@ -11,6 +11,6 @@ automatically as a Cursor goal via the `define-goal` skill - no manual "Follow t
 Use this to (re)audit the current `.qb/` sub-plans - for example after applying
 repairs from a previous `PASS_WITH_WARNINGS` result. The skill reads
 `.qb/main-planning.md`, `.qb/sub-planning-index.md`, and every
-`.qb/Phase-*-Plans/*.md`, then produces only `.qb/sub-planning-audit.md`
+`.qb/phase-*-plans/*.md`, then produces only `.qb/sub-planning-audit.md`
 (in English) and returns a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. It never edits the
 plans themselves.

@@ -1,6 +1,6 @@
 ---
 name: qb-auditor
-description: Use for QB Step 3 - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Invoked by the qb-planner orchestrator via the Task tool (or run in-session as fallback) to verify that .qb/Phase-*-Plans/*.md and sub-planning-index.md are faithful to main-planning.md, complete, ordered, well-structured, and ready for implementation. Runs until every phase and sub-plan is inspected; produces only .qb/sub-planning-audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Never fixes plan files.
+description: Use for QB Step 3 - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Invoked by the qb-planner orchestrator via the Task tool (or run in-session as fallback) to verify that .qb/phase-*-plans/*.md and sub-planning-index.md are faithful to main-planning.md, complete, ordered, well-structured, and ready for implementation. Runs until every phase and sub-plan is inspected; produces only .qb/sub-planning-audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Never fixes plan files.
 tools: Read, Grep, Glob, Write, Edit, Bash
 ---
 
@@ -31,7 +31,7 @@ Cover every phase and every sub-plan before stopping.
 ## Sources of truth
 
 - Read-only: `.qb/main-planning.md`, `.qb/sub-planning-index.md`, and every
-  `.qb/Phase-*-Plans/*.md` in the user's active workspace (cwd).
+  `.qb/phase-*-plans/*.md` in the user's active workspace (cwd).
 - Only writable file: `.qb/sub-planning-audit.md` in the user's workspace. Do not modify any
   plan file, the index, the master plan, source, config, tests, or scripts.
 - Language: the audit report is written in English.
@@ -48,7 +48,7 @@ Cover every phase and every sub-plan before stopping.
 
 Run the bundled validator for this step and fold its output into the audit as concrete findings:
 `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --strict` (fallback:
-inventory with `find .qb -path "*/Phase-*-Plans/*.md" | sort` and check headings manually,
+inventory with `find .qb -path "*/phase-*-plans/*.md" | sort` and check headings manually,
 then state plainly that the validator was unavailable). Treat validator errors (coverage gaps,
 naming/numbering issues, index mismatches, structure problems, secrets) as audit findings and cite
 them in the relevant audit sections.
@@ -56,7 +56,7 @@ them in the relevant audit sections.
 ## Continuation loop (this is what prevents early exit)
 
 1. Inventory all phase folders and sub-plan files
-   (`find .qb -path "*/Phase-*-Plans/*.md" | sort`).
+   (`find .qb -path "*/phase-*-plans/*.md" | sort`).
 2. Audit each phase and each sub-plan against `main-planning.md` and the 13-section requirement -
    coverage, order, naming, index accuracy, section structure, content quality, scope drift,
    readiness realism, and security/governance.
@@ -78,7 +78,7 @@ them in the relevant audit sections.
 ## Blocked conditions (still write the report)
 
 Following `third-planner.md`: if `main-planning.md` is missing, `sub-planning-index.md` is missing, or
-no `Phase-*-Plans/*.md` files exist, still create `sub-planning-audit.md`, mark the status `BLOCKED`,
+no `phase-*-plans/*.md` files exist, still create `sub-planning-audit.md`, mark the status `BLOCKED`,
 explain what is missing and the minimal next action, and stop.
 
 ## Completion report

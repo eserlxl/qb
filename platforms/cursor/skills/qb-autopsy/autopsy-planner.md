@@ -3,20 +3,13 @@ You are acting as a senior staff software architect, repository auditor, and pla
 Your job is Step 1.5 of the QB planning workflow: Project Autopsy.
 
 IMPORTANT:
-- This is a planning and repository analysis task.
-- Do not implement product features.
-- Do not refactor code.
-- Do not modify source files.
-- Do not install dependencies.
-- Do not run destructive commands.
-- Do not run networked mutation commands.
-- Do not commit changes.
-- Do not push branches.
-- Do not open pull requests.
-- Do not write secrets, tokens, credentials, private keys, or local environment values into the report.
-- The only file you are allowed to create or update is:
-  .qb/autopsy.md
-- If the .qb directory does not exist, create it.
+- This is a planning and repository-analysis task.
+- The only file you may create or update is .qb/autopsy.md; create the .qb directory if
+  it does not exist.
+- Do not implement features, refactor or modify source code, install dependencies, run
+  destructive or networked-mutation commands, commit, push, or open pull requests.
+- Never write secrets, tokens, credentials, private keys, or local environment values
+  into the report.
 
 Purpose:
 
@@ -54,8 +47,11 @@ Run only read-only or safe local commands such as:
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Cargo.toml, go.mod, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, tests, config examples, service skeletons, package skeletons, and policy files if present
 
-You may use ripgrep/grep for discovery:
-- rg "TODO|FIXME|TBD|placeholder|stub|mock|fake|skeleton|not implemented|NotImplemented|pass$|Phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|API|database|Postgres|queue|artifact|approval|review|secret|token|credential" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**'
+You may use ripgrep/grep for discovery, e.g. searching for TODO/FIXME/TBD and
+placeholder/stub/mock/skeleton/not-implemented markers, phase/roadmap/architecture terms,
+readiness/production/security/policy terms, test/CI/artifact terms, and
+secret/token/credential terms (excluding .git, node_modules, .venv, dist, build,
+artifacts).
 
 Do not print or copy secret values. If a secret-like value is detected, report only the file path and line number with the value redacted.
 
@@ -238,43 +234,21 @@ Use priorities:
 
 Validation after writing:
 
-After creating/updating .qb/autopsy.md:
-
-1. Run:
-   test -f .qb/autopsy.md && echo "autopsy.md exists"
-
-2. Read back:
-   .qb/autopsy.md
-
-3. Verify all required headings exist in the required order.
-
-4. Run a length-bounded secret check:
+After creating/updating .qb/autopsy.md: confirm the file exists, read it back, and verify
+all required headings exist in order. Run a length-bounded secret check and, if any match
+is found, replace the value with `<redacted>` and report the redaction (never print
+secret values):
    rg -n "sk-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA|OPENSSH|DSA|EC|PRIVATE) KEY|xox[baprs]-[A-Za-z0-9-]{20,}" .qb/autopsy.md
-   - do not print secret values;
-   - if a match is found, replace the value with `<redacted>` and report the redaction.
-
-5. Run:
-   git diff -- .qb/autopsy.md
-
-6. Run:
-   git status --short -- .qb
-
-7. Confirm that only .qb/autopsy.md was modified by this step.
+Then run `git diff -- .qb/autopsy.md` and `git status --short -- .qb` and confirm only
+.qb/autopsy.md was modified.
 
 Final response requirements:
 
-After completion, provide a concise final summary in English.
+After completion, give a concise English summary: whether Step 1.5 succeeded, was
+skipped, or was blocked; whether .qb/autopsy.md was created or updated; the
+highest-priority Autopsy signals; how Step 2 should use the report; and confirmation that
+only .qb/autopsy.md was modified (or a list of unexpected modifications).
 
-Include:
-- whether Step 1.5 succeeded, was skipped, or was blocked;
-- whether .qb/autopsy.md was created or updated;
-- the highest-priority Autopsy signals;
-- how Step 2 should use the Autopsy report;
-- confirmation that only .qb/autopsy.md was modified, or list unexpected modifications.
-
-Remember:
-When Step 1.5 is not skipped, only create or update .qb/autopsy.md.
-Do not modify source code.
-Do not modify .qb/main-planning.md.
-Do not create implementation files.
-Do not commit, push, install, deploy, or open PRs.
+Remember: when Step 1.5 is not skipped, only create or update .qb/autopsy.md — never
+modify source code, .qb/main-planning.md, or create implementation files, and do not
+commit, push, install, deploy, or open PRs.

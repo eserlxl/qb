@@ -3,21 +3,13 @@ You are acting as a senior staff software architect, technical program planner, 
 Your job is Step 1 of a multi-step project planning workflow.
 
 IMPORTANT:
-- This is a planning and repository analysis task.
-- Do not implement product features.
-- Do not refactor code.
-- Do not modify source files.
-- The only file you are allowed to create or update is:
-  .qb/main-planning.md
-- If the .qb directory does not exist, create it.
-- Do not create additional planning files.
-- Do not install dependencies.
-- Do not run destructive commands.
-- Do not run networked mutation commands.
-- Do not commit changes.
-- Do not push branches.
-- Do not open pull requests.
-- Do not write secrets, tokens, credentials, private keys, or local environment values into the plan.
+- This is a planning and repository-analysis task.
+- The only file you may create or update is .qb/main-planning.md; create the .qb
+  directory if it does not exist, and do not create additional planning files.
+- Do not implement features, refactor or modify source code, install dependencies, run
+  destructive or networked-mutation commands, commit, push, or open pull requests.
+- Never write secrets, tokens, credentials, private keys, or local environment values
+  into the plan.
 
 Project context to use:
 
@@ -109,8 +101,9 @@ Run only read-only or safe local commands such as:
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, test files, and config examples if present
 
-You may use ripgrep/grep to discover important project markers:
-- rg "TODO|FIXME|Phase|phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|Linear|GitHub|Temporal|LangGraph|LiteLLM|Codex|OpenCode|Claude|Gemini|API|database|Postgres|queue|artifact|approval|review" .
+You may use ripgrep/grep to discover project markers, e.g. TODO/FIXME, phase/roadmap/
+architecture/runbook, readiness/production, security/policy, test/smoke/CI, and
+API/database/queue/artifact terms.
 
 If the repo is empty or almost empty:
 - Do not fail.
@@ -297,46 +290,25 @@ Do not include secrets or environment values.
 
 Quality bar:
 
-The generated plan must be:
-- grounded in actual repository evidence;
-- useful for a senior engineering team;
-- realistic;
-- explicit about uncertainty;
-- not a generic startup/project template;
-- not just a summary of files;
-- not an implementation plan yet;
-- detailed enough to guide Step 2;
-- concise enough to be maintainable.
+The generated plan must be grounded in actual repository evidence, realistic, explicit
+about uncertainty, detailed enough to guide Step 2 yet concise enough to maintain — not a
+generic template, not just a file summary, and not an implementation plan yet.
 
 Important behavior:
 
-If you find severe blockers, call them out clearly.
-
-If the repo has many docs but little live functionality, say that plainly.
-
-If tests exist but do not prove live readiness, distinguish that.
-
-If CI/local smoke exists, describe what it proves and what it does not prove.
-
-If the project is already advanced in some areas, preserve that progress and plan from there.
-
-Always use the exact required artifact filenames the validator expects (e.g. .qb/main-planning.md); do not invent alternate spellings or rename generated files unless instructed.
+Call out severe blockers clearly. Say plainly when the repo has many docs but little live
+functionality, when tests do not prove live readiness, and what CI/local smoke does and
+does not prove. Where the project is already advanced, preserve that progress and plan
+from there. Always use the exact artifact filenames the validator expects (e.g.
+.qb/main-planning.md); do not invent alternate spellings or rename generated files unless
+instructed.
 
 Validation after writing:
 
-After creating/updating .qb/main-planning.md:
-1. Read the file back.
-2. Check that all required top-level sections exist.
-3. Check that the document is in English.
-4. Check that it does not contain secrets.
-5. Run git diff -- .qb/main-planning.md and review the diff.
-6. Provide a final concise summary of:
-   - what file was changed;
-   - what current-state conclusion was reached;
-   - how many high-level phases were proposed;
-   - what the most important next action is;
-   - any uncertainties or blockers.
+After creating/updating .qb/main-planning.md: read it back; confirm all required
+top-level sections exist, the document is in English, and it contains no secrets; run
+`git diff -- .qb/main-planning.md` and review it; then give a concise summary of the file
+changed, the current-state conclusion, how many high-level phases were proposed, the most
+important next action, and any uncertainties or blockers.
 
-Remember:
-Only create or modify .qb/main-planning.md.
-Do not modify anything else.
+Remember: only create or modify .qb/main-planning.md; do not modify anything else.

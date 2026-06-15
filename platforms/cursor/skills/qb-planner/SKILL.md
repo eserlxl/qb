@@ -14,7 +14,7 @@ Step-1 intake, and the gates; it delegates the long autonomous steps to the goal
 Step 1   repo-aware intake -> First-Planner -> main-planning.md       (interactive)   [validator step1]
 Step 1.5 qb-autopsy  -> autopsy.md (existing projects only)    (goal-backed)    [validator step2 autopsy]
  Gate 1 feedback (main-planning + Autopsy) + approve
-Step 2   qb-subplanner -> Phase-*-Plans/ + sub-planning-index.md  (goal-backed)    [validator step2]
+Step 2   qb-subplanner -> phase-*-plans/ + sub-planning-index.md  (goal-backed)    [validator step2]
  Gate 2 audit approval
 Step 3   qb-auditor     -> sub-planning-audit.md                (goal-backed)    [validator step3]
  Repair PASS_WITH_WARNINGS -> targeted fixes -> re-audit
@@ -131,7 +131,7 @@ Canonical goal text, referencing the bundled spec by its real co-located path:
 - Step 2 (`qb-subplanner`, spec `second-planner.md`):
   > Run Step 2 per the qb-subplanner skill's second-planner.md spec. Read all main phases in .qb/main-planning.md; if .qb/autopsy.md exists, read it fully as supporting feedback and account for it in the sub-plans. For each phase, create phase-<n>-plans folders under .qb and phase-<n>.<m>-*.md detailed sub-plan files. Do not stop until all phases are covered. Change only files under .qb.
 - Step 3 (`qb-auditor`, spec `third-planner.md`):
-  > Run Step 3 per the qb-auditor skill's third-planner.md spec. Audit .qb/main-planning.md, sub-planning-index.md, and all Phase-*-Plans/*.md files; analyze main-phase coverage, file naming, ordering, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan file; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans are reviewed.
+  > Run Step 3 per the qb-auditor skill's third-planner.md spec. Audit .qb/main-planning.md, sub-planning-index.md, and all phase-*-plans/*.md files; analyze main-phase coverage, file naming, ordering, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan file; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans are reviewed.
 
 ## Gate 1 - feedback, then approve Step 2
 

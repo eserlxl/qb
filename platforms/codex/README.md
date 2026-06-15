@@ -27,7 +27,7 @@ This package is the Codex platform build of QB. The planner prompts, reference d
 | --- | --- | --- |
 | 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `.qb/main-planning.md` |
 | 1.5 Autopsy | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `.qb/autopsy.md` |
-| 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `.qb/sub-planning-index.md`, `.qb/Phase-*-Plans/*.md` |
+| 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `.qb/sub-planning-index.md`, `.qb/phase-*-plans/*.md` |
 | 3. QA Audit | Audits coverage, structure, quality, readiness, and governance without repairing files. | `.qb/sub-planning-audit.md` |
 | 4. Gated Handoff | Prints a copy-ready implementation Goal prompt when Step 3 passes. | Text-only Goal mode prompt |
 

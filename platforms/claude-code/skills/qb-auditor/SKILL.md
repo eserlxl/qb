@@ -1,6 +1,6 @@
 ---
 name: qb-auditor
-description: Goal-backed Step 3 of the QB planning workflow - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Use to verify that .qb/Phase-*-Plans/*.md and sub-planning-index.md are faithful to main-planning.md, complete, ordered, well-structured, and ready for implementation. Delegated automatically to the qb-auditor subagent via the Task tool and runs until every phase and sub-plan is inspected; produces only .qb/sub-planning-audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Safe to run standalone for re-audits.
+description: Goal-backed Step 3 of the QB planning workflow - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Use to verify that .qb/phase-*-plans/*.md and sub-planning-index.md are faithful to main-planning.md, complete, ordered, well-structured, and ready for implementation. Delegated automatically to the qb-auditor subagent via the Task tool and runs until every phase and sub-plan is inspected; produces only .qb/sub-planning-audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Safe to run standalone for re-audits.
 ---
 
 # QB Auditor (Step 3, goal-backed)
@@ -14,7 +14,7 @@ covers every phase and every sub-plan before stopping.
 - **In-session, zero-setup.** Read the full Step-3 specification from `third-planner.md`
   (next to this skill) and follow it end to end. Do not inline its full text into chat.
 - **Sources of truth (read-only):** `.qb/main-planning.md`,
-  `.qb/sub-planning-index.md`, and every `.qb/Phase-*-Plans/*.md` in the user's
+  `.qb/sub-planning-index.md`, and every `.qb/phase-*-plans/*.md` in the user's
   active workspace (cwd).
 - **Only writable file:** `.qb/sub-planning-audit.md` in the user's workspace. Do not
   modify any plan file, the index, the master plan, source, config, tests, or scripts.
@@ -56,13 +56,13 @@ bounds, stop condition) as the subagent's task brief, together with the absolute
 
 Run the bundled validator and fold its output into the audit as concrete findings:
 `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --strict`
-(fallback: inventory with `find .qb -path "*/Phase-*-Plans/*.md" | sort` and check headings
+(fallback: inventory with `find .qb -path "*/phase-*-plans/*.md" | sort` and check headings
 manually). Treat validator errors (coverage gaps, naming/numbering issues, index mismatches,
 structure problems, secrets) as audit findings and cite them in the relevant audit sections.
 
 ## Continuation loop (this is what prevents early exit)
 
-1. Inventory all phase folders and sub-plan files (`find .qb -path "*/Phase-*-Plans/*.md" | sort`).
+1. Inventory all phase folders and sub-plan files (`find .qb -path "*/phase-*-plans/*.md" | sort`).
 2. Audit each phase and each sub-plan against `main-planning.md` and the 13-section requirement -
    coverage, order, naming, index accuracy, section structure, content quality, scope drift,
    readiness realism, and security/governance.
@@ -84,7 +84,7 @@ structure problems, secrets) as audit findings and cite them in the relevant aud
 ## Blocked conditions (still write the report)
 
 Following `third-planner.md`: if `main-planning.md` is missing, `sub-planning-index.md` is missing,
-or no `Phase-*-Plans/*.md` files exist, still create `sub-planning-audit.md`, mark the status
+or no `phase-*-plans/*.md` files exist, still create `sub-planning-audit.md`, mark the status
 `BLOCKED`, explain what is missing and the minimal next action, and stop.
 
 ## Output and handoff

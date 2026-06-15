@@ -14,40 +14,26 @@ Audit and analyze the Step 2 sub-planning output.
 
 This is a quality-control, coverage, consistency, and readiness audit task.
 
-Do not implement product features.
-Do not refactor code.
-Do not modify source code.
-Do not install dependencies.
-Do not run destructive commands.
-Do not run networked mutation commands.
-Do not commit changes.
-Do not push branches.
-Do not open pull requests.
-Do not write secrets, credentials, tokens, private keys, local environment values, or sensitive machine-specific data into any file.
+Do not implement features, refactor or modify source code, install dependencies, run
+destructive or networked-mutation commands, commit, push, or open pull requests. Never
+write secrets, credentials, tokens, private keys, local environment values, or sensitive
+machine-specific data into any file.
 
 Allowed file changes:
 You may only create or update this file:
 
 .qb/sub-planning-audit.md
 
-Do not modify:
-- .qb/main-planning.md
-- .qb/sub-planning-index.md
-- any .qb/Phase-*-Plans/*.md file
-- any source code
-- any config
-- any tests
-- any scripts
-- any docs outside .qb/sub-planning-audit.md
-
-If you find problems, do not fix them directly.
-Instead, report them clearly in .qb/sub-planning-audit.md with recommended remediation actions.
+Do not modify .qb/main-planning.md, .qb/sub-planning-index.md, any
+.qb/phase-*-plans/*.md file, or any source code, config, tests, scripts, or docs outside
+.qb/sub-planning-audit.md. If you find problems, do not fix them directly — report them
+clearly in .qb/sub-planning-audit.md with recommended remediation actions.
 
 Primary sources of truth:
 
 1. .qb/main-planning.md
 2. .qb/sub-planning-index.md
-3. .qb/Phase-*-Plans/*.md
+3. .qb/phase-*-plans/*.md
 
 main-planning.md is the master plan.
 sub-planning-index.md and all sub-plan files must be checked against it.
@@ -67,13 +53,12 @@ Run only safe read-only commands such as:
 - find .qb -maxdepth 4 -type f | sort
 - cat .qb/main-planning.md
 - cat .qb/sub-planning-index.md
-- find .qb -path "*/Phase-*-Plans/*.md" -type f | sort
+- find .qb -path "*/phase-*-plans/*.md" -type f | sort
 - grep/ripgrep commands for headings and phase markers
 
-Useful discovery commands:
-- rg "^#|^##|Phase|Phase|Maturity|Acceptance|Risk|Dependency|Validation|Test|Desired|Scope|Out of Scope|Current Repository Evidence|Planned Work Breakdown" .qb
-- rg "TODO|FIXME|TBD|unclear|missing|later|future|assumption|blocked|blocker|risk|secret|token|credential|production|live|local|readiness" .qb
-- rg "docs/|.qb/|main-planning|Sub-Planning|Phase-" .qb
+Useful discovery: ripgrep .qb for section headings and phase markers, for
+TODO/FIXME/TBD/unclear/missing/blocker/risk markers, and for secret/credential/readiness
+terms.
 
 If .qb/main-planning.md is missing:
 - Create .qb/sub-planning-audit.md.
@@ -85,10 +70,10 @@ If .qb/sub-planning-index.md is missing:
 - Create .qb/sub-planning-audit.md.
 - Mark the audit status as BLOCKED.
 - Explain that Step 3 cannot audit Step 2 index coverage without sub-planning-index.md.
-- Still inspect any Phase-*-Plans folders if present.
+- Still inspect any phase-*-plans folders if present.
 - Stop after writing the blocker audit.
 
-If no .qb/Phase-*-Plans/*.md files exist:
+If no .qb/phase-*-plans/*.md files exist:
 - Create .qb/sub-planning-audit.md.
 - Mark the audit status as BLOCKED.
 - Explain that Step 2 appears incomplete or missing.
@@ -107,9 +92,9 @@ You must evaluate:
 2. Phase order consistency
 - Generated folders must preserve the phase order from main-planning.md.
 - Sub-plan numbering must be sequential within each phase.
-- Detect gaps such as Phase2.1, Phase2.3 with missing Phase2.2.
-- Detect duplicates such as two Phase3.1 files.
-- Detect inconsistent numbering such as phase-2-plans containing Phase3.1 files.
+- Detect gaps such as phase-2.1, phase-2.3 with missing phase-2.2.
+- Detect duplicates such as two phase-3.1 files.
+- Detect inconsistent numbering such as phase-2-plans containing phase-3.1 files.
 
 3. Naming convention compliance
 Expected folder format:
@@ -458,75 +443,32 @@ End with:
 
 Validation after writing the audit:
 
-After creating/updating .qb/sub-planning-audit.md:
-
-1. Read the file back.
-
-2. Run:
-   find .qb -maxdepth 4 -type f | sort
-
-3. Run:
-   git diff -- .qb/sub-planning-audit.md
-
-4. Run:
-   git status --short
-
-5. Confirm whether only .qb/sub-planning-audit.md changed.
-
-6. If any file outside .qb/sub-planning-audit.md changed, report it as unexpected and do not attempt to fix unless explicitly asked.
+After creating/updating .qb/sub-planning-audit.md: read it back; run
+`find .qb -maxdepth 4 -type f | sort`, `git diff -- .qb/sub-planning-audit.md`, and
+`git status --short`; and confirm only .qb/sub-planning-audit.md changed. If any other
+file changed, report it as unexpected and do not fix it unless explicitly asked.
 
 Goal-following behavior:
 
-This is a long audit task. Continue until the audit is complete.
+This is a long audit task — do not stop after only one phase. You may stop only when:
 
-Do not stop after checking only one phase.
+A. Success: .qb/sub-planning-audit.md exists and you have checked main-planning.md
+coverage, sub-planning-index.md consistency, all phase folders, all sub-plan files,
+required section structure, naming/ordering, Step 4 readiness, the prioritized fix list,
+and git status.
 
-Use this stopping rule:
-
-You may stop only when one of the following is true:
-
-A. Success:
-- .qb/sub-planning-audit.md exists;
-- main-planning.md coverage was checked;
-- sub-planning-index.md consistency was checked;
-- all detected phase folders were inspected;
-- all detected sub-plan files were inventoried;
-- required section structure was checked;
-- naming/order issues were checked;
-- Step 4 readiness was assessed;
-- prioritized fixes were listed;
-- git status was checked.
-
-B. Blocked:
-- .qb/main-planning.md is missing;
-- .qb/sub-planning-index.md is missing;
-- no sub-plan files exist;
-- repository access/read errors prevent audit.
-
-If blocked:
-- still create .qb/sub-planning-audit.md;
-- mark status BLOCKED;
-- explain the blocker;
-- provide the minimal next action;
-- stop.
+B. Blocked: .qb/main-planning.md or .qb/sub-planning-index.md is missing, no sub-plan
+files exist, or read errors prevent the audit. If blocked, still create
+.qb/sub-planning-audit.md, mark status BLOCKED, explain the blocker and the minimal next
+action, then stop.
 
 Final response requirements:
 
-After completion, provide a concise final summary in English.
+After completion, give a concise English summary: audit status; main phases detected;
+sub-plan files inspected; P0/P1/P2/P3 finding counts; whether Step 4 can begin; the most
+important fix (if any); the recommended next prompt direction; and confirmation that only
+.qb/sub-planning-audit.md was modified (or a list of unexpected modifications).
 
-Include:
-- audit status;
-- number of main phases detected;
-- number of sub-plan files inspected;
-- number of P0/P1/P2/P3 findings;
-- whether Step 4 can begin;
-- the most important fix, if any;
-- the recommended next prompt direction;
-- confirmation that only .qb/sub-planning-audit.md was modified, or list unexpected modifications.
-
-Remember:
-This is an audit and analysis step.
-Do not fix the sub-plans.
-Do not create new phase plans.
-Do not change the master plan.
-Only create or update .qb/sub-planning-audit.md.
+Remember: this is an audit-and-analysis step — do not fix the sub-plans, create new
+phase plans, or change the master plan. Only create or update
+.qb/sub-planning-audit.md.

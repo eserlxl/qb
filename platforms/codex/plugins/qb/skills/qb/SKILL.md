@@ -121,7 +121,7 @@ After Step 2 is complete, ask whether the user wants to continue to Step 3. If y
 ```text
 Use $qb. Run Step 3 according to references/Third-Planner.md.
 
-Audit .qb/main-planning.md, .qb/sub-planning-index.md, and .qb/Phase-*-Plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans have been reviewed.
+Audit .qb/main-planning.md, .qb/sub-planning-index.md, and .qb/phase-*-plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans have been reviewed.
 ```
 
 When executing Step 3 directly:
