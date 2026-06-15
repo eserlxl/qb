@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   single deterministic result line (`QB_PLAN_AUTO_OK:` / `QB_PLAN_AUTO_ERROR:`) so an external
   caller such as planwright can detect success. Auto mode writes only under `.qb/` and never
   modifies source code, commits, pushes, or opens PRs.
+- **Repo-aware auto-intake fast path.** On a well-structured repository (at least three of five
+  signals: a README, a manifest/build file, a source directory, a tests directory, a CI config),
+  Step-1 intake auto-derives all four fields and asks a single consolidated confirmation instead
+  of one question per field; weak-evidence fields fall back to per-field prompts. In `auto` mode
+  it derives without confirmation and fails closed (`QB_PLAN_AUTO_ERROR`) when a field cannot be
+  derived.
 
 ## [0.7.0] - 2026-06-15
 

@@ -66,7 +66,8 @@ This validates the manifest, required files, and frontmatter, and runs the test
 suite. Expect a final `qb_repo_validation=passed` line.
 
 You can also verify interactively: open a chat in a project and run
-`/qb-plan`. QB performs a bounded read-only scan of the repository,
-then asks the four intake questions (`PROJECT_NAME`, `PROJECT_INTENT`,
-`TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) before writing
-`.qb/main-planning.md`.
+`/qb-plan`. QB performs a bounded read-only scan of the repository, then
+confirms the four intake fields (`PROJECT_NAME`, `PROJECT_INTENT`,
+`TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) — auto-derived with a single
+consolidated confirmation on a well-structured repo, or asked in turn
+otherwise — before writing `.qb/main-planning.md`.

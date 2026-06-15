@@ -6,8 +6,8 @@ active, evidence-backed, and useful for an existing repository.
 
 ## Boundaries
 
-- Ask in the user's language.
-- Ask one question at a time.
+- Ask in the user's language (interactive mode).
+- In the per-field fallback, ask one field per turn; the well-structured fast path instead presents a single consolidated confirmation (see "Well-Structured Fast Path").
 - Use plain text only. Do not use pop-ups, forms, or multiple-choice UI for these four descriptive fields.
 - Do not write files during intake.
 - Do not run networked, destructive, install, commit, push, deploy, or PR commands.
@@ -53,14 +53,51 @@ Infer a draft answer only when there is evidence.
 - `TARGET_END_STATE`: draft the "done" state across product, engineering, operations, security, and user value.
 - `KNOWN_CONSTRAINTS`: infer stack, deployment model, test commands, CI, compliance/security boundaries, must-use tools, must-not-use tools, timeline hints, and unknowns that need user confirmation.
 
-Do not treat inferred values as final until the user confirms or edits them.
+In interactive mode, do not treat inferred values as final until the user confirms or edits
+them; in auto mode the fail-closed derivation (see "Well-Structured Fast Path") is authoritative.
+
+## Well-Structured Fast Path
+
+Use this fast path when the workspace is a **well-structured repository** and the Pre-Intake
+Scan yields strong evidence for the fields. Treat the repository as well-structured when the
+scan finds at least three of these five signals, including either a README or a manifest:
+
+- a README (`README*`);
+- a manifest or build file (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`,
+  `Makefile`, `composer.json`, `Gemfile`, or similar);
+- a source directory (`src/`, `lib/`, `app/`, or a package/service directory);
+- a tests directory (`tests/`, `test/`, `spec/`, or co-located test files);
+- a CI config (`.github/workflows/*`, `.gitlab-ci.yml`, or similar).
+
+When the repo is well-structured, derive all four fields (`PROJECT_NAME`, `PROJECT_INTENT`,
+`TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) from the Pre-Intake Scan and the "What To Infer"
+guidance, then:
+
+- **Interactive mode:** present all four derived fields together in a **single consolidated
+  confirmation** (plain text, no forms), each marked as repo-inferred, and ask the user to
+  confirm them or edit any. User edits are the source of truth. If a particular field's evidence
+  is weak, mark it and fall back to its per-field question (see "Question Style") for that field
+  only, while batch-confirming the rest (when asking a single follow-up field, the per-field
+  template's "Question N / 4" header may be dropped or relabeled).
+- **Auto mode (`/qb-plan auto`):** do not ask for confirmation. If all four fields derive with
+  sufficient evidence, record them and proceed. If any field cannot be derived with sufficient
+  evidence, do **not** prompt - print this line and stop, creating no `.qb/` artifacts:
+  `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
+
+When the repository is **not** well-structured (few signals, empty, or scaffold-only), skip the
+fast path and use the per-field "Question Style" flow below. All intake boundaries still apply:
+ask in the user's language (interactive mode), never write files during intake, and run no
+networked, destructive, install, commit, push, deploy, or PR commands.
 
 ## Question Style
+
+Use this per-field flow when the repository is not well-structured, or for any single field
+whose evidence is weak (the well-structured fast path above handles the strong-evidence case).
 
 Start with a short setup sentence (translate to the user's language when it is not English):
 
 ```text
-I will ask 4 short questions one at a time. I will enrich them with the evidence I find in the repository; after your answers I will generate the master plan.
+I will ask a few short questions, one field per turn. I will enrich them with the evidence I find in the repository; after your answers I will generate the master plan.
 ```
 
 ### Question 1 / 4 - PROJECT_NAME

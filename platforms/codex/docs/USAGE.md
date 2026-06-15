@@ -12,7 +12,7 @@ Use $qb to create a main plan for this project.
 
 QB first performs a bounded read-only scan of the current repository. It may inspect files such as `README.md`, `AGENTS.md`, manifests, CI workflows, docs indexes, deployment files, tests, and top-level service directories.
 
-Then it asks four intake questions, one at a time:
+Then, unless the repo is well-structured (in which case it auto-derives the four fields and asks a single consolidated confirmation), it asks for each intake field in turn:
 
 - `PROJECT_NAME`: the project name.
 - `PROJECT_INTENT`: what the project is for and what it should become.

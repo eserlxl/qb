@@ -15,8 +15,9 @@ skip Step 4; produce and validate `.qb/plan.md`; then print the single final res
 (`QB_PLAN_AUTO_OK:` on success, `QB_PLAN_AUTO_ERROR:` on failure) so an external caller such as
 planwright can detect the outcome. Without the flag, run the interactive flow below.
 
-- Ask the four Step-1 fields (`PROJECT_NAME`, `PROJECT_INTENT`, `TARGET_END_STATE`,
-  `KNOWN_CONSTRAINTS`) one at a time, in the language the user is writing in.
+- Collect the four Step-1 fields (`PROJECT_NAME`, `PROJECT_INTENT`, `TARGET_END_STATE`,
+  `KNOWN_CONSTRAINTS`) per `repo-aware-intake.md`: on a well-structured repo, auto-derive them
+  and ask a single consolidated confirmation; otherwise ask per field, in the user's language.
 - Produce `.qb/main-planning.md`, then pause at Gate 1 for feedback and approval.
 - On approval, run Step 2 (`qb-subplanner`, goal-backed), pause at Gate 2, then run
   Step 3 (`qb-auditor`, goal-backed). Offer targeted repairs if the audit is

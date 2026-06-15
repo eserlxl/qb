@@ -96,10 +96,11 @@ Without the `auto` flag, ignore this section and follow the interactive Step 0 -
 ## Step 1 - repo-aware intake (interactive)
 
 Follow `references/repo-aware-intake.md` (resolve plugin root). Before asking, run a bounded read-only
-scan of the user's workspace so you can propose evidence-backed drafts. Then ask the four fields **one
-per turn, in order, in the user's language, as plain-text questions** (no multiple-choice). For each,
-offer your repo-derived draft and ask the user to confirm or edit; mark clearly when a value is
-inferred. If repo evidence is weak, say so and ask the concise generic version.
+scan of the user's workspace. Then follow its **Well-Structured Fast Path**: on a well-structured repo,
+auto-derive all four fields and present a single consolidated confirmation; otherwise (or for any
+weak-evidence field) ask that field per turn, in the user's language, as a plain-text question (no
+multiple-choice), offering your repo-derived draft to confirm or edit. Mark clearly when a value is
+inferred.
 
 1. `PROJECT_NAME`
 2. `PROJECT_INTENT` - what the project is and what it should become.

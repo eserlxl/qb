@@ -13,8 +13,8 @@ the planner prompt; they capture reliability practices proven in real use.
 ## Step 1 Repo-Aware Intake
 
 - Run a bounded, read-only repository scan before asking the four Step 1 fields.
-- Use `references/repo-aware-intake.md` to infer evidence-backed defaults, but never treat an inferred value as final until the user confirms or edits it.
-- Keep intake conversational and sequential: one plain-text question at a time, in the user's language.
+- Use `references/repo-aware-intake.md` to infer evidence-backed defaults. In interactive mode, never treat an inferred value as final until the user confirms or edits it; in auto mode the fail-closed derivation (see its Well-Structured Fast Path) is authoritative.
+- In the per-field fallback, keep intake conversational and sequential: one plain-text question at a time, in the user's language. On a well-structured repo, present a single consolidated confirmation instead (see `references/repo-aware-intake.md`, Well-Structured Fast Path).
 - If the repository is empty or evidence is weak, say so and fall back to concise generic questions.
 - Do not let the pre-intake scan replace the full Step 1 inspection required by `first-planner.md`.
 

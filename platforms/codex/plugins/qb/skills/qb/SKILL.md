@@ -49,7 +49,8 @@ and disables the Step 4 implementation handoff.
 2. **Intake is auto-derive only - fail closed.** Run the repo-aware Pre-Intake Scan from
    `references/repo-aware-intake.md` and derive all four fields (`PROJECT_NAME`, `PROJECT_INTENT`,
    `TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) from repository evidence. If any field cannot be
-   derived, do not fall back to a question - print and stop:
+   derived with sufficient evidence, do not fall back to a question - print and stop, creating no
+   `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
 3. **Run straight through - planning-only.** Execute Step 1 -> 1.5 -> 2 -> 3, then the Step 5
    export, treating the gates as approved. Record a `BLOCKED` or P0/P1 audit status in the summary
@@ -84,7 +85,7 @@ The exit code is the contract: `0` clean, `1` findings present, `2` policy/budge
 
 Read `references/repo-aware-intake.md` before asking questions.
 
-Before asking `PROJECT_NAME`, do a bounded, read-only repository scan so the intake can suggest evidence-backed defaults. Then ask these four fields one at a time in the user's language, using plain text questions only:
+Before asking `PROJECT_NAME`, do a bounded, read-only repository scan so the intake can suggest evidence-backed defaults. Then follow the **Well-Structured Fast Path** in `references/repo-aware-intake.md`: on a well-structured repo, auto-derive these four fields and present a single consolidated confirmation; otherwise (or for any weak-evidence field) ask that field per turn in the user's language, using plain text questions only:
 
 1. `PROJECT_NAME`: project name, with an inferred default when possible.
 2. `PROJECT_INTENT`: what the project is for and what it should become, with a repo-derived draft when possible.

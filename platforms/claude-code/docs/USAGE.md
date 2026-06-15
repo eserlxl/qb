@@ -17,9 +17,9 @@ Open the chat in the project you want to plan and run:
 
 ## Step 1: Main Plan (interactive, repo-aware)
 
-QB runs a bounded read-only scan of your workspace, then asks four intake
-questions one at a time, in your language, each with a repo-derived draft to
-confirm or edit:
+QB runs a bounded read-only scan of your workspace. On a well-structured repo it auto-derives
+the four intake fields and asks a single consolidated confirmation; otherwise it asks for each
+field in turn, in your language, with a repo-derived draft to confirm or edit:
 
 - `PROJECT_NAME`
 - `PROJECT_INTENT`
