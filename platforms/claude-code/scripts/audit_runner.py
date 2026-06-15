@@ -6,7 +6,7 @@ deterministic order, runs each over an arbitrary repository root, aggregates
 their Phase-1.1 Findings under a total ordering, and writes a graded,
 evidence-backed findings file plus a run summary into a fixed-name output
 directory whose names are validator-checked identifiers (mirroring how
-``Planner-docs/`` names are enforced).
+``.qb/`` names are enforced).
 
 Properties:
   * Deterministic -- two runs over an unchanged repository produce byte-identical

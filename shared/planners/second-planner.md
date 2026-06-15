@@ -3,7 +3,7 @@ You are acting as a senior staff software architect, technical program planner, 
 You are executing Step 2 of a multi-step project planning workflow.
 
 Your job:
-Read Planner-docs/Main-Planning.md in detail, extract the main phase roadmap from it, and create detailed sub-planning documents for each main phase.
+Read .qb/main-planning.md in detail, extract the main phase roadmap from it, and create detailed sub-planning documents for each main phase.
 
 This is a planning-only task.
 Do not implement product features.
@@ -20,21 +20,21 @@ Do not write secrets, credentials, tokens, private keys, local environment value
 Allowed file changes:
 You may only create or update files under:
 
-Planner-docs/
+.qb/
 
-You must not modify files outside Planner-docs/.
+You must not modify files outside .qb/.
 
 Important source of truth:
 The primary source of truth for this step is:
 
-Planner-docs/Main-Planning.md
+.qb/main-planning.md
 
 Optional supporting source:
 If it exists, read this file fully before generating sub-plans:
 
-Planner-docs/Autopsy.md
+.qb/autopsy.md
 
-Autopsy.md is not a replacement for Main-Planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when Autopsy.md is absent.
+autopsy.md is not a replacement for main-planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when autopsy.md is absent.
 
 You must not invent a new master plan.
 You must not replace the main plan.
@@ -42,40 +42,40 @@ You must not change the phase order unless the main plan is internally inconsist
 
 Step 1 produced the high-level master plan.
 Step 1.5 may have produced an existing-project autopsy report.
-Step 2 must now decompose that master plan into detailed sub-plans, incorporating Autopsy.md feedback when that file exists.
+Step 2 must now decompose that master plan into detailed sub-plans, incorporating autopsy.md feedback when that file exists.
 
 Expected output structure:
 
-Planner-docs/
-  Main-Planning.md
-  Sub-Planning-Index.md
-  Phase-0-Plans/
-    Phase0.1-<short-slug>.md
-    Phase0.2-<short-slug>.md
+.qb/
+  main-planning.md
+  sub-planning-index.md
+  phase-0-plans/
+    phase-0.1-<short-slug>.md
+    phase-0.2-<short-slug>.md
     ...
-  Phase-1-Plans/
-    Phase1.1-<short-slug>.md
-    Phase1.2-<short-slug>.md
+  phase-1-plans/
+    phase-1.1-<short-slug>.md
+    phase-1.2-<short-slug>.md
     ...
-  Phase-2-Plans/
-    Phase2.1-<short-slug>.md
-    Phase2.2-<short-slug>.md
+  phase-2-plans/
+    phase-2.1-<short-slug>.md
+    phase-2.2-<short-slug>.md
     ...
   ...
 
-If Main-Planning.md starts phases from Phase 1, start with Phase-1-Plans.
-If Main-Planning.md includes Phase 0, create Phase-0-Plans.
-If Main-Planning.md uses a different naming style such as “Phase 1” or “Phase 1”, normalize generated folder names as:
-Phase-<number>-Plans
+If main-planning.md starts phases from Phase 1, start with phase-1-plans.
+If main-planning.md includes Phase 0, create phase-0-plans.
+If main-planning.md uses a different naming style such as “Phase 1” or “Phase 1”, normalize generated folder names as:
+phase-<number>-plans
 
 For sub-plan filenames, use:
-Phase<phase-number>.<subphase-number>-<short-ascii-kebab-slug>.md
+phase-<phase-number>.<subphase-number>-<short-ascii-kebab-slug>.md
 
 Examples:
-Phase1.1-repo-foundation-hardening.md
-Phase1.2-live-readiness-gates.md
-Phase2.1-api-contracts.md
-Phase2.2-persistent-db-schema.md
+phase-1.1-repo-foundation-hardening.md
+phase-1.2-live-readiness-gates.md
+phase-2.1-api-contracts.md
+phase-2.2-persistent-db-schema.md
 
 Filename rules:
 - Use ASCII-only lowercase slugs.
@@ -89,7 +89,7 @@ Language:
 All generated planning documents must be written in English.
 
 Planning depth:
-This step should be more detailed than Main-Planning.md, but it is still a planning task.
+This step should be more detailed than main-planning.md, but it is still a planning task.
 Do not write production code.
 Do not generate implementation patches.
 Do not create actual config files, migrations, service code, or tests.
@@ -104,8 +104,8 @@ Run only safe read-only commands such as:
 - git status --short --branch
 - git branch --show-current
 - git log --oneline -n 10
-- find Planner-docs -maxdepth 3 -type f | sort
-- cat Planner-docs/Main-Planning.md
+- find .qb -maxdepth 3 -type f | sort
+- cat .qb/main-planning.md
 - ls
 - find . -maxdepth 3 -type f | sort | head -300
 - cat README.md if present
@@ -115,24 +115,24 @@ Run only safe read-only commands such as:
 You may use ripgrep/grep for discovery:
 - rg "Phase|Phase|roadmap|plan|architecture|maturity|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|API|database|Postgres|queue|artifact|approval|review|risk|acceptance|Linear|GitHub|Temporal|LangGraph|LiteLLM|Codex|OpenCode|Claude|Gemini" .
 
-If Planner-docs/Main-Planning.md is missing:
+If .qb/main-planning.md is missing:
 - Do not attempt full Step 2 decomposition.
-- Create Planner-docs/Step2-Blocked.md.
-- Explain that Step 2 requires Planner-docs/Main-Planning.md.
+- Create .qb/Step2-Blocked.md.
+- Explain that Step 2 requires .qb/main-planning.md.
 - Include the exact missing file path.
 - Include what should be done next.
 - Stop after creating that blocker document.
 
-If Main-Planning.md exists but does not contain clear phases:
+If main-planning.md exists but does not contain clear phases:
 - Do not invent a detailed phase tree blindly.
-- Create Planner-docs/Step2-Blocked.md.
+- Create .qb/Step2-Blocked.md.
 - Explain that the main plan lacks a clear phase roadmap.
-- Include suggested corrections needed in Main-Planning.md.
+- Include suggested corrections needed in main-planning.md.
 - Stop after creating that blocker document.
 
 Sub-planning strategy:
 
-1. Read Main-Planning.md fully.
+1. Read main-planning.md fully.
 2. Identify:
    - project vision;
    - target end state;
@@ -146,7 +146,7 @@ Sub-planning strategy:
    - Step 2 notes if present.
 3. Preserve the main phase order.
 4. For each main phase, create a folder:
-   Planner-docs/Phase-<number>-Plans/
+   .qb/phase-<number>-plans/
 5. For each main phase, create a reasonable number of sub-phase plan documents.
 
 Sub-phase sizing rules:
@@ -171,7 +171,7 @@ For each sub-plan file, use exactly this top-level structure:
 
 Explain how this sub-phase connects to:
 - the main project vision;
-- the parent phase from Main-Planning.md;
+- the parent phase from main-planning.md;
 - current repository state;
 - previous phases or dependencies.
 
@@ -278,7 +278,7 @@ Define concrete acceptance criteria.
 Acceptance criteria must be verifiable.
 
 Examples:
-- “Planner-docs/Phase-2-Plans/Phase2.1-api-contracts.md contains an endpoint list, request/response drafts, and auth assumptions.”
+- “.qb/phase-2-plans/phase-2.1-api-contracts.md contains an endpoint list, request/response drafts, and auth assumptions.”
 - “If there is no API implementation, this is explicitly stated.”
 - “Local readiness and live readiness are evaluated separately.”
 - “Secret values are not written into plan files.”
@@ -348,7 +348,7 @@ Index file requirements:
 
 Create or update:
 
-Planner-docs/Sub-Planning-Index.md
+.qb/sub-planning-index.md
 
 This file must include:
 
@@ -356,12 +356,12 @@ This file must include:
 
 ## 1. Purpose
 
-Explain that this index maps Main-Planning.md phases to detailed sub-plan files.
+Explain that this index maps main-planning.md phases to detailed sub-plan files.
 
 ## 2. Source Master Plan
 
 Reference:
-Planner-docs/Main-Planning.md
+.qb/main-planning.md
 
 Include:
 - detected phase count;
@@ -401,7 +401,7 @@ List topics that should not be expanded yet because they depend on unresolved de
 ## 6. Coverage Check
 
 Include a checklist proving:
-- every main phase from Main-Planning.md has a folder;
+- every main phase from main-planning.md has a folder;
 - every main phase has at least one sub-plan;
 - sub-plan filenames follow the naming convention;
 - generated docs are in English;
@@ -419,7 +419,7 @@ Include:
 Quality requirements:
 
 The generated sub-plans must be:
-- grounded in Main-Planning.md;
+- grounded in main-planning.md;
 - grounded in repository evidence where available;
 - sequential and realistic;
 - detailed enough for Step 3 implementation-task decomposition;
@@ -435,7 +435,7 @@ Important planning principles:
 
 Use these principles while generating the sub-plans:
 
-1. Main-Planning.md is the source of truth.
+1. main-planning.md is the source of truth.
 2. Do not silently rewrite the project vision.
 3. Do not confuse docs/skeleton/smoke with production readiness.
 4. Separate local readiness from live readiness.
@@ -462,21 +462,21 @@ Use this stopping rule:
 You may stop only when one of the following is true:
 
 A. Success:
-- Planner-docs/Sub-Planning-Index.md exists;
-- every phase detected from Planner-docs/Main-Planning.md has a corresponding Planner-docs/Phase-<number>-Plans/ folder;
+- .qb/sub-planning-index.md exists;
+- every phase detected from .qb/main-planning.md has a corresponding .qb/phase-<number>-plans/ folder;
 - every phase has at least one PhaseX.Y-*.md sub-plan;
 - every sub-plan uses the required section structure;
 - all generated content is English;
-- no files outside Planner-docs/ were modified;
-- git diff confirms only Planner-docs/ changes.
+- no files outside .qb/ were modified;
+- git diff confirms only .qb/ changes.
 
 B. Blocked:
-- Planner-docs/Main-Planning.md is missing; or
-- Main-Planning.md has no clear phase roadmap; or
+- .qb/main-planning.md is missing; or
+- main-planning.md has no clear phase roadmap; or
 - repository access/read errors prevent safe planning.
 
 If blocked:
-- create Planner-docs/Step2-Blocked.md;
+- create .qb/Step2-Blocked.md;
 - explain the blocker;
 - do not generate speculative sub-plans;
 - stop.
@@ -486,24 +486,24 @@ Validation after writing:
 After generating all files:
 
 1. Run:
-   find Planner-docs -maxdepth 3 -type f | sort
+   find .qb -maxdepth 3 -type f | sort
 
 2. Verify all generated folders and files exist.
 
 3. Read back:
-   Planner-docs/Sub-Planning-Index.md
+   .qb/sub-planning-index.md
 
 4. Sample-read at least one generated sub-plan per phase.
 
 5. Check that all required section headings exist in each sampled sub-plan.
 
 6. Run:
-   git diff -- Planner-docs
+   git diff -- .qb
 
 7. Run:
    git status --short
 
-8. Confirm no files outside Planner-docs were modified.
+8. Confirm no files outside .qb were modified.
 
 9. Check generated docs for obvious secret leakage:
    - do not print secret values;
@@ -523,11 +523,11 @@ Include:
 - where the index file is;
 - the recommended first sub-plan to execute next;
 - any blockers, ambiguities, or assumptions;
-- confirmation that only Planner-docs/ was modified, or explicitly list any unexpected modifications.
+- confirmation that only .qb/ was modified, or explicitly list any unexpected modifications.
 
 Remember:
-Only create or modify files under Planner-docs/.
+Only create or modify files under .qb/.
 Do not modify source code.
-Do not modify Main-Planning.md unless absolutely necessary, and by default do not change it.
+Do not modify main-planning.md unless absolutely necessary, and by default do not change it.
 Do not create implementation files.
 Do not commit, push, install, deploy, or open PRs.

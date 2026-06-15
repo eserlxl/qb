@@ -6,7 +6,7 @@ risk: every autonomous write happens inside a dedicated, disposable git worktree
 (never the operator's checked-out tree), and every state is reversible via a
 captured git ref (the rollback handle).
 
-Autonomy-to-isolation contract (Main-Planning section 5):
+Autonomy-to-isolation contract (main-planning section 5):
   * A0 (report-only): opens no isolation, writes nothing.
   * A1 (propose):     all writes confined to throwaway isolation; the operator's
                       working tree is never touched.

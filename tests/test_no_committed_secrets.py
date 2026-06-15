@@ -1,7 +1,7 @@
 """Repo-wide guard: no real credential is committed to any tracked file.
 
 Each platform's validate.sh scans only its own subtree, and the shared validator
-scans only the generated Planner-docs/ tree, so a secret committed anywhere else
+scans only the generated .qb/ tree, so a secret committed anywhere else
 in the monorepo would slip through CI. This test enumerates every git-tracked
 file and fails if any line matches a known secret class. Deliberate test
 fixtures opt out with a trailing ``pragma: allowlist secret`` marker.

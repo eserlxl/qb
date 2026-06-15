@@ -15,8 +15,8 @@ This package is the Codex platform build of QB. The planner prompts, reference d
 ## Why QB
 
 - **Repo-aware intake:** QB inspects the current repository before asking questions, then proposes evidence-backed defaults for project name, intent, target end state, and constraints.
-- **Durable planning docs:** Output is written under `Planner-docs/` so long planning work survives context changes and can be reviewed like normal project documentation.
-- **Project Autopsy:** Existing projects get a focused `Autopsy.md` report covering modules, features, placeholders, technical debt, integration gaps, validation gaps, and readiness risks.
+- **Durable planning docs:** Output is written under `.qb/` so long planning work survives context changes and can be reviewed like normal project documentation.
+- **Project Autopsy:** Existing projects get a focused `autopsy.md` report covering modules, features, placeholders, technical debt, integration gaps, validation gaps, and readiness risks.
 - **Full phase decomposition:** The main plan can be expanded into ordered phase folders and detailed sub-plan files, using Autopsy feedback when available.
 - **QA before implementation:** The audit step checks coverage, naming, ordering, section structure, readiness, security/governance, and implementation preparedness.
 - **Gated execution handoff:** QB does not implement product changes itself. It prints a separate Goal mode prompt only when the audit says implementation can begin, then guides that run through the READY queue in small verified slices.
@@ -25,10 +25,10 @@ This package is the Codex platform build of QB. The planner prompts, reference d
 
 | Step | What QB Does | Output |
 | --- | --- | --- |
-| 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `Planner-docs/Main-Planning.md` |
-| 1.5 Autopsy | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `Planner-docs/Autopsy.md` |
-| 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `Planner-docs/Sub-Planning-Index.md`, `Planner-docs/Phase-*-Plans/*.md` |
-| 3. QA Audit | Audits coverage, structure, quality, readiness, and governance without repairing files. | `Planner-docs/Sub-Planning-Audit.md` |
+| 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `.qb/main-planning.md` |
+| 1.5 Autopsy | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `.qb/autopsy.md` |
+| 2. Phase Sub-Plans | Expands every main phase into detailed implementation-ready sub-plans. | `.qb/sub-planning-index.md`, `.qb/Phase-*-Plans/*.md` |
+| 3. QA Audit | Audits coverage, structure, quality, readiness, and governance without repairing files. | `.qb/sub-planning-audit.md` |
 | 4. Gated Handoff | Prints a copy-ready implementation Goal prompt when Step 3 passes. | Text-only Goal mode prompt |
 
 Step 1 runs in the current Codex thread. Steps 2, 3, and 4 are intentionally handed off as text-only Goal mode prompts so the user stays in control of long-running work.
@@ -63,27 +63,27 @@ QB will inspect the repository briefly, then ask for:
 - `TARGET_END_STATE`
 - `KNOWN_CONSTRAINTS`
 
-QB asks intake questions in the user's language when practical. Generated Planner-docs artifacts are English by default unless the user explicitly requests another body language. Required document headings remain English for validator stability.
+QB asks intake questions in the user's language when practical. Generated .qb artifacts are English by default unless the user explicitly requests another body language. Required document headings remain English for validator stability.
 
 For existing repositories, the questions include repo-derived suggestions. For empty or minimal repositories, QB falls back to concise generic questions and marks repository evidence as limited.
 
 ## Generated Artifacts
 
-QB writes planning artifacts under the target project's `Planner-docs/` directory:
+QB writes planning artifacts under the target project's `.qb/` directory:
 
 ```text
-Planner-docs/
-  Main-Planning.md
-  Autopsy.md
-  Sub-Planning-Index.md
-  Sub-Planning-Audit.md
-  Phase-0-Plans/
-    Phase0.1-*.md
-  Phase-1-Plans/
-    Phase1.1-*.md
+.qb/
+  main-planning.md
+  autopsy.md
+  sub-planning-index.md
+  sub-planning-audit.md
+  phase-0-plans/
+    phase-0.1-*.md
+  phase-1-plans/
+    phase-1.1-*.md
 ```
 
-The artifact filenames (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the bundled planner prompts and validator match exactly — don't rename them.
+The artifact filenames (`main-planning.md`, `sub-planning-index.md`, `sub-planning-audit.md`, `phase-<n>-plans/`, `phase-<n>.<m>-*.md`) are fixed identifiers the bundled planner prompts and validator match exactly — don't rename them.
 
 ## Validator
 

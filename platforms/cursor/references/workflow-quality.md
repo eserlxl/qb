@@ -8,7 +8,7 @@ the planner prompt; they capture reliability practices proven in real use.
 - Read the full active planner prompt (bundled next to the running skill) before summarizing requirements.
 - Do not report phase, sub-plan, or section counts from memory.
 - Report counts only after reading the prompt or running the validator.
-- Required section counts: `Main-Planning.md` has 10 numbered sections; the sub-plan index has 7 (after its H1); each Step 2 sub-plan has 13 top-level `##` sections after its H1; the audit has 15.
+- Required section counts: `main-planning.md` has 10 numbered sections; the sub-plan index has 7 (after its H1); each Step 2 sub-plan has 13 top-level `##` sections after its H1; the audit has 15.
 
 ## Step 1 Repo-Aware Intake
 
@@ -23,7 +23,7 @@ the planner prompt; they capture reliability practices proven in real use.
 Prefer the bundled validator over ad hoc checks. Resolve the plugin root by walking up
 from the active skill's own directory to the folder that contains the plugin manifest;
 the script is at `<plugin-root>/scripts/validate_planner_docs.py`. Always pass `--root .`
-so it validates the user's active workspace `Planner-docs/`, never the plugin directory.
+so it validates the user's active workspace `.qb/`, never the plugin directory.
 
 ```bash
 python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step1 --strict
@@ -39,7 +39,7 @@ severity counts.
 
 Graceful fallback: if `python3` is unavailable or the script cannot be found, perform
 the equivalent checks manually (heading presence and order; every main phase has a
-`Phase-<n>-Plans/` folder with at least one conforming sub-plan; the index references every
+`phase-<n>-plans/` folder with at least one conforming sub-plan; the index references every
 sub-plan by full relative path; no secrets) and state plainly that the validator was
 unavailable and checks were manual.
 
@@ -57,13 +57,13 @@ unavailable and checks were manual.
 
 ## Handle Untracked Planner Docs Correctly
 
-`Planner-docs/` is usually untracked on first use, and `git diff -- Planner-docs` does
+`.qb/` is usually untracked on first use, and `git diff -- .qb` does
 not show new untracked files. Use these together:
 
 ```bash
-find Planner-docs -maxdepth 4 -type f | sort
-git status --short -- Planner-docs
-git diff -- Planner-docs
+find .qb -maxdepth 4 -type f | sort
+git status --short -- .qb
+git diff -- .qb
 ```
 
 Use `git diff --no-index` only as a read-only comparison helper.
@@ -76,13 +76,13 @@ Use `git diff --no-index` only as a read-only comparison helper.
 ## Step Handoffs (in-session, automatic)
 
 - Every step runs in the current session. Step 1 is interactive; Steps 2 and 3 are launched automatically by the workflow under each step's goal contract (objective, success evidence, scope bounds, stop condition). There is no copy/paste handoff.
-- Step 3 may create or update only `Planner-docs/Sub-Planning-Audit.md`.
+- Step 3 may create or update only `.qb/sub-planning-audit.md`.
 - Step 4 (implementation) starts only after `--mode step4` validation passes: the audit is not `BLOCKED` and has no P0/P1 findings. Step 4 is a separate goal-backed implementation run, not a planning-file generation step.
 
 ## Step 4 Token Discipline
 
 - Do not load all phase sub-plans at once.
-- Read `Sub-Planning-Audit.md` and `Sub-Planning-Index.md` first.
+- Read `sub-planning-audit.md` and `sub-planning-index.md` first.
 - Select one READY or READY_WITH_WARNINGS sub-plan.
 - Load only the selected sub-plan and the repo files needed for that one slice.
 - Stop before implementation if the audit contains P0/P1 findings.

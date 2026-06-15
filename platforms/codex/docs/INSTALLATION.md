@@ -58,8 +58,8 @@ Expected behavior:
 3. It asks for `PROJECT_INTENT`, ideally with a repo-derived draft.
 4. It asks for `TARGET_END_STATE`, ideally across product, engineering, operations, security, and user value.
 5. It asks for `KNOWN_CONSTRAINTS`, including detected stack, infra, validation, security, and unknown constraints.
-6. It uses the confirmed values to create or update `Planner-docs/Main-Planning.md`.
-7. For existing or partially built repositories, it may create or update `Planner-docs/Autopsy.md` as Step 1.5.
+6. It uses the confirmed values to create or update `.qb/main-planning.md`.
+7. For existing or partially built repositories, it may create or update `.qb/autopsy.md` as Step 1.5.
 
 ## Troubleshooting
 

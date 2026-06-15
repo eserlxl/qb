@@ -4,7 +4,7 @@ The reusable secret/severity machinery moved into
 ``shared/scripts/analyzer_core.py``; ``validate_planner_docs.py`` is now a caller.
 This test pins (a) that there is a single source for the secret patterns and the
 severity counter, (b) that the planning validation path is unchanged (secret
-detection still fires; ``--mode all`` over the repo's own Planner-docs still
+detection still fires; ``--mode all`` over the repo's own .qb tree still
 passes), and (c) that the extracted secret scan is exposed as a Phase-1.2
 analyzer returning Phase-1.1-conformant, redacted findings.
 """
@@ -81,6 +81,10 @@ class ValidatorRefactorNonRegressionTests(unittest.TestCase):
             self.assertGreaterEqual(state.metrics["secret_findings"], 1)
 
     def test_mode_all_still_passes_over_repo_planner_docs(self) -> None:
+        # The generated plan tree (.qb/) is local-only (gitignored); skip when it
+        # is absent (e.g. a fresh CI checkout) rather than reporting a failure.
+        if not (REPO_ROOT / ".qb").is_dir():
+            self.skipTest(".qb plan tree is local-only (gitignored); nothing to validate")
         result = subprocess.run(
             ["python3", str(VALIDATOR_PATH), "--root", str(REPO_ROOT), "--mode", "all"],
             text=True,

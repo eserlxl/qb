@@ -15,27 +15,27 @@ IMPORTANT:
 - Do not open pull requests.
 - Do not write secrets, tokens, credentials, private keys, or local environment values into the report.
 - The only file you are allowed to create or update is:
-  Planner-docs/Autopsy.md
-- If the Planner-docs directory does not exist, create it.
+  .qb/autopsy.md
+- If the .qb directory does not exist, create it.
 
 Purpose:
 
 Step 1 created:
-Planner-docs/Main-Planning.md
+.qb/main-planning.md
 
 Step 1.5 must read that main plan and inspect the current repository in detail. The output is an autopsy-style technical feedback report that helps Step 2 create better phase sub-plans.
 
-This step is intended for existing or partially built projects. If the repository is empty or has no meaningful project evidence, do not create or update `Planner-docs/Autopsy.md`. Report that Step 1.5 was skipped because there is not enough repository evidence for an autopsy, then stop.
+This step is intended for existing or partially built projects. If the repository is empty or has no meaningful project evidence, do not create or update `.qb/autopsy.md`. Report that Step 1.5 was skipped because there is not enough repository evidence for an autopsy, then stop.
 
 Source of truth:
 
 Primary source:
-- Planner-docs/Main-Planning.md
+- .qb/main-planning.md
 
 Supporting evidence:
 - repository file tree;
 - README.md, AGENTS.md, manifests, Makefile, CI workflows, docs, runbooks, tests, scripts, configs, service/package folders, deployment files, and policy/security files when present;
-- existing Planner-docs files if present.
+- existing .qb files if present.
 
 Repository inspection requirements:
 
@@ -47,9 +47,9 @@ Run only read-only or safe local commands such as:
 - git branch --show-current
 - git log --oneline -n 10
 - find . -maxdepth 3 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type f -print | sort | head -300
-- for d in Planner-docs docs configs scripts services packages tests infra .github; do [ -d "$d" ] && find "$d" -maxdepth 2 -type f | sort | head -80; done
-- if [ -d Planner-docs ]; then find Planner-docs -maxdepth 3 -type f | sort; fi
-- cat Planner-docs/Main-Planning.md
+- for d in .qb docs configs scripts services packages tests infra .github; do [ -d "$d" ] && find "$d" -maxdepth 2 -type f | sort | head -80; done
+- if [ -d .qb ]; then find .qb -maxdepth 3 -type f | sort; fi
+- cat .qb/main-planning.md
 - cat README.md if present
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Cargo.toml, go.mod, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, tests, config examples, service skeletons, package skeletons, and policy files if present
@@ -79,7 +79,7 @@ Output file requirements:
 
 Create or update:
 
-Planner-docs/Autopsy.md
+.qb/autopsy.md
 
 The document must be written in English.
 
@@ -110,7 +110,7 @@ Include:
 - manifests/configs;
 - tests/CI evidence;
 - service/package folders;
-- any relevant Planner-docs files.
+- any relevant .qb files.
 
 ## 3. Project Areas and Responsibility Boundaries
 
@@ -201,7 +201,7 @@ Include:
 
 ## 11. Alignment with the Main Plan
 
-Compare the repository evidence against Planner-docs/Main-Planning.md.
+Compare the repository evidence against .qb/main-planning.md.
 
 Include:
 - main plan assumptions that are supported;
@@ -238,28 +238,28 @@ Use priorities:
 
 Validation after writing:
 
-After creating/updating Planner-docs/Autopsy.md:
+After creating/updating .qb/autopsy.md:
 
 1. Run:
-   test -f Planner-docs/Autopsy.md && echo "Autopsy.md exists"
+   test -f .qb/autopsy.md && echo "autopsy.md exists"
 
 2. Read back:
-   Planner-docs/Autopsy.md
+   .qb/autopsy.md
 
 3. Verify all required headings exist in the required order.
 
 4. Run a length-bounded secret check:
-   rg -n "sk-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA|OPENSSH|DSA|EC|PRIVATE) KEY|xox[baprs]-[A-Za-z0-9-]{20,}" Planner-docs/Autopsy.md
+   rg -n "sk-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA|OPENSSH|DSA|EC|PRIVATE) KEY|xox[baprs]-[A-Za-z0-9-]{20,}" .qb/autopsy.md
    - do not print secret values;
    - if a match is found, replace the value with `<redacted>` and report the redaction.
 
 5. Run:
-   git diff -- Planner-docs/Autopsy.md
+   git diff -- .qb/autopsy.md
 
 6. Run:
-   git status --short -- Planner-docs
+   git status --short -- .qb
 
-7. Confirm that only Planner-docs/Autopsy.md was modified by this step.
+7. Confirm that only .qb/autopsy.md was modified by this step.
 
 Final response requirements:
 
@@ -267,14 +267,14 @@ After completion, provide a concise final summary in English.
 
 Include:
 - whether Step 1.5 succeeded, was skipped, or was blocked;
-- whether Planner-docs/Autopsy.md was created or updated;
+- whether .qb/autopsy.md was created or updated;
 - the highest-priority Autopsy signals;
 - how Step 2 should use the Autopsy report;
-- confirmation that only Planner-docs/Autopsy.md was modified, or list unexpected modifications.
+- confirmation that only .qb/autopsy.md was modified, or list unexpected modifications.
 
 Remember:
-When Step 1.5 is not skipped, only create or update Planner-docs/Autopsy.md.
+When Step 1.5 is not skipped, only create or update .qb/autopsy.md.
 Do not modify source code.
-Do not modify Planner-docs/Main-Planning.md.
+Do not modify .qb/main-planning.md.
 Do not create implementation files.
 Do not commit, push, install, deploy, or open PRs.

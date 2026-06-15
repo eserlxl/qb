@@ -10,13 +10,13 @@ from tests.qb_monorepo import PLATFORMS_DIR, REPO_ROOT, SHARED_DIR
 VALIDATOR = SHARED_DIR / "scripts/validate_planner_docs.py"
 SYNC_SCRIPT = REPO_ROOT / "scripts/sync.sh"
 
-# Exact artifact identifiers the workflow + validator depend on (the "Planning"
-# spelling is intentional and must be preserved verbatim).
+# Exact artifact identifiers the workflow + validator depend on (lower-case,
+# dash-corrected filenames; must be preserved verbatim).
 PRESERVED_LITERALS = (
-    "Main-Planning.md",
-    "Autopsy.md",
-    "Sub-Planning-Index.md",
-    "Sub-Planning-Audit.md",
+    "main-planning.md",
+    "autopsy.md",
+    "sub-planning-index.md",
+    "sub-planning-audit.md",
 )
 
 # Audit-status vocabulary the Step-4 gate depends on.
@@ -40,11 +40,10 @@ class SharedValidatorArtifactTests(unittest.TestCase):
         self.assertEqual(missing, [], f"missing artifact names in validator: {missing}")
 
     def test_faz_folder_and_subplan_patterns_appear_in_validator(self) -> None:
-        # The folder + sub-plan regex literals (intentional "Phase" spelling).
-        self.assertIn("Phase-", self.text, "Phase-<n>-Plans folder pattern missing from validator")
-        self.assertIn("Phase", self.text, "Phase sub-plan pattern missing from validator")
-        # Sub-plan numbering uses Phase<n>.<m>; assert the dotted form is present.
-        self.assertIn(r"Phase(\d+)\.(\d+)", self.text, "Phase<n>.<m> sub-plan regex missing")
+        # The folder + sub-plan regex literals (lower-case, dash-corrected).
+        self.assertIn("phase-", self.text, "phase-<n>-plans folder pattern missing from validator")
+        # Sub-plan numbering uses phase-<n>.<m>; assert the dotted form is present.
+        self.assertIn(r"phase-(\d+)\.(\d+)", self.text, "phase-<n>.<m> sub-plan regex missing")
 
     def test_audit_vocabulary_appears_in_validator(self) -> None:
         missing = [word for word in AUDIT_VOCABULARY if word not in self.text]
@@ -61,8 +60,8 @@ class SharedSpecArtifactTests(unittest.TestCase):
         corpus = "\n".join(
             path.read_text(encoding="utf-8") for path in sorted(planners_dir.glob("*.md"))
         )
-        self.assertIn("Planner-docs", corpus, "shared planner specs never mention Planner-docs/")
-        self.assertIn("Main-Planning.md", corpus, "shared planner specs never mention Main-Planning.md")
+        self.assertIn(".qb", corpus, "shared planner specs never mention .qb/")
+        self.assertIn("main-planning.md", corpus, "shared planner specs never mention main-planning.md")
 
 
 class SyncCleanTests(unittest.TestCase):

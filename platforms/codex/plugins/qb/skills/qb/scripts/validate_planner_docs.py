@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate QB Planner-docs outputs.
+"""Validate QB plan outputs (the generated .qb/ tree).
 
 This helper is intentionally read-only. It checks the planning documents that
 QB generates without editing or normalizing them.
@@ -115,10 +115,10 @@ AUDIT_HEADINGS = [
 
 FIX_LIST_HEADING = "## 13. Prioritized Fix List"
 
-FOLDER_RE = re.compile(r"^Phase-(\d+)-Plans$")
-SUBPLAN_RE = re.compile(r"^Phase(\d+)\.(\d+)-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
+FOLDER_RE = re.compile(r"^phase-(\d+)-plans$")
+SUBPLAN_RE = re.compile(r"^phase-(\d+)\.(\d+)-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
 INDEX_REF_RE = re.compile(
-    r"(?:\./)?(?:Planner-docs/)?Phase-\d+-Plans/Phase\d+\.\d+-[a-z0-9]+(?:-[a-z0-9]+)*\.md"
+    r"(?:\./)?(?:\.qb/)?phase-\d+-plans/phase-\d+\.\d+-[a-z0-9]+(?:-[a-z0-9]+)*\.md"
 )
 MAIN_PHASE_RE = re.compile(r"\bPhase\s*-?\s*(\d+)\b", re.IGNORECASE)
 ROADMAP_HEADING = "## 6. Phased Master Roadmap"
@@ -171,7 +171,7 @@ class ValidationState:
 
     @property
     def planner_docs(self) -> Path:
-        return self.root / "Planner-docs"
+        return self.root / ".qb"
 
     def rel(self, path: Path) -> str:
         try:
@@ -240,10 +240,10 @@ def extract_main_phase_numbers(text: str) -> list[int]:
 def collect_phase_folders(state: ValidationState) -> dict[int, Path]:
     folders: dict[int, Path] = {}
     if not state.planner_docs.exists():
-        state.error("missing_directory=Planner-docs")
+        state.error("missing_directory=.qb")
         return folders
 
-    for folder in sorted(state.planner_docs.glob("Phase-*-Plans")):
+    for folder in sorted(state.planner_docs.glob("phase-*-plans")):
         if not folder.is_dir():
             continue
         match = FOLDER_RE.match(folder.name)
@@ -252,14 +252,14 @@ def collect_phase_folders(state: ValidationState) -> dict[int, Path]:
             continue
         phase = int(match.group(1))
         if phase in folders:
-            state.error(f"duplicate_phase_folder=Phase-{phase}-Plans")
+            state.error(f"duplicate_phase_folder=phase-{phase}-plans")
         folders[phase] = folder
     return folders
 
 
 def collect_subplans(state: ValidationState) -> list[tuple[int | None, int | None, Path]]:
     result: list[tuple[int | None, int | None, Path]] = []
-    for folder in sorted(state.planner_docs.glob("Phase-*-Plans")):
+    for folder in sorted(state.planner_docs.glob("phase-*-plans")):
         if not folder.is_dir():
             continue
         folder_match = FOLDER_RE.match(folder.name)
@@ -313,7 +313,7 @@ def add_repeated_sentence_candidates(
 
 
 def validate_step1(state: ValidationState) -> list[int]:
-    main_path = state.planner_docs / "Main-Planning.md"
+    main_path = state.planner_docs / "main-planning.md"
     text = read_text(main_path, state)
     if text is None:
         state.metrics["main_phase_count"] = 0
@@ -323,12 +323,12 @@ def validate_step1(state: ValidationState) -> list[int]:
     phases = extract_main_phase_numbers(text)
     state.metrics["main_phase_count"] = len(phases)
     if not phases:
-        state.error("main_plan_has_no_detected_phases=Planner-docs/Main-Planning.md")
+        state.error("main_plan_has_no_detected_phases=.qb/main-planning.md")
     return phases
 
 
 def validate_autopsy_optional(state: ValidationState) -> None:
-    autopsy_path = state.planner_docs / "Autopsy.md"
+    autopsy_path = state.planner_docs / "autopsy.md"
     state.metrics["autopsy_exists"] = "true" if autopsy_path.exists() else "false"
     if not autopsy_path.exists():
         return
@@ -341,7 +341,7 @@ def validate_autopsy_optional(state: ValidationState) -> None:
 
 
 def validate_index(state: ValidationState) -> set[str]:
-    index_path = state.planner_docs / "Sub-Planning-Index.md"
+    index_path = state.planner_docs / "sub-planning-index.md"
     text = read_text(index_path, state)
     if text is None:
         state.metrics["index_reference_count"] = 0
@@ -353,8 +353,8 @@ def validate_index(state: ValidationState) -> set[str]:
         ref = match.group(0)
         if ref.startswith("./"):
             ref = ref[2:]
-        if not ref.startswith("Planner-docs/"):
-            ref = f"Planner-docs/{ref}"
+        if not ref.startswith(".qb/"):
+            ref = f".qb/{ref}"
         refs.add(ref)
     state.metrics["index_reference_count"] = len(refs)
     return refs
@@ -419,10 +419,10 @@ def validate_step2(state: ValidationState) -> None:
     if main_phases:
         for phase in main_phases:
             if phase not in folders:
-                state.error(f"missing_phase_folder=Planner-docs/Phase-{phase}-Plans")
+                state.error(f"missing_phase_folder=.qb/phase-{phase}-plans")
         for phase in sorted(folders):
             if phase not in main_phases:
-                state.warning(f"extra_phase_folder_without_main_phase=Planner-docs/Phase-{phase}-Plans")
+                state.warning(f"extra_phase_folder_without_main_phase=.qb/phase-{phase}-plans")
 
     actual_refs = {state.rel(path) for _, subphase, path in subplans if subphase is not None}
     for ref in sorted(actual_refs - index_refs):
@@ -440,7 +440,7 @@ def validate_step2(state: ValidationState) -> None:
             continue
         key = (phase, subphase)
         if key in seen:
-            state.error(f"duplicate_subplan_number=Phase{phase}.{subphase}")
+            state.error(f"duplicate_subplan_number=phase-{phase}.{subphase}")
         seen.add(key)
         per_phase[phase].append(subphase)
         validate_subplan_structure(state, phase, subphase, path, repeated_bodies, repeated_sentences)
@@ -452,7 +452,7 @@ def validate_step2(state: ValidationState) -> None:
             continue
         expected = list(range(1, max(numbers) + 1))
         if numbers != expected:
-            state.error(f"subplan_numbering_gap=Phase{phase}::expected={expected}::actual={numbers}")
+            state.error(f"subplan_numbering_gap=phase-{phase}::expected={expected}::actual={numbers}")
 
     for key, paths in sorted(repeated_bodies.items()):
         if len(paths) >= 3:
@@ -469,10 +469,10 @@ def validate_step2(state: ValidationState) -> None:
 
 def validate_step3_preflight(state: ValidationState) -> None:
     validate_step2(state)
-    audit_path = state.planner_docs / "Sub-Planning-Audit.md"
+    audit_path = state.planner_docs / "sub-planning-audit.md"
     state.metrics["audit_exists"] = "true" if audit_path.exists() else "false"
     if state.mode == "all" and not audit_path.exists():
-        state.error("missing_file=Planner-docs/Sub-Planning-Audit.md")
+        state.error("missing_file=.qb/sub-planning-audit.md")
     if audit_path.exists():
         text = read_text(audit_path, state)
         if text is not None:
@@ -504,7 +504,7 @@ def count_audit_severities(text: str) -> dict[str, int]:
 
 def validate_step4_readiness(state: ValidationState) -> None:
     validate_step3_preflight(state)
-    audit_path = state.planner_docs / "Sub-Planning-Audit.md"
+    audit_path = state.planner_docs / "sub-planning-audit.md"
     text = read_text(audit_path, state)
     if text is None:
         state.metrics["audit_status"] = "missing"
@@ -513,7 +513,7 @@ def validate_step4_readiness(state: ValidationState) -> None:
     status = extract_audit_status(text)
     state.metrics["audit_status"] = status or "unknown"
     if status is None:
-        state.error("audit_status_missing=Planner-docs/Sub-Planning-Audit.md")
+        state.error("audit_status_missing=.qb/sub-planning-audit.md")
     elif status == "BLOCKED":
         state.error("step4_blocked_by_audit_status=BLOCKED")
 
@@ -568,8 +568,8 @@ def finalize(state: ValidationState) -> int:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate QB Planner-docs outputs.")
-    parser.add_argument("--root", default=".", help="Project root containing Planner-docs/; default: current directory.")
+    parser = argparse.ArgumentParser(description="Validate QB plan outputs (the generated .qb/ tree).")
+    parser.add_argument("--root", default=".", help="Project root containing .qb/; default: current directory.")
     parser.add_argument(
         "--mode",
         choices=("step1", "step2", "step3", "step4", "all"),

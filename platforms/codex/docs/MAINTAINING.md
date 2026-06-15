@@ -37,7 +37,7 @@ python3 "$CODEX_SKILL_VALIDATOR" "$CODEXQB_GLOBAL_SKILL"
 
 ## Validate Planner Docs
 
-The skill ships a read-only validator for generated `Planner-docs/` outputs. From a QB repository checkout, run:
+The skill ships a read-only validator for generated `.qb/` outputs. From a QB repository checkout, run:
 
 ```bash
 python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step1
@@ -57,7 +57,7 @@ When changing the validator, test at least:
 - a normal filename containing `sk-` such as `task-spec.yaml`;
 - a fake long secret token that should be detected;
 - roadmap table extraction with historical phase references such as `Phase 0B-10` or `Phase 11`;
-- optional `Autopsy.md` validation when present, and no failure when it is absent;
+- optional `autopsy.md` validation when present, and no failure when it is absent;
 - Step 4 readiness gating for missing audit, `BLOCKED`, `PASS`, `PASS_WITH_WARNINGS`, and prose such as `no P0/P1 findings`.
 
 ## Validate Skill Prompt Content
@@ -67,7 +67,7 @@ When changing Step 1 behavior, verify that:
 - `SKILL.md` references `references/repo-aware-intake.md`;
 - the intake reference still asks only the four stable fields;
 - `SKILL.md` references `references/Autopsy-Planner.md` for Step 1.5;
-- `Second-Planner.md` reads `Planner-docs/Autopsy.md` as an optional supporting source;
+- `Second-Planner.md` reads `.qb/autopsy.md` as an optional supporting source;
 - `First-Planner.md` still accepts the same four required placeholders.
 
 The planner prompts and reference docs (`First-Planner.md`, `Second-Planner.md`, `Third-Planner.md`, `Fourth-Planner.md`, `Autopsy-Planner.md`, `repo-aware-intake.md`, `workflow-quality.md`) are shared, host-neutral sources. They are maintained in the monorepo's `shared/` tree and materialized into this plugin by `sync.sh`; edit the shared source, not the synced copy.
@@ -134,6 +134,6 @@ QB currently uses repository marketplace distribution. Public directory or works
 
 - Keep the skill concise.
 - Keep long planner prompts in `references/`.
-- Preserve the `Planner-docs/*Planning*` filenames required by the bundled prompts.
+- Preserve the `.qb/*Planning*` filenames required by the bundled prompts.
 - Do not add MCP servers, apps, hooks, or assets unless the plugin manifest and validator are updated accordingly.
 - Do not put secrets or environment-specific credentials into docs, planner prompts, or examples.

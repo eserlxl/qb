@@ -26,29 +26,29 @@ confirm or edit:
 - `TARGET_END_STATE` (product, engineering, operations, security, user value)
 - `KNOWN_CONSTRAINTS` (team, infra, budget, timeline, stack, compliance, must-use/must-not-use)
 
-It writes `Planner-docs/Main-Planning.md` and validates it (`--mode step1`).
+It writes `.qb/main-planning.md` and validates it (`--mode step1`).
 
 ## Step 1.5: Existing-Project Autopsy (automatic for existing repos)
 
 For an existing or partially built project, QB then delegates to the
 `qb-autopsy` subagent (or runs the `qb-autopsy` skill in-session as
-the fallback) and writes `Planner-docs/Autopsy.md` - a 13-section technical
+the fallback) and writes `.qb/autopsy.md` - a 13-section technical
 feedback report (modules, feature inventory, placeholders/stubs, technical debt,
 broken integrations, test/CI gaps, security, and alignment with the main plan).
-For empty or nearly empty repositories this step is skipped and `Autopsy.md` is
+For empty or nearly empty repositories this step is skipped and `autopsy.md` is
 not created.
 
 ## Gate 1
 
 You review the master plan (and the autopsy, when present), give feedback, and
-approve moving on. Main-plan feedback is applied to `Main-Planning.md` only;
-autopsy feedback to `Autopsy.md` only.
+approve moving on. Main-plan feedback is applied to `main-planning.md` only;
+autopsy feedback to `autopsy.md` only.
 
 ## Step 2: Phase Sub-Plans (subagent-delegated)
 
 The `qb-subplanner` subagent decomposes every phase into detailed
-sub-plans under `Planner-docs/Phase-<n>-Plans/`, plus a full-path
-`Planner-docs/Sub-Planning-Index.md`. When `Autopsy.md` exists, it is read as
+sub-plans under `.qb/phase-<n>-plans/`, plus a full-path
+`.qb/sub-planning-index.md`. When `autopsy.md` exists, it is read as
 supporting feedback (not a replacement for the main plan). It runs until every
 phase is covered, then validates all files (`--mode step2 --strict`).
 
@@ -59,7 +59,7 @@ QB asks for explicit approval before auditing.
 ## Step 3: Sub-Plan QA Audit (subagent-delegated)
 
 The `qb-auditor` subagent runs the validator first, audits the sub-plans
-against the master plan, and writes `Planner-docs/Sub-Planning-Audit.md` with a
+against the master plan, and writes `.qb/sub-planning-audit.md` with a
 status of `PASS`, `PASS_WITH_WARNINGS`, or `BLOCKED`. It never edits the plans
 themselves. Findings are listed as `- AUDIT-FIX-NN | PX | <title>` single-line
 headers.
@@ -95,7 +95,7 @@ zero-setup, and gated at every step.
 
 ## Direct step invocation
 
-- `/qb-autopsy` - run only the autopsy on an existing `Main-Planning.md`.
+- `/qb-autopsy` - run only the autopsy on an existing `main-planning.md`.
 - `/qb-audit` - re-run only the audit (for example after repairs).
 - `/qb-implement` - run only the gated implementation for one `READY` sub-plan.
 
@@ -117,21 +117,21 @@ It exits nonzero on structural failures. With `--strict`, repeated or generic
 section warnings become failures. Secret scanning uses length-bounded token
 patterns so normal filenames such as `task-spec.yaml` are not flagged. In
 `--mode step4`, P0/P1 audit findings block implementation readiness while P2/P3
-findings are warnings. When `Planner-docs/Autopsy.md` exists, the validator
+findings are warnings. When `.qb/autopsy.md` exists, the validator
 checks its required heading order during Step 2/3 validation.
 
 ## Output location
 
-All planning artifacts land under `Planner-docs/` in your active workspace -
+All planning artifacts land under `.qb/` in your active workspace -
 never in the plugin directory:
 
 ```text
-Planner-docs/
-├── Main-Planning.md         # the master plan                          (Step 1)
-├── Autopsy.md              # repo health report for existing projects (Step 1.5)
-├── Sub-Planning-Index.md    # map of every sub-plan + coverage check   (Step 2)
-├── Sub-Planning-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-└── Phase-1-Plans/            # detailed sub-plans, one folder per phase
-    ├── Phase1.1-...md
-    └── Phase1.2-...md
+.qb/
+├── main-planning.md         # the master plan                          (Step 1)
+├── autopsy.md              # repo health report for existing projects (Step 1.5)
+├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
+├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
+└── phase-1-plans/            # detailed sub-plans, one folder per phase
+    ├── phase-1.1-...md
+    └── phase-1.2-...md
 ```

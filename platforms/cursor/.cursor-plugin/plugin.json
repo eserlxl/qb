@@ -2,7 +2,7 @@
   "name": "qb",
   "displayName": "QB",
   "version": "0.6.0",
-  "description": "Five-step, goal-backed project planning workflow for Cursor with a repo-aware intake and existing-project autopsy: a senior-architect master plan, a Step 1.5 autopsy, autonomous phase decomposition, a coverage/quality audit validated by a bundled read-only checker, and a gated implementation step. Produces English planning docs under Planner-docs/. In-session and automatic via the define-goal skill.",
+  "description": "Five-step, goal-backed project planning workflow for Cursor with a repo-aware intake and existing-project autopsy: a senior-architect master plan, a Step 1.5 autopsy, autonomous phase decomposition, a coverage/quality audit validated by a bundled read-only checker, and a gated implementation step. Produces English planning docs under .qb/. In-session and automatic via the define-goal skill.",
   "author": {
     "name": "Eser KUBALI"
   },

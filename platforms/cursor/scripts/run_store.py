@@ -6,7 +6,7 @@ the store directory, a reader can reconstruct what was found, what changed, why,
 and how to undo it -- with no reliance on chat scrollback or external trackers.
 
 Fixed-name layout under the run output directory (working name ``QB-Audit/``,
-mirroring the ``Planner-docs/`` convention):
+mirroring the ``.qb/`` convention):
   findings.jsonl          -- the graded findings inventory (one Finding per line)
   evidence/<id>.json      -- per-fix evidence: verify command, before/after result,
                              keep/revert outcome, and a git reversal handle

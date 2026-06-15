@@ -44,3 +44,6 @@ QB-sanitized.zip
 
 # Generated audit-engine output (reproducible; not source)
 QB-Audit/
+
+# Generated QB planning output (local-only plan files; not source)
+.qb/

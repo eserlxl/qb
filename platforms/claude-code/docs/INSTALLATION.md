@@ -69,4 +69,4 @@ You can also verify interactively: open a chat in a project and run
 `/qb-plan`. QB performs a bounded read-only scan of the repository,
 then asks the four intake questions (`PROJECT_NAME`, `PROJECT_INTENT`,
 `TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) before writing
-`Planner-docs/Main-Planning.md`.
+`.qb/main-planning.md`.

@@ -3,7 +3,7 @@
 Canonical host-neutral QB IP under ``shared/`` (Python standard library only).
 This is the finding-driven successor to the slice-driven discipline in
 ``shared/planners/fourth-planner.md``: where that spec selects a plan slice from
-``Sub-Planning-Audit.md``, this contract takes a single Phase-1 ``Finding`` and
+``sub-planning-audit.md``, this contract takes a single Phase-1 ``Finding`` and
 produces a deterministic ``FixPlan`` -- the bound fix recipe, the verification
 command chosen FIRST (before any edit), and whether the finding may be
 auto-applied or must be proposed for human review.

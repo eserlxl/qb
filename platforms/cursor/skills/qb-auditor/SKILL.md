@@ -1,6 +1,6 @@
 ---
 name: qb-auditor
-description: Goal-backed Step 3 of the QB planning workflow - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Use to verify that Planner-docs/Phase-*-Plans/*.md and Sub-Planning-Index.md are faithful to Main-Planning.md, complete, ordered, well-structured, and ready for implementation. Launched automatically as a Cursor goal via the define-goal skill and runs until every phase and sub-plan is inspected; produces only Planner-docs/Sub-Planning-Audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Safe to run standalone for re-audits.
+description: Goal-backed Step 3 of the QB planning workflow - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Use to verify that .qb/Phase-*-Plans/*.md and sub-planning-index.md are faithful to main-planning.md, complete, ordered, well-structured, and ready for implementation. Launched automatically as a Cursor goal via the define-goal skill and runs until every phase and sub-plan is inspected; produces only .qb/sub-planning-audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Safe to run standalone for re-audits.
 ---
 
 # QB Auditor (Step 3, goal-backed)
@@ -13,10 +13,10 @@ every phase and every sub-plan before stopping.
 
 - **In-session, zero-setup.** Read the full Step-3 specification from `third-planner.md`
   (next to this skill) and follow it end to end. Do not inline its full text into chat.
-- **Sources of truth (read-only):** `Planner-docs/Main-Planning.md`,
-  `Planner-docs/Sub-Planning-Index.md`, and every `Planner-docs/Phase-*-Plans/*.md` in the user's
+- **Sources of truth (read-only):** `.qb/main-planning.md`,
+  `.qb/sub-planning-index.md`, and every `.qb/Phase-*-Plans/*.md` in the user's
   active workspace (cwd).
-- **Only writable file:** `Planner-docs/Sub-Planning-Audit.md` in the user's workspace. Do not
+- **Only writable file:** `.qb/sub-planning-audit.md` in the user's workspace. Do not
   modify any plan file, the index, the master plan, source, config, tests, or scripts.
 - **Language:** the audit report is written in English.
 - **Reliability + validator.** Resolve the plugin root by walking up to the folder containing
@@ -25,16 +25,16 @@ every phase and every sub-plan before stopping.
 
 ## Goal contract (declare before starting)
 
-- **Objective:** Produce `Planner-docs/Sub-Planning-Audit.md` using the exact 15-section structure
+- **Objective:** Produce `.qb/sub-planning-audit.md` using the exact 15-section structure
   from `third-planner.md`, with an overall status of `PASS`, `PASS_WITH_WARNINGS`, or `BLOCKED`.
 - **Success evidence (all must hold):**
-  - `Main-Planning.md` phase coverage was checked against generated folders/sub-plans.
-  - `Sub-Planning-Index.md` consistency was checked against the actual files.
+  - `main-planning.md` phase coverage was checked against generated folders/sub-plans.
+  - `sub-planning-index.md` consistency was checked against the actual files.
   - Every detected phase folder was inspected and every sub-plan file inventoried.
   - Required section structure, naming, and ordering were checked.
   - Step 4 readiness was assessed and a prioritized fix list (`AUDIT-FIX-NN`, severity P0-P3) was produced.
-  - `git status` was checked; only `Sub-Planning-Audit.md` changed.
-- **Scope bounds:** create/update only `Planner-docs/Sub-Planning-Audit.md`. Report problems; do
+  - `git status` was checked; only `sub-planning-audit.md` changed.
+- **Scope bounds:** create/update only `.qb/sub-planning-audit.md`. Report problems; do
   not fix them. No secrets in the report. No commit, push, or PR.
 - **Stop condition:** stop only when the full audit is complete, or on a Blocked condition below.
 
@@ -54,18 +54,18 @@ the Goal" button and no copy/paste handoff.
 
 Run the bundled validator and fold its output into the audit as concrete findings:
 `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --strict`
-(fallback: inventory with `find Planner-docs -path "*/Phase-*-Plans/*.md" | sort` and check headings
+(fallback: inventory with `find .qb -path "*/Phase-*-Plans/*.md" | sort` and check headings
 manually). Treat validator errors (coverage gaps, naming/numbering issues, index mismatches,
 structure problems, secrets) as audit findings and cite them in the relevant audit sections.
 
 ## Continuation loop (this is what prevents early exit)
 
-1. Inventory all phase folders and sub-plan files (`find Planner-docs -path "*/Phase-*-Plans/*.md" | sort`).
-2. Audit each phase and each sub-plan against `Main-Planning.md` and the 13-section requirement -
+1. Inventory all phase folders and sub-plan files (`find .qb -path "*/Phase-*-Plans/*.md" | sort`).
+2. Audit each phase and each sub-plan against `main-planning.md` and the 13-section requirement -
    coverage, order, naming, index accuracy, section structure, content quality, scope drift,
    readiness realism, and security/governance.
 3. After each phase, continue to the next. **Do not stop after auditing one phase.**
-4. When all phases and sub-plans are inspected, assemble `Sub-Planning-Audit.md` with all 15
+4. When all phases and sub-plans are inspected, assemble `sub-planning-audit.md` with all 15
    sections, the coverage table, the file inventory, the Step-4 readiness table, and the
    prioritized fix list.
 5. In `## 13. Prioritized Fix List`, write each real finding as a **single-line header**
@@ -77,19 +77,19 @@ structure problems, secrets) as audit findings and cite them in the relevant aud
 6. Re-run `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --strict`
    (post-write), then `--mode step4` to determine the Step-4 gate; record the gate result
    (PASS / blocked-by-P0/P1 / BLOCKED) in `## 12` and `## 14`. Confirm `git status` shows only
-   `Sub-Planning-Audit.md` changed.
+   `sub-planning-audit.md` changed.
 
 ## Blocked conditions (still write the report)
 
-Following `third-planner.md`: if `Main-Planning.md` is missing, `Sub-Planning-Index.md` is missing,
-or no `Phase-*-Plans/*.md` files exist, still create `Sub-Planning-Audit.md`, mark the status
+Following `third-planner.md`: if `main-planning.md` is missing, `sub-planning-index.md` is missing,
+or no `Phase-*-Plans/*.md` files exist, still create `sub-planning-audit.md`, mark the status
 `BLOCKED`, explain what is missing and the minimal next action, and stop.
 
 ## Output and handoff
 
 Report: the audit status; number of main phases detected; number of sub-plan files inspected; the
 P0/P1/P2/P3 finding counts; whether Step 4 can begin; the single most important fix; and
-confirmation that only `Sub-Planning-Audit.md` changed.
+confirmation that only `sub-planning-audit.md` changed.
 
 - **PASS** -> Step 4 (implementation) can begin; the orchestrator offers it, gated by `--mode step4`.
 - **PASS_WITH_WARNINGS** -> if there are no P0/P1 findings, Step 4 may begin with the P2/P3 warnings

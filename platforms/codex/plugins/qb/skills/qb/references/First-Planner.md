@@ -8,8 +8,8 @@ IMPORTANT:
 - Do not refactor code.
 - Do not modify source files.
 - The only file you are allowed to create or update is:
-  Planner-docs/Main-Planning.md
-- If the Planner-docs directory does not exist, create it.
+  .qb/main-planning.md
+- If the .qb directory does not exist, create it.
 - Do not create additional planning files.
 - Do not install dependencies.
 - Do not run destructive commands.
@@ -69,7 +69,7 @@ Use the following principles while planning:
 
 Your task:
 
-Analyze the current repository in detail and create or update Planner-docs/Main-Planning.md with a high-level master project plan.
+Analyze the current repository in detail and create or update .qb/main-planning.md with a high-level master project plan.
 
 This Step 1 plan must describe the project’s current state and the rough phase roadmap from the current state, or from Phase 0 if the project has not started, to the desired final state.
 
@@ -99,7 +99,7 @@ Run only read-only or safe local commands such as:
 - git log --oneline -n 10
 - find . -maxdepth 3 -type f | sort | head -200
 - ls
-- ls Planner-docs
+- ls .qb
 - ls configs
 - ls scripts
 - ls services
@@ -119,19 +119,19 @@ If the repo is empty or almost empty:
 - Use PROJECT_INTENT, TARGET_END_STATE, KNOWN_CONSTRAINTS, and IMPORTANT_FEEDBACK_AND_ARCHITECTURAL_PRINCIPLES as the primary source of truth.
 - Explicitly state that repository evidence is limited.
 
-If the repo already has Planner-docs/plans:
+If the repo already has .qb/plans:
 - Read them.
 - Reconcile them instead of blindly duplicating them.
 - Preserve useful existing intent.
 - Identify contradictions, gaps, stale assumptions, and over-planning.
 - Do not delete existing plans.
-- Planner-docs/Main-Planning.md should become the high-level master plan that points future detailed planning in the right direction.
+- .qb/main-planning.md should become the high-level master plan that points future detailed planning in the right direction.
 
 Output file requirements:
 
 Create or update:
 
-Planner-docs/Main-Planning.md
+.qb/main-planning.md
 
 The document must be written in English.
 
@@ -320,16 +320,16 @@ If CI/local smoke exists, describe what it proves and what it does not prove.
 
 If the project is already advanced in some areas, preserve that progress and plan from there.
 
-Always use the exact required artifact filenames the validator expects (e.g. Planner-docs/Main-Planning.md); do not invent alternate spellings or rename generated files unless instructed.
+Always use the exact required artifact filenames the validator expects (e.g. .qb/main-planning.md); do not invent alternate spellings or rename generated files unless instructed.
 
 Validation after writing:
 
-After creating/updating Planner-docs/Main-Planning.md:
+After creating/updating .qb/main-planning.md:
 1. Read the file back.
 2. Check that all required top-level sections exist.
 3. Check that the document is in English.
 4. Check that it does not contain secrets.
-5. Run git diff -- Planner-docs/Main-Planning.md and review the diff.
+5. Run git diff -- .qb/main-planning.md and review the diff.
 6. Provide a final concise summary of:
    - what file was changed;
    - what current-state conclusion was reached;
@@ -338,5 +338,5 @@ After creating/updating Planner-docs/Main-Planning.md:
    - any uncertainties or blockers.
 
 Remember:
-Only create or modify Planner-docs/Main-Planning.md.
+Only create or modify .qb/main-planning.md.
 Do not modify anything else.

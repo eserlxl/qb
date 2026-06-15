@@ -79,7 +79,7 @@ Then answer the four short questions and approve each step as you go. That's it.
 flowchart TD
     Start(["/qb-plan"]):::start
 
-    subgraph PLAN["Planning &nbsp;·&nbsp; writes only inside Planner-docs/"]
+    subgraph PLAN["Planning &nbsp;·&nbsp; writes only inside .qb/"]
         direction TB
         S1["<b>Step 1 · Master plan</b><br/><i>you answer 4 questions</i>"]:::step
         S15["<b>Step 1.5 · Repo autopsy</b><br/><i>existing projects only</i>"]:::step
@@ -107,12 +107,12 @@ flowchart TD
 
 | Step | Name | What happens | Output | Your part |
 |:--:|---|---|---|---|
-| **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `Planner-docs/Main-Planning.md` | Answer 4 questions |
-| **1.5** | Autopsy | For existing projects, a technical health report. | `Planner-docs/Autopsy.md` | — (auto / skipped) |
+| **1** | Master plan | Repo-aware intake, then a senior-architect plan. | `.qb/main-planning.md` | Answer 4 questions |
+| **1.5** | Autopsy | For existing projects, a technical health report. | `.qb/autopsy.md` | — (auto / skipped) |
 | **Gate 1** | Review | Review the plan (and autopsy) together. | — | Feedback + approve |
-| **2** | Sub-plans | Every phase becomes detailed sub-plans plus an index. | `Planner-docs/Phase-<n>-Plans/` + `Sub-Planning-Index.md` | — |
+| **2** | Sub-plans | Every phase becomes detailed sub-plans plus an index. | `.qb/phase-<n>-plans/` + `sub-planning-index.md` | — |
 | **Gate 2** | Approve audit | Confirm you want the quality audit. | — | Approve |
-| **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `Planner-docs/Sub-Planning-Audit.md` | Approve repairs if needed |
+| **3** | Audit | Coverage/quality audit with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status. | `.qb/sub-planning-audit.md` | Approve repairs if needed |
 | **4** | Implement | One bounded, reversible code slice from a `READY` sub-plan. | code changes (gated) | Approve (gated) |
 
 ---
@@ -134,20 +134,20 @@ If subagents or the Task tool are unavailable in a session, QB falls back to run
 
 ## What you'll get
 
-Every artifact lands under `Planner-docs/` in **your** workspace — never in the plugin folder:
+Every artifact lands under `.qb/` in **your** workspace — never in the plugin folder:
 
 ```text
-Planner-docs/
-├── Main-Planning.md         # the master plan                          (Step 1)
-├── Autopsy.md              # repo health report for existing projects (Step 1.5)
-├── Sub-Planning-Index.md    # map of every sub-plan + coverage check   (Step 2)
-├── Sub-Planning-Audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-└── Phase-1-Plans/            # detailed sub-plans, one folder per phase
-    ├── Phase1.1-...md
-    └── Phase1.2-...md
+.qb/
+├── main-planning.md         # the master plan                          (Step 1)
+├── autopsy.md              # repo health report for existing projects (Step 1.5)
+├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
+├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
+└── phase-1-plans/            # detailed sub-plans, one folder per phase
+    ├── phase-1.1-...md
+    └── phase-1.2-...md
 ```
 
-> The artifact names (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the validator and index cross-references match exactly — don't rename them. The document *content* is English.
+> The artifact names (`main-planning.md`, `sub-planning-index.md`, `sub-planning-audit.md`, `phase-<n>-plans/`, `phase-<n>.<m>-*.md`) are fixed identifiers the validator and index cross-references match exactly — don't rename them. The document *content* is English.
 
 ---
 
@@ -187,7 +187,7 @@ From the QB monorepo root, `make check` first verifies that shared sources are s
 
 ## You stay in control
 
-- Steps 1–3 only write inside `Planner-docs/` — they **never** modify your source code, config, tests, or scripts.
+- Steps 1–3 only write inside `.qb/` — they **never** modify your source code, config, tests, or scripts.
 - Step 4 is the **only** step that edits code, and only after the audit passes and you approve — one reversible slice at a time.
 - It never commits, pushes, opens a PR, or calls external systems unless you explicitly ask.
 - No secrets, tokens, or credentials are ever written into a file.
@@ -227,7 +227,7 @@ Questions follow your language; all planning documents are written in English.
 <details>
 <summary><strong>Can I rename the planning files?</strong></summary>
 
-No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. The document *content* is English.
+No. `main-planning.md`, `sub-planning-index.md`, `sub-planning-audit.md`, and the `phase-<n>-plans/` / `phase-<n>.<m>-*.md` patterns are fixed identifiers the validator and the index cross-references match exactly. The document *content* is English.
 </details>
 
 <details>

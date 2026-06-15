@@ -39,14 +39,14 @@ commands, the five `SKILL.md` orchestrations, `docs/`, `README.md`, `CHANGELOG.m
 
 ## How the validator works
 
-`scripts/validate_planner_docs.py` is read-only. Run it against a target project's `Planner-docs/`:
+`scripts/validate_planner_docs.py` is read-only. Run it against a target project's `.qb/`:
 
 ```bash
 python3 scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
 ```
 
-Modes: `step1` (Main-Planning.md sections + phase roadmap), `step2` (phase folders, sub-plan
-structure, full-path index references, optional `Autopsy.md` heading order, duplicate/gap
+Modes: `step1` (main-planning.md sections + phase roadmap), `step2` (phase folders, sub-plan
+structure, full-path index references, optional `autopsy.md` heading order, duplicate/gap
 numbering), `step3` (audit heading order), `step4` (audit status + `AUDIT-FIX-NN | PX` severity
 gating). It also runs a length-bounded secret scan in every mode. `--strict` turns quality
 warnings (repeated/generic sections) into failures.
@@ -55,7 +55,7 @@ Key invariants the tests guard (`tests/`):
 
 - Step-4 severity counting is driven by `AUDIT-FIX-NN | PX` finding headers, so negative prose like "P0/P1 none" is never miscounted.
 - The roadmap phase count comes from the `## 6` table, ignoring historical phase mentions.
-- Optional `Autopsy.md` is validated only when present.
+- Optional `autopsy.md` is validated only when present.
 - Index references must be full relative paths.
 
 ## Editing the bundled prompts
@@ -63,8 +63,8 @@ Key invariants the tests guard (`tests/`):
 The bundled planner specs are the host-neutral source of truth for each step and live in the
 monorepo's `shared/planners/`. Edit them there, then re-sync into this platform.
 
-When editing them: preserve the exact required output filenames (`Main-Planning.md`,
-`Sub-Planning-Index.md`, `Sub-Planning-Audit.md`), keep all required section headings and order (the
+When editing them: preserve the exact required output filenames (`main-planning.md`,
+`sub-planning-index.md`, `sub-planning-audit.md`), keep all required section headings and order (the
 validator and `tests/test_validate_planner_docs.py` enforce them), keep the four Step-1
 placeholders, and keep the specs host-neutral (they refer to the product generically as "QB").
 

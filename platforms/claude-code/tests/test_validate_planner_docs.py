@@ -113,14 +113,14 @@ def write_main_plan(docs: Path) -> None:
                 "| 2 | Live Gateway Activation | ready_live evidence | M4 | make smoke |",
                 "",
             ]
-    (docs / "Main-Planning.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "main-planning.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_autopsy(docs: Path, headings: list[str] | None = None) -> None:
     lines: list[str] = []
     for heading in headings or AUTOPSY_HEADINGS:
         lines += [heading, "", body(heading), ""]
-    (docs / "Autopsy.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "autopsy.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_subplan(path: Path, phase: int, subphase: int) -> None:
@@ -137,11 +137,11 @@ def write_subplan(path: Path, phase: int, subphase: int) -> None:
 
 def write_index(docs: Path, relative_refs: bool = False) -> None:
     refs = [
-        "Phase-1-Plans/Phase1.1-local-contract.md",
-        "./Planner-docs/Phase-2-Plans/Phase2.1-live-gateway.md",
+        "phase-1-plans/phase-1.1-local-contract.md",
+        "./.qb/phase-2-plans/phase-2.1-live-gateway.md",
     ] if relative_refs else [
-        "Planner-docs/Phase-1-Plans/Phase1.1-local-contract.md",
-        "Planner-docs/Phase-2-Plans/Phase2.1-live-gateway.md",
+        ".qb/phase-1-plans/phase-1.1-local-contract.md",
+        ".qb/phase-2-plans/phase-2.1-live-gateway.md",
     ]
 
     lines: list[str] = []
@@ -149,7 +149,7 @@ def write_index(docs: Path, relative_refs: bool = False) -> None:
         lines += [heading, "", body(heading), ""]
         if heading == "## 3. Phase and Sub-Plan Map":
             lines += [f"- {ref}" for ref in refs] + [""]
-    (docs / "Sub-Planning-Index.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "sub-planning-index.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_audit(docs: Path, status: str, fixes: list[str] | None = None) -> None:
@@ -163,17 +163,17 @@ def write_audit(docs: Path, status: str, fixes: list[str] | None = None) -> None
                 lines += [fix, ""]
         if heading == "## 15. Audit Result":
             lines += [f"Final status: {status}", ""]
-    (docs / "Sub-Planning-Audit.md").write_text("\n".join(lines), encoding="utf-8")
+    (docs / "sub-planning-audit.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_valid_step2_fixture(root: Path, relative_refs: bool = False) -> Path:
-    docs = root / "Planner-docs"
-    (docs / "Phase-1-Plans").mkdir(parents=True)
-    (docs / "Phase-2-Plans").mkdir(parents=True)
+    docs = root / ".qb"
+    (docs / "phase-1-plans").mkdir(parents=True)
+    (docs / "phase-2-plans").mkdir(parents=True)
     write_main_plan(docs)
     write_index(docs, relative_refs=relative_refs)
-    write_subplan(docs / "Phase-1-Plans/Phase1.1-local-contract.md", 1, 1)
-    write_subplan(docs / "Phase-2-Plans/Phase2.1-live-gateway.md", 2, 1)
+    write_subplan(docs / "phase-1-plans/phase-1.1-local-contract.md", 1, 1)
+    write_subplan(docs / "phase-2-plans/phase-2.1-live-gateway.md", 2, 1)
     return docs
 
 
@@ -201,7 +201,7 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             write_autopsy(docs, headings=bad_headings)
             result = run_validator(Path(temp_dir), "step2", strict=True)
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("heading_out_of_order=Planner-docs/Autopsy.md", result.stdout)
+            self.assertIn("heading_out_of_order=.qb/autopsy.md", result.stdout)
 
     def test_roadmap_table_ignores_historical_phase_mentions(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -209,8 +209,8 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             result = run_validator(Path(temp_dir), "step2", strict=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("main_phase_count=2", result.stdout)
-            self.assertNotIn("Phase-10-Plans", result.stdout)
-            self.assertNotIn("Phase-11-Plans", result.stdout)
+            self.assertNotIn("phase-10-plans", result.stdout)
+            self.assertNotIn("phase-11-plans", result.stdout)
 
     def test_placeholder_safe_and_example_placeholder_are_not_false_positive(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -244,7 +244,7 @@ class ValidatePlannerDocsTests(unittest.TestCase):
             write_valid_step2_fixture(Path(temp_dir))
             result = run_validator(Path(temp_dir), "step4")
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("missing_file=Planner-docs/Sub-Planning-Audit.md", result.stdout)
+            self.assertIn("missing_file=.qb/sub-planning-audit.md", result.stdout)
 
     def test_step4_blocked_audit_fails(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

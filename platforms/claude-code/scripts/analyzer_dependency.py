@@ -2,7 +2,7 @@
 
 Canonical host-neutral QB IP under ``shared/`` (Python standard library only).
 This closes Phase 2 with the one analyzer that legitimately wants a network, while
-honoring the offline-core / opt-in-networked split (Main-Planning sections 5/7).
+honoring the offline-core / opt-in-networked split (main-planning sections 5/7).
 
 Two tiers:
   * OFFLINE tier (always runs): parses dependency manifests/lockfiles in the
