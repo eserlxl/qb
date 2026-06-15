@@ -7,7 +7,7 @@ description: Repo-aware Codex planning with assessment, phase sub-plans, QA audi
 
 ## Overview
 
-Run the bundled planning workflow for a project repository. Keep Step 1 conversational and repo-aware, run Step 1.5 Assessment for existing projects, and hand off Step 2 and Step 3 as text-only Goal mode prompts unless the user explicitly asks for a different flow. After Step 3, automatically run the Step 5 export to produce `.qb/plan.md` in planwright's plan format, and provide a gated Step 4 implementation handoff prompt only when the audit says implementation can begin.
+Run the bundled planning workflow for a project repository. Keep Step 1 conversational and repo-aware, run Step 1.5 Assessment for existing projects, and hand off Step 2 and Step 3 as text-only Goal mode prompts unless the user explicitly asks for a different flow. After Step 3, automatically run the Step 3.5 export to produce `.qb/plan.md` in planwright's plan format, and provide a gated Step 4 implementation handoff prompt only when the audit says implementation can begin.
 
 The bundled prompts are:
 
@@ -16,7 +16,7 @@ The bundled prompts are:
 - `references/Second-Planner.md` for Step 2 phase sub-planning.
 - `references/Third-Planner.md` for Step 3 sub-plan QA and coverage audit.
 - `references/Fourth-Planner.md` for the Step 4 implementation Goal handoff prompt template.
-- `references/Export-Planner.md` for the Step 5 planwright-format plan export.
+- `references/Export-Planner.md` for the Step 3.5 planwright-format plan export.
 
 Bundled support files:
 
@@ -52,7 +52,7 @@ and disables the Step 4 implementation handoff.
    derived with sufficient evidence, do not fall back to a question - print and stop, creating no
    `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
-3. **Run straight through - planning-only.** Execute Step 1 -> 1.5 -> 2 -> 3, then the Step 5
+3. **Run straight through - planning-only.** Execute Step 1 -> 1.5 -> 2 -> 3, then the Step 3.5
    export, treating the gates as approved. Record a `BLOCKED` or P0/P1 audit status in the summary
    but still produce the export. Auto mode writes only under `.qb/`: do not emit or run the Step 4
    implementation handoff, and never modify source code, commit, push, or open PRs.
@@ -177,9 +177,9 @@ When Step 3 completes:
 5. If validation passes with non-blocking warnings, print the Step 4 prompt and state that the implementation run must keep P2/P3 warnings visible.
 6. The Step 4 prompt should execute the READY/READY_WITH_WARNINGS queue continuously in small verified slices. It should not stop after the first successful slice unless a stop gate is hit.
 
-## Step 5 Export to planwright
+## Step 3.5 Export to planwright
 
-Step 5 is an automatic, read-only closing step that projects the `.qb/` sub-plans into a single flat checkbox plan, `.qb/plan.md`, in the exact item format an external planwright executor consumes. Unlike Step 4 it never changes source code, so it runs automatically once Step 3 completes (whenever Step 2 produced sub-plans) — no gate, no copy/paste prompt.
+Step 3.5 is an automatic, read-only export that projects the `.qb/` sub-plans into a single flat checkbox plan, `.qb/plan.md`, in the exact item format an external planwright executor consumes. Unlike Step 4 it never changes source code, so it runs automatically once Step 3 completes (whenever Step 2 produced sub-plans), before the optional gated Step 4 implement — no gate, no copy/paste prompt.
 
 When the export runs:
 
@@ -194,7 +194,7 @@ When the export runs:
 ## Quality and Validation
 
 - Prefer `scripts/validate_planner_docs.py` over ad hoc validation scripts.
-- Use `scripts/validate_planwright_plan.py --root . --strict` to validate the Step 5 export (`.qb/plan.md`).
+- Use `scripts/validate_planwright_plan.py --root . --strict` to validate the Step 3.5 export (`.qb/plan.md`).
 - Use `--mode step1`, `--mode step2`, `--mode step3`, or `--mode step4` for the active workflow step.
 - Use `--strict` in Goal mode so generic or repeated section warnings become failures.
 - Do not report section counts from memory; report counts only after reading the active prompt or running validation.
@@ -208,7 +208,7 @@ When the export runs:
 - Do not implement product features, refactor source code, install dependencies, commit, push, deploy, or open pull requests.
 - Do not write secrets, tokens, credentials, private keys, or local sensitive environment values into planning files.
 - Preserve the exact required filenames: `main-planning.md`, `sub-planning-index.md`, and `sub-planning-audit.md`.
-- Preserve `.qb/assessment.md` as the Step 1.5 assessment filename, and `.qb/plan.md` as the Step 5 planwright-format export filename.
+- Preserve `.qb/assessment.md` as the Step 1.5 assessment filename, and `.qb/plan.md` as the Step 3.5 planwright-format export filename.
 - If a required source file is missing, follow the blocker behavior in the active planner prompt instead of inventing speculative output.
 
 ## Completion Reporting

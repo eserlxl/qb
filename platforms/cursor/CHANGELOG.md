@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it derives without confirmation and fails closed (`QB_PLAN_AUTO_ERROR`) when a field cannot be
   derived.
 
+### Changed
+
+- **Export renumbered Step 5 → Step 3.5.** The automatic planwright-format export now carries the
+  number that matches where it already runs — between the Step 3 audit and the optional, gated Step 4
+  implementation — instead of the trailing "Step 5" label. Behaviour is unchanged (it still runs
+  automatically after the audit and writes only `.qb/plan.md`); the orchestrator flow, commands, and
+  usage docs were updated so the numbering reflects execution order. The Step 4 implementation gate
+  (`--mode step4`) and the `## 12. Step 4 Readiness Assessment` audit heading are unchanged.
+
 ## [0.7.0] - 2026-06-15
 
 ### Added

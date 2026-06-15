@@ -64,6 +64,17 @@ status of `PASS`, `PASS_WITH_WARNINGS`, or `BLOCKED`. It never edits the plans
 themselves. Findings are listed as `- AUDIT-FIX-NN | PX | <title>` single-line
 headers.
 
+## Step 3.5: Export to planwright (automatic)
+
+After the audit and before the optional Step 4 implement, QB automatically projects the sub-plans into a flat,
+execution-ready `.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s
+8-field checkbox item format — one item per "Planned Work Breakdown" entry, across
+all phases. It writes only `.qb/plan.md` (no source changes, no gate) and validates
+it with `validate_planwright_plan.py`, which mirrors the machine-checkable subset of
+planwright's plan linter so the file is accepted by planwright on hand-off. To run the
+plan with planwright: `cp .qb/plan.md .planwright/plan.md`, then run planwright
+`execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
+
 ## Step 4: Gated Implementation (subagent-delegated)
 
 After the audit, QB runs the Step-4 gate (`--mode step4`). Step 4 is
@@ -74,17 +85,6 @@ first, makes a minimal change, runs focused tests plus the relevant `make`
 target, and verifies before claiming done. It never commits, pushes, opens a PR,
 or mutates external systems unless you explicitly ask. Re-run
 `/qb-implement` for each subsequent slice.
-
-## Step 5: Export to planwright (automatic)
-
-After the audit, QB automatically projects the sub-plans into a flat,
-execution-ready `.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s
-8-field checkbox item format — one item per "Planned Work Breakdown" entry, across
-all phases. It writes only `.qb/plan.md` (no source changes, no gate) and validates
-it with `validate_planwright_plan.py`, which mirrors the machine-checkable subset of
-planwright's plan linter so the file is accepted by planwright on hand-off. To run the
-plan with planwright: `cp .qb/plan.md .planwright/plan.md`, then run planwright
-`execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
 
 ## Subagent delegation and the goal contract
 
@@ -110,9 +110,9 @@ zero-setup, and gated at every step.
 - `/qb-audit` - re-run only the audit (for example after repairs).
 - `/qb-implement` - run only the gated implementation for one `READY` sub-plan.
 
-The Step 5 planwright export has no dedicated command (it runs automatically at the end
-of every `/qb-plan` run). To refresh `.qb/plan.md` on its own, re-run `/qb-plan`, or ask
-QB to run only the Step 5 export against the existing `.qb/` sub-plans.
+The Step 3.5 planwright export has no dedicated command (it runs automatically after the
+audit on every `/qb-plan` run). To refresh `.qb/plan.md` on its own, re-run `/qb-plan`, or ask
+QB to run only the Step 3.5 export against the existing `.qb/` sub-plans.
 
 ## Validator output
 
@@ -146,7 +146,7 @@ never in the plugin directory:
 ├── assessment.md              # repo health report for existing projects (Step 1.5)
 ├── sub-planning-index.md    # map of every sub-plan + coverage check   (Step 2)
 ├── sub-planning-audit.md    # quality/coverage audit + PASS/BLOCKED    (Step 3)
-├── plan.md                  # flat planwright-format export            (Step 5)
+├── plan.md                  # flat planwright-format export            (Step 3.5)
 └── phase-1-plans/            # detailed sub-plans, one folder per phase
     ├── phase-1.1-...md
     └── phase-1.2-...md

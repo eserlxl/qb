@@ -22,7 +22,7 @@ planwright can detect the outcome. Without the flag, run the interactive flow be
 - On approval, run Step 2 (`qb-subplanner`, goal-backed), pause at Gate 2, then run
   Step 3 (`qb-auditor`, goal-backed). Offer targeted repairs if the audit is
   `PASS_WITH_WARNINGS`.
-- As the automatic closing step (Step 5), export the sub-plans to `.qb/plan.md` in planwright's
+- As the automatic Step 3.5 (after the audit, before the optional implement), export the sub-plans to `.qb/plan.md` in planwright's
   plan format and validate it with `validate_planwright_plan.py`. Tell the user the hand-off:
   `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`).
 

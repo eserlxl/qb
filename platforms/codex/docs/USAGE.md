@@ -108,6 +108,16 @@ When running through an installed plugin, QB should use the bundled validator pa
 
 If the validator exits nonzero because it found structural issues, Step 3 should still write the audit unless required source files are missing.
 
+## Step 3.5: Export to planwright (automatic)
+
+After Step 3 and before the optional Step 4 implement, QB automatically projects the `.qb/` sub-plans into a flat, execution-ready `.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s 8-field checkbox item format — one item per "Planned Work Breakdown" entry, across all phases. Unlike Step 4 it never changes source code, so it runs without a gate or handoff prompt; it writes only `.qb/plan.md`. Validate it with the bundled validator, which mirrors the machine-checkable subset of planwright's plan linter:
+
+```bash
+python3 plugins/qb/skills/qb/scripts/validate_planwright_plan.py --root /path/to/project --strict
+```
+
+To run the plan with planwright: `cp .qb/plan.md .planwright/plan.md`, then run planwright `execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
+
 ## Step 4: Gated Implementation Handoff
 
 After Step 3, QB may print a Step 4 Goal mode prompt. This prompt is for a separate implementation run; QB itself does not implement product changes during Steps 1-3.
@@ -131,16 +141,6 @@ If the audit is `BLOCKED` or contains P0/P1 findings, repair the planning packag
 The implementation handoff tells Codex to use relevant skills/plugins by scope, execute the READY/READY_WITH_WARNINGS queue continuously in small reversible slices, test before or with code changes, report exact blockers, avoid secrets, and limit token use by reading the audit/index first and only the active sub-plan afterward.
 
 Step 4 should not stop after the first successful slice. It should continue to the next acceptance criterion or next eligible sub-plan until the queue is complete or a stop gate is hit, such as a P0/P1 finding, failing test, missing source file, required credential/live approval, unsafe external mutation, unrelated dirty worktree, or token/context budget pressure.
-
-## Step 5: Export to planwright (automatic)
-
-After Step 3, QB automatically projects the `.qb/` sub-plans into a flat, execution-ready `.qb/plan.md` in [planwright](https://github.com/eserlxl/planwright)'s 8-field checkbox item format — one item per "Planned Work Breakdown" entry, across all phases. Unlike Step 4 it never changes source code, so it runs without a gate or handoff prompt; it writes only `.qb/plan.md`. Validate it with the bundled validator, which mirrors the machine-checkable subset of planwright's plan linter:
-
-```bash
-python3 plugins/qb/skills/qb/scripts/validate_planwright_plan.py --root /path/to/project --strict
-```
-
-To run the plan with planwright: `cp .qb/plan.md .planwright/plan.md`, then run planwright `execute` (or `cycle <N>`). QB never writes to `.planwright/` or invokes planwright.
 
 ## Direct Step Invocation
 
@@ -168,7 +168,7 @@ You can also ask for the Step 4 prompt text after a completed audit:
 Use $qb to print the Step 4 implementation handoff prompt if the audit allows it.
 ```
 
-The Step 5 export runs automatically after Step 3, but you can re-run it directly against existing sub-plans:
+The Step 3.5 export runs automatically after Step 3, but you can re-run it directly against existing sub-plans:
 
 ```text
 Use $qb to export the .qb/ sub-plans to .qb/plan.md in planwright format.

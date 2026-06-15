@@ -70,7 +70,7 @@ class SpecValidatorContractTests(unittest.TestCase):
 class ExportSpecValidatorContractTests(unittest.TestCase):
     """The export spec must document the exact fields and modes its validator enforces.
 
-    validate_planwright_plan.py is the structural gate for the Step 5 export
+    validate_planwright_plan.py is the structural gate for the Step 3.5 export
     (.qb/plan.md); export-planner.md is what instructs the model to produce that
     format. If either side drifts, generated plans silently start failing the gate.
     This pins the contract: every REQUIRED_FIELD (plus the optional New Surfaces) and

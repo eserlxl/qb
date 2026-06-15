@@ -1,7 +1,7 @@
 """Behavior tests for the QB-exported planwright-plan validator.
 
 The shared validator (shared/scripts/validate_planwright_plan.py) is the read-only
-structural gate for the Step 5 export, .qb/plan.md. It mirrors the machine-checkable
+structural gate for the Step 3.5 export, .qb/plan.md. It mirrors the machine-checkable
 subset of planwright's own plan linter, so a plan that passes here is accepted by
 planwright on hand-off. These tests pin that gate: a clean plan passes, and each
 structural violation class fails.
