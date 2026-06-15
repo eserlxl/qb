@@ -151,6 +151,48 @@ class AutonomyLevelTests(unittest.TestCase):
             self.assertEqual((repo / "style.txt").read_text(), "messy\n")
             self.assertEqual(_git(repo, "branch", "--list", "qb-fix/*").stdout.strip(), "")
 
+    def test_promote_applies_delete_rename_and_binary(self) -> None:
+        # _promote must mirror the full changeset shape, not just in-place text edits.
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _build_fixture(repo)
+            (repo / "data.bin").write_bytes(b"\x00\x01\x02")
+            (repo / "old.txt").write_text("o\n", encoding="utf-8")
+            _git(repo, "add", "-A")
+            _git(repo, "commit", "-q", "-m", "more")
+            iso = self.orch._isolation.Isolation(repo, level="A2", run_id="promo", allowlist=None).open()
+            try:
+                wt = iso.worktree_path
+                (wt / "style.txt").unlink()                          # deletion
+                (wt / "old.txt").rename(wt / "new.txt")             # rename
+                (wt / "data.bin").write_bytes(b"\xff\xfe\xfd\x00")  # binary modify
+                promoted = self.orch._promote(iso, repo)
+                self.assertFalse((repo / "style.txt").exists())     # deletion applied
+                self.assertFalse((repo / "old.txt").exists())       # rename: old removed
+                self.assertTrue((repo / "new.txt").is_file())       # rename: new added
+                self.assertEqual((repo / "data.bin").read_bytes(), b"\xff\xfe\xfd\x00")  # binary intact
+                self.assertEqual(set(promoted), {"style.txt", "old.txt", "new.txt", "data.bin"})
+            finally:
+                iso.teardown()
+
+    def test_promote_skips_out_of_allowlist_path(self) -> None:
+        # A change outside the write allowlist (a policy violation, or an incidental
+        # verification byproduct) is filtered out -- never written to the real tree.
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _build_fixture(repo)
+            iso = self.orch._isolation.Isolation(repo, level="A2", run_id="deny", allowlist=["*.txt"]).open()
+            try:
+                (iso.worktree_path / "evil.py").write_text("x = 1\n", encoding="utf-8")
+                (iso.worktree_path / "ok.txt").write_text("fine\n", encoding="utf-8")
+                promoted = self.orch._promote(iso, repo)
+                self.assertNotIn("evil.py", promoted)
+                self.assertFalse((repo / "evil.py").exists())   # filtered: not written
+                self.assertIn("ok.txt", promoted)
+                self.assertTrue((repo / "ok.txt").is_file())    # allowlisted: promoted
+            finally:
+                iso.teardown()
+
 
 if __name__ == "__main__":
     unittest.main()

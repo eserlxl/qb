@@ -22,6 +22,7 @@ is the gate's auto-revert. Both are explicit and reversible.
 from __future__ import annotations
 
 import sys
+from fnmatch import fnmatch
 from importlib import util as _import_util
 from pathlib import Path
 
@@ -61,20 +62,49 @@ def _evidence_path(finding) -> str:
 
 
 def _promote(isolation, repo_root):
-    """The sole working-tree write path: copy isolation's changes into repo_root."""
+    """The sole working-tree write path: apply isolation's verified changes to repo_root.
+
+    Promotion is driven off ``git status --porcelain -z --no-renames``: ``--no-renames``
+    decomposes a rename into a delete + add (so there is no fragile rename-pair parse),
+    ``-z`` is NUL-delimited (no path quoting), and the two-char XY status distinguishes
+    deletions from copies. The previous ``line[3:].strip()`` + ``is_file()`` approach
+    silently dropped deletions, mangled renames into a single garbage path, and aborted
+    mid-loop on a non-UTF-8 file -- each leaving a partially-applied working tree.
+
+    Fail closed on scope: a change is promoted only when it is contained under
+    ``repo_root`` AND (when the isolation carries a write allowlist) matches it. Anything
+    else -- a fix write outside policy, or an incidental verification byproduct such as
+    ``__pycache__`` left in the disposable worktree -- is skipped and never reaches the
+    working tree. Content round-trips as bytes so binary files survive.
+    """
     repo_root = Path(repo_root)
-    status = _cs.run_command(["git", "-C", str(isolation.worktree_path), "status", "--porcelain"])
+    wt = Path(isolation.worktree_path)
+    status = _cs.run_command(
+        ["git", "-C", str(wt), "status", "--porcelain", "-z", "--no-renames"])
+    allowlist = getattr(isolation, "allowlist", None)
     promoted = []
-    for line in status.stdout.splitlines():
-        rel = line[3:].strip()
+    for entry in status.stdout.split("\0"):
+        if len(entry) < 4:
+            continue
+        xy, rel = entry[:2], entry[3:]
         if not rel:
             continue
-        source = isolation.worktree_path / rel
-        if not source.is_file():
+        # Confine to the allowlist (when set) and to repo_root before any write.
+        if allowlist is not None and not any(fnmatch(rel, g) for g in allowlist):
+            continue
+        if not _cs.is_within(repo_root, rel):
             continue
         target = repo_root / rel
+        if "D" in xy:                       # deletion (incl. a rename's old side)
+            if target.is_file() or target.is_symlink():
+                target.unlink()
+                promoted.append(rel)
+            continue
+        source = wt / rel
+        if not source.is_file():
+            continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        target.write_bytes(source.read_bytes())  # bytes: binary-safe round-trip
         promoted.append(rel)
     return promoted
 
