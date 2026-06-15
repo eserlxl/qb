@@ -85,6 +85,21 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(self.report.SEVERITY_TO_SARIF,
                          {"P0": "error", "P1": "error", "P2": "warning", "P3": "note"})
 
+    def test_unknown_severity_renders_as_error_fail_closed(self) -> None:
+        # read_findings does not re-validate, so a store carrying an out-of-vocab
+        # severity must NOT be silently downgraded to 'warning' -- it fails closed
+        # to the most severe SARIF level instead.
+        with tempfile.TemporaryDirectory() as d:
+            store = self.rs.RunStore(Path(d) / self.rs.OUTPUT_DIR_NAME).open()
+            ev = "src/x.py:3"
+            f = self.schema.Finding(
+                id=self.schema.compute_finding_id("secret", ev, "k"),
+                category="secret", severity="P9-bogus", confidence="high",
+                evidence=ev, rationale="r", suggested_fix="s", fix_strategy="manual")
+            store.write_findings([f])
+            sarif = self.report.render_sarif(store)
+            self.assertEqual(sarif["runs"][0]["results"][0]["level"], "error")
+
     def test_summary_text_uses_p_vocabulary(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._populated_store(Path(d) / self.rs.OUTPUT_DIR_NAME)

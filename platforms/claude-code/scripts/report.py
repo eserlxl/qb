@@ -71,7 +71,10 @@ def render_sarif(store) -> dict:
         path, line = _evidence_location(finding.get("evidence", ""))
         results.append({
             "ruleId": _category_rule(finding.get("category", "unknown")),
-            "level": SEVERITY_TO_SARIF.get(finding.get("severity", "P2"), "warning"),
+            # Fail closed: an unknown or missing severity (e.g. a store written by a
+            # future/buggy producer, never re-validated on read) maps to the MOST
+            # severe level, not silently down to 'warning' which would hide a P0.
+            "level": SEVERITY_TO_SARIF.get(finding.get("severity"), "error"),
             "message": {"text": finding.get("rationale", "")},
             "locations": [{
                 "physicalLocation": {
