@@ -30,6 +30,7 @@ required_files=(
   "plugins/qb/skills/qb/references/repo-aware-intake.md"
   "plugins/qb/skills/qb/references/workflow-quality.md"
   "README.md"
+  "CHANGELOG.md"
   "docs/INSTALLATION.md"
   "docs/USAGE.md"
   "docs/MAINTAINING.md"
