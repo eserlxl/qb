@@ -136,6 +136,11 @@ MAP=(
   "scripts/fixer.py|platforms/claude-code/scripts/fixer.py"
   "scripts/fixer.py|platforms/cursor/scripts/fixer.py"
   "scripts/fixer.py|platforms/codex/plugins/qb/skills/qb/scripts/fixer.py"
+
+  # shared/scripts/isolation.py
+  "scripts/isolation.py|platforms/claude-code/scripts/isolation.py"
+  "scripts/isolation.py|platforms/cursor/scripts/isolation.py"
+  "scripts/isolation.py|platforms/codex/plugins/qb/skills/qb/scripts/isolation.py"
 )
 
 # Number of distinct shared source files (for the summary line).
