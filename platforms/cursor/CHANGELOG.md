@@ -5,6 +5,19 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-15
+
+### Added
+
+- **`/qb-plan auto` — non-interactive planning mode.** Passing the `auto` flag runs the whole
+  planning workflow without prompting: it auto-derives the four Step-1 intake fields from the
+  repository and **fails closed** if any is missing (prints
+  `QB_PLAN_AUTO_ERROR: missing required field(s): …` and stops), auto-passes Gate 1 and Gate 2,
+  skips the gated Step 4 implementation, produces and validates `.qb/plan.md`, and prints a
+  single deterministic result line (`QB_PLAN_AUTO_OK:` / `QB_PLAN_AUTO_ERROR:`) so an external
+  caller such as planwright can detect success. Auto mode writes only under `.qb/` and never
+  modifies source code, commits, pushes, or opens PRs.
+
 ## [0.7.0] - 2026-06-15
 
 ### Added

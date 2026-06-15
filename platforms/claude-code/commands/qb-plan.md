@@ -1,11 +1,21 @@
 ---
 name: qb-plan
-description: Start the QB three-step planning workflow (master plan, phase decomposition, audit).
+description: Start the QB three-step planning workflow (master plan, phase decomposition, audit). Pass `auto` to run non-interactively (for planwright).
+argument-hint: [auto]
 ---
 
 # QB Plan
 
 Invoke the `qb-planner` skill and run its workflow from the beginning.
+
+**Auto mode.** If the invocation includes the `auto` flag (`/qb-plan auto`; `$ARGUMENTS`
+contains `auto`), run the `qb-planner` skill in its **"Auto mode (non-interactive)"** path: do
+not prompt for anything; auto-derive the four Step-1 fields from the repository and, if any
+field cannot be derived, print `QB_PLAN_AUTO_ERROR: missing required field(s): …` and stop;
+auto-pass Gate 1 and Gate 2; skip Step 4; produce and validate `.qb/plan.md`; then print the
+single final result line (`QB_PLAN_AUTO_OK:` on success, `QB_PLAN_AUTO_ERROR:` on failure) so
+an external caller such as planwright can detect the outcome. Without the flag, run the
+interactive flow below.
 
 - Ask the four Step-1 fields (`PROJECT_NAME`, `PROJECT_INTENT`, `TARGET_END_STATE`,
   `KNOWN_CONSTRAINTS`) one at a time, in the language the user is writing in.

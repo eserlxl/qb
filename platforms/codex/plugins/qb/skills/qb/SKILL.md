@@ -33,8 +33,32 @@ Bundled support files:
 4. If the user directly asks for Step 3, read `references/Third-Planner.md` and execute it.
 5. If the user asks only for the Goal mode prompt text, print the matching Step 2, Step 3, or gated Step 4 copy block without modifying files.
 6. If the user asks to audit and harden the repository (rather than plan it), launch the QB engine loop described under "Audit and Harden" below instead of the planner.
+7. If the invocation includes the `auto` flag (for example "Use $qb auto"), run the planning workflow non-interactively per **Auto Mode (non-interactive)** below instead of the conversational flow.
 
 Do not run `migrate-to-codex` for this workflow. This is a native Codex skill workflow, not a Claude migration.
+
+## Auto Mode (non-interactive)
+
+When the user invokes `$qb` with the `auto` flag (for example "Use $qb auto"), run the planning
+workflow **non-interactively** so an external caller (for example planwright) can detect a clean
+success or failure from the output. Auto mode overrides the conversational intake and the gates,
+and disables the Step 4 implementation handoff.
+
+1. **Never prompt.** Do not ask the four intake questions and do not pause for approval between
+   steps. Emit only progress and the final result line, in English.
+2. **Intake is auto-derive only - fail closed.** Run the repo-aware Pre-Intake Scan from
+   `references/repo-aware-intake.md` and derive all four fields (`PROJECT_NAME`, `PROJECT_INTENT`,
+   `TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) from repository evidence. If any field cannot be
+   derived, do not fall back to a question - print and stop:
+   `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
+3. **Run straight through - planning-only.** Execute Step 1 -> 1.5 -> 2 -> 3, then the Step 5
+   export, treating the gates as approved. Record a `BLOCKED` or P0/P1 audit status in the summary
+   but still produce the export. Auto mode writes only under `.qb/`: do not emit or run the Step 4
+   implementation handoff, and never modify source code, commit, push, or open PRs.
+4. **Deterministic result line.** Print exactly one final line. Success (only after `.qb/plan.md`
+   passed `scripts/validate_planwright_plan.py`):
+   `QB_PLAN_AUTO_OK: .qb/plan.md generated (<item-count> items); audit=<PASS|PASS_WITH_WARNINGS|BLOCKED>`
+   Otherwise: `QB_PLAN_AUTO_ERROR: <reason>`.
 
 ## Audit and Harden (engine loop)
 

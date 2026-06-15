@@ -52,7 +52,38 @@ Step 5   Export-Planner -> .qb/plan.md (planwright format)      (automatic, clos
   create/update `sub-planning-audit.md`; only Step 4 may change source code, and only after its gate
   passes and the user approves; the Step 5 export may only create/update `.qb/plan.md`. Never write
   secrets, tokens, or credentials. Never auto-commit, push, or open PRs during planning.
-- **Always wait for explicit approval at each gate** before continuing.
+- **Always wait for explicit approval at each gate** before continuing (except in auto mode; see below).
+
+## Auto mode (non-interactive)
+
+When `qb-plan` is invoked with the `auto` flag (`/qb-plan auto`), run the entire workflow
+**non-interactively** so an external caller (for example planwright) can invoke it and detect a
+clean success or failure from the output. Auto mode **overrides** the interactive behavior of
+Step 0, the Step-1 intake, Gate 1, Gate 2, and the repair loop, and it **disables Step 4**.
+
+1. **Never prompt.** Do not ask the four intake questions, do not request Gate-1 feedback or
+   Gate-2 approval, and do not offer interactive repairs. Emit only progress and the final
+   result line. There is no user message to detect a language from, so produce everything in English.
+2. **Intake is auto-derive only - fail closed.** Run the repo-aware Pre-Intake Scan from
+   `references/repo-aware-intake.md` and derive all four fields (`PROJECT_NAME`, `PROJECT_INTENT`,
+   `TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) from repository evidence. If any field cannot be
+   derived with sufficient evidence, do **not** fall back to a prompt - print a single error line
+   and stop immediately, creating no `.qb/` artifacts:
+   `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
+3. **Auto-pass the gates.** Treat Gate 1 and Gate 2 as approved and run Step 1 -> 1.5 -> 2 -> 3
+   straight through. If the audit is `PASS_WITH_WARNINGS` with only P2/P3 findings, continue; do
+   not run the interactive repair loop. Record a `BLOCKED` or P0/P1 audit status in the summary
+   but still produce the export (the export runs regardless of audit status).
+4. **Planning-only - never touch source.** Auto mode writes only under `.qb/`. It runs the
+   Step 5 export to produce and validate `.qb/plan.md`, then stops. It never runs Step 4, never
+   modifies source code, and never commits, pushes, or opens PRs - regardless of audit status.
+5. **Deterministic result line.** Print exactly one machine-detectable result line and nothing
+   after it. Success (only after `.qb/plan.md` exists and passed `validate_planwright_plan.py`):
+   `QB_PLAN_AUTO_OK: .qb/plan.md generated (<item-count> items); audit=<PASS|PASS_WITH_WARNINGS|BLOCKED>`
+   Any blocking error (missing field, an unresolved validator failure, or no sub-plans to
+   export): `QB_PLAN_AUTO_ERROR: <reason>`. Never print the success line unless the export validated.
+
+Without the `auto` flag, ignore this section and follow the interactive Step 0 -> gates flow below.
 
 ## Step 0 - detect and brief
 
