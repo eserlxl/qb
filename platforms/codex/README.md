@@ -1,6 +1,8 @@
 # QB
 
 [![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
+[![version](https://img.shields.io/badge/version-0.3.0-2563EB)](CHANGELOG.md)
+[![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 
 **Repo-aware planning for Codex.** QB turns a project repository into a durable planning package: main plan, existing-project autopsy, phase sub-plans, QA audit, and a gated implementation handoff.
 
@@ -33,7 +35,15 @@ Step 1 runs in the current Codex thread. Steps 2, 3, and 4 are intentionally han
 
 ## Quick Start
 
-Add this repository as a Codex plugin marketplace:
+From this monorepo checkout, add the Codex platform package as a local Codex marketplace:
+
+```bash
+cd /absolute/path/to/qb/platforms/codex
+codex plugin marketplace add .
+codex plugin add qb@eserlxl
+```
+
+If you are using a standalone Codex package checkout, run the same commands from that package root. If the package is published as a remote Codex marketplace, use the repository reference instead:
 
 ```bash
 codex plugin marketplace add eserlxl/qb --ref main
@@ -94,17 +104,19 @@ The validator checks required sections, phase folders, filename conventions, ind
 Maintainers can run the dependency-free package check with:
 
 ```bash
-make check
+make check   # from platforms/codex: validate this package
 ```
 
 `make check` validates plugin JSON, required package files, `agents/openai.yaml` semantic fields, stale invocation names, and cross-host residue without requiring PyYAML or local Codex validator dependencies.
+
+From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all three platform validators and the top-level invariant tests.
 
 ## Release Validation
 
 Run this before sharing, committing, or pushing release changes:
 
 ```bash
-make check
+make check   # package-level check when run from platforms/codex
 ```
 
 The repository also includes GitHub Actions at `.github/workflows/validate.yml`, which runs the same check on pushes to `main` and pull requests.
@@ -132,6 +144,8 @@ Generated plans should distinguish documentation readiness, local readiness, liv
 
 ## Repository Layout
 
+Paths in this section are relative to the Codex package root (`platforms/codex/` inside the monorepo, or the repository root for a standalone Codex package).
+
 ```text
 .agents/plugins/marketplace.json
 Makefile
@@ -158,6 +172,7 @@ scripts/
   validate.sh
 LICENSE
 README.md
+CHANGELOG.md
 ```
 
 ## Documentation

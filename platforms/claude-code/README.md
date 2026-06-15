@@ -9,7 +9,7 @@ then ship it one safe slice at a time.
 
 <br>
 
-[![version](https://img.shields.io/badge/version-0.1.0-2563EB)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.3.0-2563EB)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-0F172A)](https://claude.com/claude-code)
 [![works with](https://img.shields.io/badge/works%20with-new%20%26%20existing%20repos-EA580C)](#what-youll-get)
@@ -52,12 +52,14 @@ It pauses for your explicit approval at every step. No CLI, no API key, no setup
 
 ## Quick start
 
-**1. Install** — add the plugin to Claude Code from its marketplace manifest:
+**1. Install** — add this platform package to Claude Code from its marketplace manifest:
 
-```bash
-claude plugin marketplace add /absolute/path/to/QB
-claude plugin install qb@eserlxl
+```text
+/plugin marketplace add /absolute/path/to/qb/platforms/claude-code
+/plugin install qb
 ```
+
+If you are using a standalone Claude Code package checkout instead of this monorepo, point `/plugin marketplace add` at that package root.
 
 **2. Plan** — open Claude Code in your project and run:
 
@@ -175,11 +177,11 @@ It checks required sections and heading order, phase-folder coverage, filename c
 Repository maintainers can run the full repo check:
 
 ```bash
-make check   # validate the manifest, required files, and frontmatter, then run the tests
-make test    # run the unit tests only
+make check   # from platforms/claude-code: validate this package and run its tests
+make test    # from platforms/claude-code: run the package unit tests only
 ```
 
-The QB monorepo also ships GitHub Actions at its top-level `.github/workflows/validate.yml`, which runs the same check on pushes and pull requests.
+From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all three platform validators and the top-level invariant tests. The monorepo also ships GitHub Actions at `.github/workflows/validate.yml`, which runs that root check on pushes and pull requests.
 
 ---
 
@@ -239,9 +241,11 @@ No. QB runs entirely in-session inside Claude Code.
 ## Development
 
 ```bash
-make check   # validate the manifest, required files, and frontmatter, then run the tests
-make test    # run the unit tests only
+make check   # from platforms/claude-code: validate this package and run its tests
+make test    # from platforms/claude-code: run the package unit tests only
 ```
+
+When editing the monorepo source of truth, change files under `shared/`, run `make sync` from the repo root, then run the root `make check`. The synced planner specs, reference docs, and validator should not be edited directly inside this package.
 
 Further reading: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) ·
 [`docs/USAGE.md`](docs/USAGE.md) ·

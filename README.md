@@ -67,9 +67,9 @@ shared/                         # CANONICAL host-neutral IP — the single sourc
   references/                   #   repo-aware-intake.md, workflow-quality.md
   scripts/validate_planner_docs.py
 platforms/
-  claude-code/                  # subagents via the Task tool
-  cursor/                       # Cursor goals via define-goal
-  codex/                        # Goal-mode copy/paste handoff
+  claude-code/                  # Claude Code package: commands, skills, agents, .claude-plugin/
+  cursor/                       # Cursor package: commands, skills, .cursor-plugin/
+  codex/                        # Codex package: .agents marketplace + plugins/qb/.codex-plugin/
 scripts/sync.sh                 # materializes shared/ into every platform (committed copies)
 tests/                          # top-level unified cross-platform invariant tests
 Makefile  README.md  LICENSE  .gitignore  .github/workflows/validate.yml
@@ -91,18 +91,30 @@ Each platform is correct *for its own host*: all three install under the plugin 
 
 ### Installing each platform
 
-**Claude Code** — add the plugin from its marketplace manifest, then install it:
+**Claude Code** — add the platform package as a Claude Code marketplace, then install it:
 
-```bash
-claude plugin marketplace add /absolute/path/to/qb/platforms/claude-code
-claude plugin install qb@eserlxl
+```text
+/plugin marketplace add /absolute/path/to/qb/platforms/claude-code
+/plugin install qb
 ```
 
 Then run `/qb-plan` in your project.
 
-**Cursor** — install the package at `platforms/cursor`, then run `/qb-plan`.
+**Cursor** — symlink or copy the platform package, reload Cursor, then run `/qb-plan`:
 
-**Codex** — install the package at `platforms/codex/plugins/qb`, then invoke `$qb`.
+```bash
+ln -s "/absolute/path/to/qb/platforms/cursor" ~/.cursor/plugins/local/qb
+```
+
+**Codex** — from this monorepo checkout, add the Codex platform package as the marketplace root, then invoke `$qb` in a new Codex thread:
+
+```bash
+cd /absolute/path/to/qb/platforms/codex
+codex plugin marketplace add .
+codex plugin add qb@eserlxl
+```
+
+For a standalone Codex package repository, the same commands run from that package root. If the package is published as a remote Codex marketplace, use its repository reference instead of `.`.
 
 Each platform directory ships its own README and `docs/` with host-specific install and usage details.
 

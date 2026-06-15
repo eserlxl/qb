@@ -11,7 +11,7 @@ then ship it one safe slice at a time.
 
 <br>
 
-[![version](https://img.shields.io/badge/version-0.4.0-2563EB)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.6.0-2563EB)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 [![Cursor](https://img.shields.io/badge/Cursor-plugin-0F172A)](https://cursor.com)
 [![works with](https://img.shields.io/badge/works%20with-new%20%26%20existing%20repos-EA580C)](#what-youll-get)
@@ -57,8 +57,10 @@ QB is the Cursor edition of the QB planning workflow. Sibling editions exist for
 **1. Install** — link the plugin into Cursor's local plugins folder:
 
 ```bash
-ln -s "/absolute/path/to/QB" ~/.cursor/plugins/local/qb
+ln -s "/absolute/path/to/qb/platforms/cursor" ~/.cursor/plugins/local/qb
 ```
+
+If you are using a standalone Cursor package checkout instead of this monorepo, symlink that package root.
 
 **2. Reload Cursor** — `Cmd/Ctrl + Shift + P` → **Developer: Reload Window**.
 
@@ -118,6 +120,21 @@ flowchart TD
 
 ---
 
+## How the long steps run
+
+QB stays fully in-session. The `qb-planner` orchestrator runs the interactive Step 1 intake itself, then launches each long, autonomous step as a Cursor goal through the native `define-goal` flow:
+
+| Step | Skill |
+|:--:|---|
+| **1.5** | `qb-autopsy` |
+| **2** | `qb-subplanner` |
+| **3** | `qb-auditor` |
+| **4** | `qb-implementer` |
+
+If goal registration is unavailable in a session, QB falls back to running the same step in-context under the identical goal contract.
+
+---
+
 ## What you'll get
 
 Every artifact lands under `Planner-docs/` in **your** workspace — never in the plugin folder:
@@ -133,6 +150,8 @@ Planner-docs/
     └── Phase1.2-...md
 ```
 
+> The artifact names (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, `Phase-<n>-Plans/`, `Phase<n>.<m>-*.md`) are fixed identifiers the validator and index cross-references match exactly — don't rename them. The document *content* is English.
+
 ---
 
 ## Commands
@@ -143,6 +162,28 @@ Planner-docs/
 | `/qb-autopsy` | Analyze an existing repository only (Step 1.5). |
 | `/qb-audit` | Re-run the quality audit only (Step 3). |
 | `/qb-implement` | Implement one reviewed slice (Step 4, gated). |
+
+---
+
+## Validator
+
+QB bundles a dependency-free, read-only validator that each step runs after writing its documents:
+
+```bash
+python3 scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
+python3 scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
+python3 scripts/validate_planner_docs.py --root /path/to/project --mode step4
+```
+
+It checks required sections and heading order, phase-folder coverage, filename conventions, full relative-path index references, duplicate/gap numbering, unindexed files, length-bounded secret patterns, the audit status, and Step 4 readiness. P0/P1 audit findings block the implementation handoff. When `python3` is unavailable, the skills fall back to an equivalent all-file check and report the fallback clearly.
+
+Repository maintainers can run the package check:
+
+```bash
+make check   # from platforms/cursor: validate this package
+```
+
+From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all three platform validators and the top-level invariant tests.
 
 ---
 
@@ -200,8 +241,10 @@ No. QB runs entirely in-session inside Cursor.
 ## Development
 
 ```bash
-make check   # validate the manifest, required files, frontmatter, and cross-host residue
+make check   # from platforms/cursor: validate this package
 ```
+
+When editing the monorepo source of truth, change files under `shared/`, run `make sync` from the repo root, then run the root `make check`. The synced planner specs, reference docs, and validator should not be edited directly inside this package.
 
 Further reading: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) ·
 [`docs/USAGE.md`](docs/USAGE.md) ·
