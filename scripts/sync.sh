@@ -147,6 +147,11 @@ MAP=(
   "scripts/analyzer_license.py|platforms/cursor/scripts/analyzer_license.py"
   "scripts/analyzer_license.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_license.py"
 
+  # shared/scripts/analyzer_config.py
+  "scripts/analyzer_config.py|platforms/claude-code/scripts/analyzer_config.py"
+  "scripts/analyzer_config.py|platforms/cursor/scripts/analyzer_config.py"
+  "scripts/analyzer_config.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_config.py"
+
   # shared/scripts/fixer.py
   "scripts/fixer.py|platforms/claude-code/scripts/fixer.py"
   "scripts/fixer.py|platforms/cursor/scripts/fixer.py"
