@@ -49,6 +49,7 @@ _core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 _cs = _load_sibling("qb_command_safety", "command_safety.py")
 _quality = _load_sibling("qb_analyzer_quality", "analyzer_quality.py")
 _dependency = _load_sibling("qb_analyzer_dependency", "analyzer_dependency.py")
+_license = _load_sibling("qb_analyzer_license", "analyzer_license.py")
 
 serialize_finding = _fs.serialize_finding
 validate_finding = _fs.validate_finding
@@ -62,6 +63,7 @@ SecretHygieneAnalyzer = _core.SecretHygieneAnalyzer
 CommandInjectionAnalyzer = _cs.CommandInjectionAnalyzer
 QualityAnalyzer = _quality.QualityAnalyzer
 DependencyAnalyzer = _dependency.DependencyAnalyzer
+LicenseAnalyzer = _license.LicenseAnalyzer
 
 # --- Fixed output-directory convention (validator-checked identifiers) ---------
 OUTPUT_DIR_NAME = "QB-Audit"
@@ -92,6 +94,7 @@ def build_default_registry():
     registry.register(CommandInjectionAnalyzer())
     registry.register(QualityAnalyzer())
     registry.register(DependencyAnalyzer())
+    registry.register(LicenseAnalyzer())
     return registry
 
 

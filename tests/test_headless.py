@@ -19,6 +19,13 @@ from tests.qb_monorepo import SHARED_DIR
 
 MODULE_PATH = SHARED_DIR / "scripts/qb_headless.py"
 
+# A genuinely clean repo declares its distribution terms; fixtures that assert an
+# EXIT_CLEAN run include this so the license-hygiene analyzer has nothing to flag.
+_LICENSE_TEXT = (
+    "MIT License\n\nCopyright (c) 2026 Example\n\nPermission is hereby granted, "
+    "free of charge, to any person obtaining a copy of this software.\n"
+)
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
@@ -41,6 +48,7 @@ class HeadlessTests(unittest.TestCase):
             repo = Path(d) / "repo"
             repo.mkdir()
             (repo / "readme.md").write_text("# nothing actionable here\n", encoding="utf-8")
+            (repo / "LICENSE").write_text(_LICENSE_TEXT, encoding="utf-8")
             out = Path(d) / "QB-Audit"
             code = self.hl.run_headless(repo, output_dir=out)
             self.assertEqual(code, self.hl.EXIT_CLEAN)
@@ -73,6 +81,7 @@ class HeadlessTests(unittest.TestCase):
             repo = Path(d) / "repo"
             repo.mkdir()
             (repo / "ok.txt").write_text("clean\n", encoding="utf-8")
+            (repo / "LICENSE").write_text(_LICENSE_TEXT, encoding="utf-8")
             code = self.hl.main(["--root", str(repo), "--out", str(Path(d) / "QB-Audit")])
             self.assertEqual(code, self.hl.EXIT_CLEAN)
 
