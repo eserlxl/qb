@@ -101,6 +101,11 @@ MAP=(
   "scripts/finding_schema.py|platforms/claude-code/scripts/finding_schema.py"
   "scripts/finding_schema.py|platforms/cursor/scripts/finding_schema.py"
   "scripts/finding_schema.py|platforms/codex/plugins/qb/skills/qb/scripts/finding_schema.py"
+
+  # shared/scripts/analyzer_interface.py
+  "scripts/analyzer_interface.py|platforms/claude-code/scripts/analyzer_interface.py"
+  "scripts/analyzer_interface.py|platforms/cursor/scripts/analyzer_interface.py"
+  "scripts/analyzer_interface.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_interface.py"
 )
 
 # Number of distinct shared source files (for the summary line).
