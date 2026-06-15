@@ -129,10 +129,12 @@ class Isolation:
         """Write inside isolation, enforced by path containment + allowlist."""
         if not self.opened:
             raise IsolationError("cannot write: isolation is not open (A0/report-only)")
-        resolve_within(self.worktree_path, rel_path)  # raises if it escapes the root
+        # Write to the *resolved* path that containment validated, not the raw join:
+        # a symlinked path component is then followed once, at check time, and the
+        # write lands on the validated target rather than re-following at write time.
+        target = resolve_within(self.worktree_path, rel_path)  # raises if it escapes the root
         if self.allowlist is not None and not any(fnmatch(rel_path, g) for g in self.allowlist):
             raise IsolationError(f"path not in write allowlist: {rel_path}")
-        target = self.worktree_path / rel_path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         return target

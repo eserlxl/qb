@@ -98,6 +98,20 @@ class RunStoreTests(unittest.TestCase):
             # round-trip still parses and preserves the id
             self.assertEqual([r["id"] for r in store.read_findings()], [f.id])
 
+    def test_record_evidence_requires_finding_id(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            with self.assertRaises(self.rs.RunStoreError):
+                store.record_evidence({"outcome": "reverted"})  # no finding_id -> not unknown.json
+
+    def test_record_evidence_refuses_to_clobber(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            store.record_evidence({"finding_id": "QBF-dup", "outcome": "reverted"})
+            with self.assertRaises(self.rs.RunStoreError):
+                store.record_evidence({"finding_id": "QBF-dup", "outcome": "kept",
+                                       "rollback_handle": "h"})
+
     def test_run_log_is_append_only_and_seq_ordered(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)

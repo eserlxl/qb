@@ -100,6 +100,16 @@ class RollbackDrillTests(unittest.TestCase):
         self.assertEqual(self.rg.permitted_autonomy(self._telemetry(1, 9)), "A1")
         self.assertEqual(self.rg.permitted_autonomy(self._telemetry(0, 0)), "A1")  # fail-closed
 
+    def test_gates_fail_closed_on_malformed_telemetry(self) -> None:
+        # Corrupt or hand-edited telemetry must deny (A1 max), never crash or pass open.
+        for bad in ({"quality": None}, {"quality": "nope"},
+                    {"quality": {"precision_estimate": "high"}},
+                    {"quality": {"precision_estimate": True}},
+                    {}, "not-a-dict"):
+            self.assertFalse(self.rg.precision_gate(bad)[0], bad)
+            self.assertFalse(self.rg.fix_safety_gate(bad)[0], bad)
+            self.assertEqual(self.rg.permitted_autonomy(bad), "A1", bad)
+
 
 if __name__ == "__main__":
     unittest.main()

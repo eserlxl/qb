@@ -94,9 +94,20 @@ def run_rollback_drill(repo_root, run_id, mutate_fn) -> bool:
 
 
 # --- release gates (consume Phase-7.1 telemetry; fail-closed) ------------------
+def _quality(telemetry) -> dict:
+    """The quality block, coerced to a dict. Malformed telemetry (a hand-edited or
+    corrupt telemetry.json with quality=null, a non-dict, or a non-numeric estimate)
+    must fail the gates closed, never crash or pass."""
+    if not isinstance(telemetry, dict):
+        return {}
+    quality = telemetry.get("quality")
+    return quality if isinstance(quality, dict) else {}
+
+
 def precision_gate(telemetry: dict, floor: float = PRECISION_FLOOR):
-    precision = telemetry.get("quality", {}).get("precision_estimate")
-    if precision is None:
+    precision = _quality(telemetry).get("precision_estimate")
+    # A non-numeric (or boolean) estimate is treated as missing -> deny, not a crash.
+    if not isinstance(precision, (int, float)) or isinstance(precision, bool):
         return (False, "no-precision-data")
     if precision < floor:
         return (False, f"precision-below-floor={precision}<{floor}")
@@ -104,7 +115,7 @@ def precision_gate(telemetry: dict, floor: float = PRECISION_FLOOR):
 
 
 def fix_safety_gate(telemetry: dict):
-    if not telemetry.get("quality", {}).get("fix_safety_ok", False):
+    if not _quality(telemetry).get("fix_safety_ok", False):
         return (False, "fix-safety-breach")
     return (True, "fix-safety-ok")
 

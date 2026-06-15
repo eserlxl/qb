@@ -94,12 +94,19 @@ class RunStore:
 
     def record_evidence(self, evidence: dict) -> None:
         record = redact(dict(evidence))
-        finding_id = record.get("finding_id", "unknown")
+        finding_id = record.get("finding_id")
+        # Per-fix evidence is keyed by finding_id; a missing/empty id would write to a
+        # shared 'unknown.json' and silently clobber another record. Require it.
+        if not isinstance(finding_id, str) or not finding_id.strip():
+            raise RunStoreError("evidence record requires a non-empty finding_id")
+        target = self.evidence_dir / f"{finding_id}.json"
+        if target.exists():
+            raise RunStoreError(f"evidence already recorded for {finding_id} (refusing to clobber)")
         # A kept fix MUST carry a reversal handle, else it is not recoverable.
         if record.get("outcome") == "kept" and not record.get("rollback_handle"):
             record["outcome"] = "not-kept"
             record["reason"] = "missing-rollback-handle"
-        (self.evidence_dir / f"{finding_id}.json").write_text(
+        target.write_text(
             json.dumps(record, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
     def append_log(self, event: dict) -> None:
