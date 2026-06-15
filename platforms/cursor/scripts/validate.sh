@@ -64,6 +64,7 @@ references/repo-aware-intake.md
 references/workflow-quality.md
 scripts/validate_planner_docs.py
 scripts/validate_planwright_plan.py
+scripts/qb_headless.py
 README.md
 CHANGELOG.md
 LICENSE

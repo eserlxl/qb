@@ -15,6 +15,7 @@ required_files=(
   ".claude-plugin/plugin.json"
   "scripts/validate_planner_docs.py"
   "scripts/validate_planwright_plan.py"
+  "scripts/qb_headless.py"
   "skills/qb-planner/SKILL.md"
   "skills/qb-planner/planners/first-planner.md"
   "skills/qb-planner/planners/export-planner.md"
