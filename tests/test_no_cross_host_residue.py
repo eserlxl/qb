@@ -74,8 +74,8 @@ class CrossHostResidueTests(unittest.TestCase):
         self._assert_clean(CURSOR, CURSOR["root"])
 
     def test_codex_host_files_have_no_cross_host_residue(self) -> None:
-        # Codex packages its host files under plugins/codexqb/.
-        self._assert_clean(CODEX, CODEX["root"] / "plugins/codexqb")
+        # Codex packages its host files under plugins/qb/.
+        self._assert_clean(CODEX, CODEX["root"] / "plugins/qb")
 
 
 if __name__ == "__main__":

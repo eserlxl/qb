@@ -1,12 +1,12 @@
 # Installation
 
-CodexQB is distributed as a Codex plugin repository with a repo-local marketplace manifest.
+QB is distributed as a Codex plugin repository with a repo-local marketplace manifest.
 
 ## Requirements
 
 - Codex with plugin support.
 - GitHub access to `alicankiraz1/CodexQB`.
-- A new Codex thread after installation so the `$codexqb` skill is loaded into context.
+- A new Codex thread after installation so the `$qb` skill is loaded into context.
 
 If this repository is private, installation only works for users and workspaces that can access the repository.
 
@@ -16,13 +16,13 @@ Run these commands in Codex:
 
 ```bash
 codex plugin marketplace add alicankiraz1/CodexQB --ref main
-codex plugin add codexqb@codexqb
+codex plugin add qb@qb
 ```
 
 Then start a new Codex thread and test the skill:
 
 ```text
-Use $codexqb to plan this project.
+Use $qb to plan this project.
 ```
 
 ## Install From A Local Clone
@@ -31,14 +31,14 @@ Clone the repository:
 
 ```bash
 git clone git@github.com:alicankiraz1/CodexQB.git
-cd CodexQB
+cd QB
 ```
 
 Add the local marketplace root:
 
 ```bash
 codex plugin marketplace add .
-codex plugin add codexqb@codexqb
+codex plugin add qb@qb
 ```
 
 Start a new Codex thread before testing.
@@ -48,12 +48,12 @@ Start a new Codex thread before testing.
 In a project repository, ask:
 
 ```text
-Use $codexqb to create a main plan for this project.
+Use $qb to create a main plan for this project.
 ```
 
 Expected behavior:
 
-1. CodexQB performs a bounded read-only scan of the current repository.
+1. QB performs a bounded read-only scan of the current repository.
 2. It asks for `PROJECT_NAME`, ideally with a repo-derived default.
 3. It asks for `PROJECT_INTENT`, ideally with a repo-derived draft.
 4. It asks for `TARGET_END_STATE`, ideally across product, engineering, operations, security, and user value.
@@ -63,12 +63,12 @@ Expected behavior:
 
 ## Troubleshooting
 
-If `$codexqb` is not recognized:
+If `$qb` is not recognized:
 
 - start a new Codex thread;
 - confirm the plugin is installed;
-- reinstall with `codex plugin add codexqb@codexqb`;
+- reinstall with `codex plugin add qb@qb`;
 - confirm the repository or local clone is accessible;
 - if installed from a private repository, confirm Codex has GitHub access to that repository.
 
-If Step 2, Step 3, or the gated Step 4 implementation handoff does not run automatically, that is expected. CodexQB prints text-only Goal mode prompts so you can explicitly launch long-running decomposition, audit, or implementation runs. Step 1.5 Autopsy is local to the initial planning thread and runs only when the repository has meaningful existing-project evidence.
+If Step 2, Step 3, or the gated Step 4 implementation handoff does not run automatically, that is expected. QB prints text-only Goal mode prompts so you can explicitly launch long-running decomposition, audit, or implementation runs. Step 1.5 Autopsy is local to the initial planning thread and runs only when the repository has meaningful existing-project evidence.

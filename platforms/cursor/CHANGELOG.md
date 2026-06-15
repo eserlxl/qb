@@ -1,9 +1,22 @@
 # Changelog
 
-All notable changes to CursorQB are documented in this file.
+All notable changes to QB are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.6.0] - 2026-06-15
+
+### Changed
+
+- **BREAKING — unified naming: per-host `*qb` identifiers collapsed to `qb`.** The
+  Claude Code, Cursor, and Codex packages now share one product name (`QB`), one plugin
+  `id` (`qb`), and one command/skill namespace. Upstream attribution to Alican Kiraz's
+  original CursorQB and CodexQB projects is preserved verbatim.
+  - Commands: `cursorqb-{plan,autopsy,audit,implement}` → `qb-{plan,autopsy,audit,implement}`
+  - Skills: `cursorqb-{planner,subplanner,auditor,implementer,autopsy}` → `qb-*`
+  - Plugin `name` / display name: `cursorqb` / `CursorQB` → `qb` / `QB`
+  - Existing installs must reinstall and update any saved command invocations.
 
 ## [0.5.0] - 2026-06-15
 
@@ -47,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `cursorqb-autopsy` skill (Step 1.5) + `/cursorqb-autopsy` command + bundled `autopsy-planner.md`:
+- `qb-autopsy` skill (Step 1.5) + `/qb-autopsy` command + bundled `autopsy-planner.md`:
   an existing-project autopsy that writes a 13-section `Planner-docs/Autopsy.md` technical feedback
   report, run automatically after Step 1 for existing/non-empty repositories and skipped for empty ones.
 - Validator Autopsy support: `AUTOPSY_HEADINGS` and `validate_autopsy_optional` (reports `autopsy_exists`
@@ -62,11 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reframed the workflow as five steps (1, 1.5, 2, 3, 4); the orchestrator runs Step 1.5 for existing
   projects and Gate 1 feedback covers both `Main-Planing.md` and `Autopsy.md`.
-- `cursorqb-subplanner` and the bundled `second-planner.md` now read `Planner-docs/Autopsy.md` as an
+- `qb-subplanner` and the bundled `second-planner.md` now read `Planner-docs/Autopsy.md` as an
   optional supporting source (not a replacement for the master plan).
-- `cursorqb-auditor` `## 13` findings now use single-line `- AUDIT-FIX-NN | PX | <title>` headers, and the
+- `qb-auditor` `## 13` findings now use single-line `- AUDIT-FIX-NN | PX | <title>` headers, and the
   validator counts severities via `AUDIT_FIX_RE` (precise; never miscounts negative prose).
-- `cursorqb-implementer` / `fourth-planner.md` now frame the Superpowers skills and the security review as
+- `qb-implementer` / `fourth-planner.md` now frame the Superpowers skills and the security review as
   optional, with a graceful fallback to the audit, the selected sub-plan, and existing validation commands.
 
 ## [0.2.0] - 2026-06-14
@@ -77,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   section/heading checks, phase-folder coverage, filename conventions, full relative-path index
   references, duplicate/gap numbering, length-bounded secret scan, audit status, and audit severity
   counts. Skills run it after each step, with a manual fallback when `python3` is unavailable.
-- `cursorqb-implementer` skill and `/cursorqb-implement` command: a gated, goal-backed Step 4 that
+- `qb-implementer` skill and `/qb-implement` command: a gated, goal-backed Step 4 that
   implements one bounded, reversible slice from an audited plan (only when the audit is not `BLOCKED`
   and has no P0/P1 findings), leveraging the Superpowers skills and the security review.
 - Repo-aware Step 1 intake (`references/repo-aware-intake.md`): a bounded read-only repository scan
@@ -89,8 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Reframed the workflow as four steps; the orchestrator now offers a gated Step 4 after the audit.
-- `cursorqb-subplanner` now requires full relative-path index references and all-file (not sampled) validation.
-- `cursorqb-auditor` now runs the validator before and after writing and keeps severity tokens on real
+- `qb-subplanner` now requires full relative-path index references and all-file (not sampled) validation.
+- `qb-auditor` now runs the validator before and after writing and keeps severity tokens on real
   `AUDIT-FIX-NN` finding lines.
 
 ### Fixed
@@ -102,18 +115,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of the CursorQB three-step, goal-backed planning workflow.
-- `cursorqb-planner` orchestrator skill: language detection, sequential Step-1 Q&A for the four
+- Initial release of the QB three-step, goal-backed planning workflow.
+- `qb-planner` orchestrator skill: language detection, sequential Step-1 Q&A for the four
   planning fields, in-context placeholder substitution, Gate 1 (feedback + approval), Gate 2
   (verbatim Turkish audit confirmation), and the `PASS_WITH_WARNINGS` repair loop.
-- `cursorqb-subplanner` skill: Step 2 phase decomposition, launched automatically as a Cursor
+- `qb-subplanner` skill: Step 2 phase decomposition, launched automatically as a Cursor
   goal via the `define-goal` skill, that runs until every phase has a `Faz-<n>-Plans/` folder,
   sub-plans, and a `Sub-Planing-Index.md`.
-- `cursorqb-auditor` skill: Step 3 coverage/quality audit, launched automatically as a Cursor
+- `qb-auditor` skill: Step 3 coverage/quality audit, launched automatically as a Cursor
   goal via the `define-goal` skill, producing `Sub-Planing-Audit.md`; safe to run standalone for
   re-audits.
 - Goal-backed steps (2 and 3) use Cursor's `define-goal` skill automatically and in-session, with
   a graceful fallback to an in-context goal contract when the goal tool is unavailable.
-- `/cursorqb-plan` and `/cursorqb-audit` commands.
+- `/qb-plan` and `/qb-audit` commands.
 - Bundled planner prompts co-located with their skills (`first-planner.md`, `second-planner.md`,
   `third-planner.md`).

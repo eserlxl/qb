@@ -1,6 +1,6 @@
-# Maintaining ClaudeQB
+# Maintaining QB
 
-ClaudeQB is ported from [CursorQB](https://github.com/alicankiraz1/CursorQB)
+QB is ported from [CursorQB](https://github.com/alicankiraz1/CursorQB)
 (its closest analog) with [CodexQB](https://github.com/alicankiraz1/CodexQB) as
 a secondary reference. The planner prompts, specs, intake, workflow-quality
 rules, and validator are tool-agnostic product IP and must stay faithful to the
@@ -15,13 +15,13 @@ make test    # unit tests only (verbose)
 
 `make check` runs `scripts/validate.sh`, which:
 
-1. parses `.claude-plugin/plugin.json` and checks `name == "claudeqb"`;
+1. parses `.claude-plugin/plugin.json` and checks `name == "qb"`;
 2. confirms every required file exists (skills, bundled planner specs, agents, references, scripts, commands, docs);
 3. checks that each skill's frontmatter `name` equals its directory and each command's and agent's `name` equals its filename stem;
 4. fails on `../` parent traversal or any source-tooling residue (the upstream Cursor/Codex plugin ids and manifest directory names, the upstream goal-skill API names, and the old Codex handoff phrase) in component docs;
 5. runs the test suite under `tests/`.
 
-Expect a final `claudeqb_repo_validation=passed` line on success.
+Expect a final `qb_repo_validation=passed` line on success.
 
 ## How the validator works
 
@@ -58,7 +58,7 @@ Use the tracked-file export target:
 make export-sanitized
 ```
 
-This writes `ClaudeQB-sanitized.zip` with `git archive`, so only tracked files
+This writes `QB-sanitized.zip` with `git archive`, so only tracked files
 are included.
 
 ## GitHub Actions CI
@@ -93,11 +93,11 @@ an `actions/setup-python` step before `make check`.
 The bundled planner specs are the source of truth for each step and must stay
 faithful to the upstream prompts:
 
-- `skills/claudeqb-planner/planners/first-planner.md` (Step 1)
-- `skills/claudeqb-autopsy/autopsy-planner.md` (Step 1.5)
-- `skills/claudeqb-subplanner/second-planner.md` (Step 2)
-- `skills/claudeqb-auditor/third-planner.md` (Step 3)
-- `skills/claudeqb-implementer/fourth-planner.md` (Step 4)
+- `skills/qb-planner/planners/first-planner.md` (Step 1)
+- `skills/qb-autopsy/autopsy-planner.md` (Step 1.5)
+- `skills/qb-subplanner/second-planner.md` (Step 2)
+- `skills/qb-auditor/third-planner.md` (Step 3)
+- `skills/qb-implementer/fourth-planner.md` (Step 4)
 
 When editing them: preserve the exact required output filenames (`Main-Planning.md`,
 `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`), keep all required section

@@ -12,24 +12,24 @@ required_files=(
   ".claude-plugin/plugin.json"
   ".claude-plugin/marketplace.json"
   "scripts/validate_planner_docs.py"
-  "skills/claudeqb-planner/SKILL.md"
-  "skills/claudeqb-planner/planners/first-planner.md"
-  "skills/claudeqb-autopsy/SKILL.md"
-  "skills/claudeqb-autopsy/autopsy-planner.md"
-  "skills/claudeqb-subplanner/SKILL.md"
-  "skills/claudeqb-subplanner/second-planner.md"
-  "skills/claudeqb-auditor/SKILL.md"
-  "skills/claudeqb-auditor/third-planner.md"
-  "skills/claudeqb-implementer/SKILL.md"
-  "skills/claudeqb-implementer/fourth-planner.md"
-  "commands/claudeqb-plan.md"
-  "commands/claudeqb-autopsy.md"
-  "commands/claudeqb-audit.md"
-  "commands/claudeqb-implement.md"
-  "agents/claudeqb-autopsy.md"
-  "agents/claudeqb-subplanner.md"
-  "agents/claudeqb-auditor.md"
-  "agents/claudeqb-implementer.md"
+  "skills/qb-planner/SKILL.md"
+  "skills/qb-planner/planners/first-planner.md"
+  "skills/qb-autopsy/SKILL.md"
+  "skills/qb-autopsy/autopsy-planner.md"
+  "skills/qb-subplanner/SKILL.md"
+  "skills/qb-subplanner/second-planner.md"
+  "skills/qb-auditor/SKILL.md"
+  "skills/qb-auditor/third-planner.md"
+  "skills/qb-implementer/SKILL.md"
+  "skills/qb-implementer/fourth-planner.md"
+  "commands/qb-plan.md"
+  "commands/qb-autopsy.md"
+  "commands/qb-audit.md"
+  "commands/qb-implement.md"
+  "agents/qb-autopsy.md"
+  "agents/qb-subplanner.md"
+  "agents/qb-auditor.md"
+  "agents/qb-implementer.md"
   "references/workflow-quality.md"
   "references/repo-aware-intake.md"
   "README.md"
@@ -53,7 +53,7 @@ import json
 import sys
 
 data = json.loads(open(".claude-plugin/plugin.json", encoding="utf-8").read())
-if data.get("name") != "claudeqb":
+if data.get("name") != "qb":
     print(f"unexpected_plugin_name={data.get('name')!r}")
     sys.exit(1)
 PY
@@ -98,9 +98,7 @@ import sys
 from pathlib import Path
 
 forbidden_substrings = {
-    "cursorqb_residue": "cursorqb",
-    "codexqb_residue": "codexqb",
-    "codex_invocation": "$codexqb",
+    "codex_invocation": "$qb",
     "cursor_plugin_dir": ".cursor-plugin",
     "codex_plugin_dir": ".codex-plugin",
     "define_goal_residue": "define-goal",
@@ -130,4 +128,4 @@ PY
 # 6) Unit tests (validator behavior + skill-content invariants).
 python3 -m unittest discover -s tests
 
-echo "claudeqb_repo_validation=passed"
+echo "qb_repo_validation=passed"

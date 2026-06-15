@@ -4,4 +4,4 @@ check:
 	bash scripts/validate.sh
 
 export-sanitized:
-	git archive --format=zip --output CodexQB-sanitized.zip HEAD
+	git archive --format=zip --output QB-sanitized.zip HEAD

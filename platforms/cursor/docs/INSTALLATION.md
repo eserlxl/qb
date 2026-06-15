@@ -1,6 +1,6 @@
 # Installation
 
-CursorQB is a single-plugin Cursor repository: Cursor discovers it directly from
+QB is a single-plugin Cursor repository: Cursor discovers it directly from
 `.cursor-plugin/plugin.json` at the repository root.
 
 ## Local install (immediate use)
@@ -8,15 +8,15 @@ CursorQB is a single-plugin Cursor repository: Cursor discovers it directly from
 Symlink this plugin into your local Cursor plugins directory, then reload Cursor:
 
 ```bash
-ln -s "/absolute/path/to/CursorQB" ~/.cursor/plugins/local/cursorqb
+ln -s "/absolute/path/to/QB" ~/.cursor/plugins/local/qb
 ```
 
 After reloading, the skills and these commands become available:
 
-- `/cursorqb-plan` - start the full five-step workflow.
-- `/cursorqb-autopsy` - run only the Step 1.5 existing-project autopsy.
-- `/cursorqb-audit` - run only the Step 3 audit.
-- `/cursorqb-implement` - run only the gated Step 4 implementation.
+- `/qb-plan` - start the full five-step workflow.
+- `/qb-autopsy` - run only the Step 1.5 existing-project autopsy.
+- `/qb-audit` - run only the Step 3 audit.
+- `/qb-implement` - run only the gated Step 4 implementation.
 
 ## Marketplace
 
@@ -37,4 +37,4 @@ make check
 ```
 
 This validates the manifest, required files, frontmatter, and cross-host residue. Expect a
-final `cursorqb_repo_validation=passed` line.
+final `qb_repo_validation=passed` line.

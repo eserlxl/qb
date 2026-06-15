@@ -1,6 +1,6 @@
-# Maintaining CodexQB
+# Maintaining QB
 
-This document covers validation and release maintenance for CodexQB.
+This document covers validation and release maintenance for QB.
 
 ## Dependency-Free Repo Check
 
@@ -24,26 +24,26 @@ The Codex skill/plugin validator scripts may require PyYAML in the active Python
 CODEX_SKILL_VALIDATOR="${CODEX_SKILL_VALIDATOR:-$HOME/.codex/skills/.system/skill-creator/scripts/quick_validate.py}"
 CODEX_PLUGIN_VALIDATOR="${CODEX_PLUGIN_VALIDATOR:-$HOME/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py}"
 
-python3 "$CODEX_SKILL_VALIDATOR" plugins/codexqb/skills/codexqb
-python3 "$CODEX_PLUGIN_VALIDATOR" plugins/codexqb
+python3 "$CODEX_SKILL_VALIDATOR" plugins/qb/skills/qb
+python3 "$CODEX_PLUGIN_VALIDATOR" plugins/qb
 ```
 
 To validate an optional local global skill copy:
 
 ```bash
-CODEXQB_GLOBAL_SKILL="${CODEXQB_GLOBAL_SKILL:-$HOME/.codex/skills/codexqb}"
+CODEXQB_GLOBAL_SKILL="${CODEXQB_GLOBAL_SKILL:-$HOME/.codex/skills/qb}"
 python3 "$CODEX_SKILL_VALIDATOR" "$CODEXQB_GLOBAL_SKILL"
 ```
 
 ## Validate Planner Docs
 
-The skill ships a read-only validator for generated `Planner-docs/` outputs. From a CodexQB repository checkout, run:
+The skill ships a read-only validator for generated `Planner-docs/` outputs. From a QB repository checkout, run:
 
 ```bash
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step1
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step4
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step1
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step4
 ```
 
 When running through an installed plugin, use the bundled validator path exposed by the active skill. If that path is unavailable, perform equivalent all-file validation and report the fallback clearly.
@@ -77,15 +77,15 @@ The planner prompts and reference docs (`First-Planner.md`, `Second-Planner.md`,
 If you maintain a local global skill copy, compare it with the repo-bundled skill after syncing:
 
 ```bash
-CODEXQB_GLOBAL_SKILL="${CODEXQB_GLOBAL_SKILL:-$HOME/.codex/skills/codexqb}"
-diff -ru plugins/codexqb/skills/codexqb "$CODEXQB_GLOBAL_SKILL"
+CODEXQB_GLOBAL_SKILL="${CODEXQB_GLOBAL_SKILL:-$HOME/.codex/skills/qb}"
+diff -ru plugins/qb/skills/qb "$CODEXQB_GLOBAL_SKILL"
 ```
 
 This is a local-only workflow check. It is not required for CI or repository marketplace releases.
 
 ## Check For Stale Invocation Names
 
-CodexQB should use `$codexqb` as the skill invocation name. The default release check includes this scan:
+QB should use `$qb` as the skill invocation name. The default release check includes this scan:
 
 ```bash
 make check
@@ -103,12 +103,12 @@ Use the tracked-file export target:
 make export-sanitized
 ```
 
-This writes `CodexQB-sanitized.zip` with `git archive`.
+This writes `QB-sanitized.zip` with `git archive`.
 
 ## Release Flow
 
-1. Update `plugins/codexqb/.codex-plugin/plugin.json`.
-2. Update `plugins/codexqb/skills/codexqb/SKILL.md` and references as needed.
+1. Update `plugins/qb/.codex-plugin/plugin.json`.
+2. Update `plugins/qb/skills/qb/SKILL.md` and references as needed.
 3. Update the shared `repo-aware-intake.md` source if Step 1 intake behavior changes, then re-sync.
 4. Update the shared `Autopsy-Planner.md` source if Step 1.5 autopsy behavior changes, then re-sync.
 5. Update the shared `Fourth-Planner.md` source if implementation handoff behavior changes, then re-sync.
@@ -121,14 +121,14 @@ This writes `CodexQB-sanitized.zip` with `git archive`.
 12. Reinstall the plugin in Codex:
 
    ```bash
-   codex plugin add codexqb@codexqb
+   codex plugin add qb@qb
    ```
 
 13. Start a new Codex thread before testing.
 
 ## Public Directory Status
 
-CodexQB currently uses repository marketplace distribution. Public directory or workspace sharing distribution can be revisited separately; this release focuses on repo-marketplace installation and local/team validation.
+QB currently uses repository marketplace distribution. Public directory or workspace sharing distribution can be revisited separately; this release focuses on repo-marketplace installation and local/team validation.
 
 ## Contribution Guidelines
 

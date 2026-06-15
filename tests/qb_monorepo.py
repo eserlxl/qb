@@ -28,26 +28,24 @@ PLATFORMS_DIR = REPO_ROOT / "platforms"
 # cross-host tokens that must NOT appear in its hand-authored host files.
 
 CLAUDE_CODE = {
-    "id": "claudeqb",
+    "id": "qb",
     "root": PLATFORMS_DIR / "claude-code",
     "manifest": PLATFORMS_DIR / "claude-code/.claude-plugin/plugin.json",
-    "forbidden": ("cursorqb", "codexqb", "$codexqb", "define-goal", ".cursor-plugin", ".codex-plugin"),
+    "forbidden": ("$qb", "define-goal", ".cursor-plugin", ".codex-plugin"),
 }
 
 CURSOR = {
-    "id": "cursorqb",
+    "id": "qb",
     "root": PLATFORMS_DIR / "cursor",
     "manifest": PLATFORMS_DIR / "cursor/.cursor-plugin/plugin.json",
-    "forbidden": ("claudeqb", "codexqb", "$codexqb", ".claude-plugin", ".codex-plugin"),
+    "forbidden": ("$qb", ".claude-plugin", ".codex-plugin"),
 }
 
 CODEX = {
-    "id": "codexqb",
+    "id": "qb",
     "root": PLATFORMS_DIR / "codex",
-    "manifest": PLATFORMS_DIR / "codex/plugins/codexqb/.codex-plugin/plugin.json",
+    "manifest": PLATFORMS_DIR / "codex/plugins/qb/.codex-plugin/plugin.json",
     "forbidden": (
-        "claudeqb",
-        "cursorqb",
         ".claude-plugin",
         ".cursor-plugin",
         "define-goal",

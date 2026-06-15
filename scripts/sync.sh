@@ -58,44 +58,44 @@ esac
 # mirrors the SPEC: each shared file fans out to claude-code, cursor, and codex.
 MAP=(
   # shared/planners/first-planner.md
-  "planners/first-planner.md|platforms/claude-code/skills/claudeqb-planner/planners/first-planner.md"
-  "planners/first-planner.md|platforms/cursor/skills/cursorqb-planner/planners/first-planner.md"
-  "planners/first-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/First-Planner.md"
+  "planners/first-planner.md|platforms/claude-code/skills/qb-planner/planners/first-planner.md"
+  "planners/first-planner.md|platforms/cursor/skills/qb-planner/planners/first-planner.md"
+  "planners/first-planner.md|platforms/codex/plugins/qb/skills/qb/references/First-Planner.md"
 
   # shared/planners/second-planner.md
-  "planners/second-planner.md|platforms/claude-code/skills/claudeqb-subplanner/second-planner.md"
-  "planners/second-planner.md|platforms/cursor/skills/cursorqb-subplanner/second-planner.md"
-  "planners/second-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Second-Planner.md"
+  "planners/second-planner.md|platforms/claude-code/skills/qb-subplanner/second-planner.md"
+  "planners/second-planner.md|platforms/cursor/skills/qb-subplanner/second-planner.md"
+  "planners/second-planner.md|platforms/codex/plugins/qb/skills/qb/references/Second-Planner.md"
 
   # shared/planners/third-planner.md
-  "planners/third-planner.md|platforms/claude-code/skills/claudeqb-auditor/third-planner.md"
-  "planners/third-planner.md|platforms/cursor/skills/cursorqb-auditor/third-planner.md"
-  "planners/third-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Third-Planner.md"
+  "planners/third-planner.md|platforms/claude-code/skills/qb-auditor/third-planner.md"
+  "planners/third-planner.md|platforms/cursor/skills/qb-auditor/third-planner.md"
+  "planners/third-planner.md|platforms/codex/plugins/qb/skills/qb/references/Third-Planner.md"
 
   # shared/planners/fourth-planner.md
-  "planners/fourth-planner.md|platforms/claude-code/skills/claudeqb-implementer/fourth-planner.md"
-  "planners/fourth-planner.md|platforms/cursor/skills/cursorqb-implementer/fourth-planner.md"
-  "planners/fourth-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Fourth-Planner.md"
+  "planners/fourth-planner.md|platforms/claude-code/skills/qb-implementer/fourth-planner.md"
+  "planners/fourth-planner.md|platforms/cursor/skills/qb-implementer/fourth-planner.md"
+  "planners/fourth-planner.md|platforms/codex/plugins/qb/skills/qb/references/Fourth-Planner.md"
 
   # shared/planners/autopsy-planner.md
-  "planners/autopsy-planner.md|platforms/claude-code/skills/claudeqb-autopsy/autopsy-planner.md"
-  "planners/autopsy-planner.md|platforms/cursor/skills/cursorqb-autopsy/autopsy-planner.md"
-  "planners/autopsy-planner.md|platforms/codex/plugins/codexqb/skills/codexqb/references/Autopsy-Planner.md"
+  "planners/autopsy-planner.md|platforms/claude-code/skills/qb-autopsy/autopsy-planner.md"
+  "planners/autopsy-planner.md|platforms/cursor/skills/qb-autopsy/autopsy-planner.md"
+  "planners/autopsy-planner.md|platforms/codex/plugins/qb/skills/qb/references/Autopsy-Planner.md"
 
   # shared/references/repo-aware-intake.md
   "references/repo-aware-intake.md|platforms/claude-code/references/repo-aware-intake.md"
   "references/repo-aware-intake.md|platforms/cursor/references/repo-aware-intake.md"
-  "references/repo-aware-intake.md|platforms/codex/plugins/codexqb/skills/codexqb/references/repo-aware-intake.md"
+  "references/repo-aware-intake.md|platforms/codex/plugins/qb/skills/qb/references/repo-aware-intake.md"
 
   # shared/references/workflow-quality.md
   "references/workflow-quality.md|platforms/claude-code/references/workflow-quality.md"
   "references/workflow-quality.md|platforms/cursor/references/workflow-quality.md"
-  "references/workflow-quality.md|platforms/codex/plugins/codexqb/skills/codexqb/references/workflow-quality.md"
+  "references/workflow-quality.md|platforms/codex/plugins/qb/skills/qb/references/workflow-quality.md"
 
   # shared/scripts/validate_planner_docs.py
   "scripts/validate_planner_docs.py|platforms/claude-code/scripts/validate_planner_docs.py"
   "scripts/validate_planner_docs.py|platforms/cursor/scripts/validate_planner_docs.py"
-  "scripts/validate_planner_docs.py|platforms/codex/plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py"
+  "scripts/validate_planner_docs.py|platforms/codex/plugins/qb/skills/qb/scripts/validate_planner_docs.py"
 )
 
 # Number of distinct shared source files (for the summary line).

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ClaudeQB
+# QB
 
 **Plan any project end to end — without leaving Claude Code.**
 
@@ -24,7 +24,7 @@ then ship it one safe slice at a time.
 
 ---
 
-ClaudeQB is a **Claude Code plugin** that runs a guided, multi-step planning workflow right in your chat. You answer a few short questions in your own language, and ClaudeQB:
+QB is a **Claude Code plugin** that runs a guided, multi-step planning workflow right in your chat. You answer a few short questions in your own language, and QB:
 
 1. **Inspects** your repository,
 2. writes a senior-architect **master plan**,
@@ -32,13 +32,13 @@ ClaudeQB is a **Claude Code plugin** that runs a guided, multi-step planning wor
 4. **audits** them for quality and coverage,
 5. and — only if you approve — **implements** one reviewed slice.
 
-It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/claudeqb-plan`.
+It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/qb-plan`.
 
-> ClaudeQB is one of three platform packages in the QB monorepo (Claude Code / Cursor / Codex) and is a Claude Code port of **CursorQB** and **CodexQB** by **Alican Kiraz**.
+> QB is one of three platform packages in the QB monorepo (Claude Code / Cursor / Codex) and is a Claude Code port of **CursorQB** and **CodexQB** by **Alican Kiraz**.
 
 ---
 
-## Why ClaudeQB?
+## Why QB?
 
 | | |
 |---|---|
@@ -55,14 +55,14 @@ It pauses for your explicit approval at every step. No CLI, no API key, no setup
 **1. Install** — add the plugin to Claude Code from its marketplace manifest:
 
 ```bash
-claude plugin marketplace add /absolute/path/to/ClaudeQB
-claude plugin install claudeqb@claudeqb
+claude plugin marketplace add /absolute/path/to/QB
+claude plugin install qb@qb
 ```
 
 **2. Plan** — open Claude Code in your project and run:
 
 ```text
-/claudeqb-plan
+/qb-plan
 ```
 
 Then answer the four short questions and approve each step as you go. That's it.
@@ -75,7 +75,7 @@ Then answer the four short questions and approve each step as you go. That's it.
 
 ```mermaid
 flowchart TD
-    Start(["/claudeqb-plan"]):::start
+    Start(["/qb-plan"]):::start
 
     subgraph PLAN["Planning &nbsp;·&nbsp; writes only inside Planner-docs/"]
         direction TB
@@ -117,16 +117,16 @@ flowchart TD
 
 ## How the long steps run
 
-ClaudeQB stays fully in-session. The `claudeqb-planner` orchestrator runs the interactive Step 1 intake itself, then **delegates** each long, autonomous step to a matching subagent via the **Task tool**, handing it that step's goal contract (objective / success evidence / scope bounds / stop condition) plus the absolute path to the bundled spec:
+QB stays fully in-session. The `qb-planner` orchestrator runs the interactive Step 1 intake itself, then **delegates** each long, autonomous step to a matching subagent via the **Task tool**, handing it that step's goal contract (objective / success evidence / scope bounds / stop condition) plus the absolute path to the bundled spec:
 
 | Step | Subagent |
 |:--:|---|
-| **1.5** | `claudeqb-autopsy` |
-| **2** | `claudeqb-subplanner` |
-| **3** | `claudeqb-auditor` |
-| **4** | `claudeqb-implementer` |
+| **1.5** | `qb-autopsy` |
+| **2** | `qb-subplanner` |
+| **3** | `qb-auditor` |
+| **4** | `qb-implementer` |
 
-If subagents or the Task tool are unavailable in a session, ClaudeQB falls back to running the same step's skill in-context under the identical goal contract — the behavior is the same either way.
+If subagents or the Task tool are unavailable in a session, QB falls back to running the same step's skill in-context under the identical goal contract — the behavior is the same either way.
 
 ---
 
@@ -153,16 +153,16 @@ Planner-docs/
 
 | Command | What it does |
 |---|---|
-| `/claudeqb-plan` | Run the full multi-step workflow from the start. |
-| `/claudeqb-autopsy` | Analyze an existing repository only (Step 1.5). |
-| `/claudeqb-audit` | Re-run the quality audit only (Step 3). |
-| `/claudeqb-implement` | Implement one reviewed slice (Step 4, gated). |
+| `/qb-plan` | Run the full multi-step workflow from the start. |
+| `/qb-autopsy` | Analyze an existing repository only (Step 1.5). |
+| `/qb-audit` | Re-run the quality audit only (Step 3). |
+| `/qb-implement` | Implement one reviewed slice (Step 4, gated). |
 
 ---
 
 ## Validator
 
-ClaudeQB bundles a dependency-free, read-only validator that each step runs after writing its documents:
+QB bundles a dependency-free, read-only validator that each step runs after writing its documents:
 
 ```bash
 python3 scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
@@ -189,7 +189,7 @@ The QB monorepo also ships GitHub Actions at its top-level `.github/workflows/va
 - Step 4 is the **only** step that edits code, and only after the audit passes and you approve — one reversible slice at a time.
 - It never commits, pushes, opens a PR, or calls external systems unless you explicitly ask.
 - No secrets, tokens, or credentials are ever written into a file.
-- ClaudeQB pauses for your explicit approval at every gate.
+- QB pauses for your explicit approval at every gate.
 
 Generated plans distinguish documentation readiness, local readiness, live readiness, production readiness, and operational evidence.
 
@@ -231,7 +231,7 @@ No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and th
 <details>
 <summary><strong>Do I need an API key or a terminal tool?</strong></summary>
 
-No. ClaudeQB runs entirely in-session inside Claude Code.
+No. QB runs entirely in-session inside Claude Code.
 </details>
 
 ---
@@ -252,7 +252,7 @@ Further reading: [`docs/INSTALLATION.md`](docs/INSTALLATION.md) ·
 
 ## Attribution
 
-ClaudeQB is a Claude Code port of **CursorQB** (the Cursor plugin) and **CodexQB** (the Codex plugin) by **Alican Kiraz**. The planner prompts, specs, repo-aware intake, workflow-quality guidance, and validator are ported faithfully; the Cursor/Codex goal mechanism is adapted to native Claude Code subagents invoked through the Task tool. Released under the **MIT** license.
+QB is a Claude Code port of **CursorQB** (the Cursor plugin) and **CodexQB** (the Codex plugin) by **Alican Kiraz**. The planner prompts, specs, repo-aware intake, workflow-quality guidance, and validator are ported faithfully; the Cursor/Codex goal mechanism is adapted to native Claude Code subagents invoked through the Task tool. Released under the **MIT** license.
 
 ---
 

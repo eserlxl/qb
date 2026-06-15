@@ -14,8 +14,8 @@ from tests.qb_monorepo import frontmatter_name
 
 class FrontmatterNameTests(unittest.TestCase):
     def test_name_inside_block_is_returned(self) -> None:
-        text = "---\nname: claudeqb-planner\ndescription: x\n---\n\n# Body\n"
-        self.assertEqual(frontmatter_name(text), "claudeqb-planner")
+        text = "---\nname: qb-planner\ndescription: x\n---\n\n# Body\n"
+        self.assertEqual(frontmatter_name(text), "qb-planner")
 
     def test_body_name_does_not_leak_past_closing_fence(self) -> None:
         # The block has no name:; a name: appears only in the body. The helper

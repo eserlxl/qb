@@ -1,9 +1,23 @@
 # Changelog
 
-All notable changes to ClaudeQB are documented in this file.
+All notable changes to QB are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.0] - 2026-06-15
+
+### Changed
+
+- **BREAKING — unified naming: per-host `*qb` identifiers collapsed to `qb`.** The
+  Claude Code, Cursor, and Codex packages now share one product name (`QB`), one plugin
+  `id` (`qb`), and one command/skill namespace. Upstream attribution to Alican Kiraz's
+  original CursorQB and CodexQB projects is preserved verbatim.
+  - Commands: `/claudeqb-{plan,autopsy,audit,implement}` → `/qb-{plan,autopsy,audit,implement}`
+  - Skills: `claudeqb-{planner,subplanner,auditor,implementer,autopsy}` → `qb-*`
+  - Agents: `claudeqb-{subplanner,auditor,implementer,autopsy}` → `qb-*`
+  - Plugin `name` / display name: `claudeqb` / `ClaudeQB` → `qb` / `QB`
+  - Existing installs must reinstall and update any saved command invocations.
 
 ## [0.2.0] - 2026-06-15
 
@@ -34,29 +48,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plugin) and CodexQB (the Codex plugin) by Alican Kiraz. The planner prompts, specs, repo-aware intake,
   workflow-quality guidance, and read-only validator are ported faithfully; the product stays zero-setup,
   in-session, and gated at every step with explicit user approval.
-- Claude Code plugin manifest at `.claude-plugin/plugin.json` (name `claudeqb`) and a marketplace manifest
+- Claude Code plugin manifest at `.claude-plugin/plugin.json` (name `qb`) and a marketplace manifest
   at `.claude-plugin/marketplace.json` that publishes the plugin from the repository root. Claude Code
   auto-discovers `commands/`, `agents/`, and `skills/`.
-- `claudeqb-planner` orchestrator skill (`skills/claudeqb-planner/`): language detection, repo-aware
+- `qb-planner` orchestrator skill (`skills/qb-planner/`): language detection, repo-aware
   Step-1 Q&A for the four planning fields, in-context placeholder substitution, Gate 1 (feedback +
   approval), Gate 2 (audit confirmation), and the `PASS_WITH_WARNINGS` repair loop. It runs Step 1.5 for
   existing projects and Gate 1 feedback covers both `Main-Planing.md` and `Autopsy.md`.
-- `claudeqb-autopsy` skill + `/claudeqb-autopsy` command (Step 1.5): an existing-project autopsy that
+- `qb-autopsy` skill + `/qb-autopsy` command (Step 1.5): an existing-project autopsy that
   writes a 13-section `Planner-docs/Autopsy.md` technical feedback report, run automatically after Step 1
   for existing/non-empty repositories and skipped for empty ones.
-- `claudeqb-subplanner` skill (Step 2): phase decomposition into `Planner-docs/Faz-<n>-Plans/` sub-plans
+- `qb-subplanner` skill (Step 2): phase decomposition into `Planner-docs/Faz-<n>-Plans/` sub-plans
   plus `Sub-Planing-Index.md`, requiring full relative-path index references and all-file validation. It
   reads `Planner-docs/Autopsy.md` as an optional supporting source.
-- `claudeqb-auditor` skill + `/claudeqb-audit` command (Step 3): a coverage/quality audit producing
+- `qb-auditor` skill + `/qb-audit` command (Step 3): a coverage/quality audit producing
   `Planner-docs/Sub-Planing-Audit.md` with a `PASS` / `PASS_WITH_WARNINGS` / `BLOCKED` status; safe to run
   standalone for re-audits.
-- `claudeqb-implementer` skill + `/claudeqb-implement` command (Step 4): a gated implementation of one
+- `qb-implementer` skill + `/qb-implement` command (Step 4): a gated implementation of one
   bounded, reversible slice from a `READY` sub-plan, only when the audit is not `BLOCKED` and has no P0/P1
   findings.
-- `/claudeqb-plan` command to run the full multi-step workflow from the start.
+- `/qb-plan` command to run the full multi-step workflow from the start.
 - Goal-backed steps adapted to Claude Code: the orchestrator delegates each long autonomous step
-  (Step 1.5, 2, 3, 4) to a matching subagent — `claudeqb-autopsy`, `claudeqb-subplanner`,
-  `claudeqb-auditor`, `claudeqb-implementer` under `agents/` — via the Task tool, passing the step's goal
+  (Step 1.5, 2, 3, 4) to a matching subagent — `qb-autopsy`, `qb-subplanner`,
+  `qb-auditor`, `qb-implementer` under `agents/` — via the Task tool, passing the step's goal
   contract (objective / success evidence / scope bounds / stop condition) and the absolute path to the
   bundled spec. If subagents or the Task tool are unavailable, it falls back to running the step's skill
   in-session under the identical in-context goal contract.

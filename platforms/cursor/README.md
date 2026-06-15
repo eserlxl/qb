@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/logo.svg" width="96" height="96" alt="CursorQB logo">
+<img src="assets/logo.svg" width="96" height="96" alt="QB logo">
 
-# CursorQB
+# QB
 
 **Plan any project end to end — without leaving Cursor.**
 
@@ -26,7 +26,7 @@ then ship it one safe slice at a time.
 
 ---
 
-CursorQB is a **Cursor plugin** that runs a guided, five-step planning workflow right in your chat. You answer a few short questions in your own language, and CursorQB:
+QB is a **Cursor plugin** that runs a guided, five-step planning workflow right in your chat. You answer a few short questions in your own language, and QB:
 
 1. **Inspects** your repository,
 2. writes a senior-architect **master plan**,
@@ -34,13 +34,13 @@ CursorQB is a **Cursor plugin** that runs a guided, five-step planning workflow 
 4. **audits** them for quality and coverage,
 5. and — only if you approve — **implements** one reviewed slice.
 
-It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/cursorqb-plan`.
+It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/qb-plan`.
 
-CursorQB is the Cursor edition of the QB planning workflow. Sibling editions exist for Claude Code (ClaudeQB) and Codex (CodexQB); the shared planning specs and read-only validator are common to all three.
+QB is the Cursor edition of the QB planning workflow. Sibling editions exist for Claude Code (QB) and Codex (QB); the shared planning specs and read-only validator are common to all three.
 
 ---
 
-## Why CursorQB?
+## Why QB?
 
 | | |
 |---|---|
@@ -57,7 +57,7 @@ CursorQB is the Cursor edition of the QB planning workflow. Sibling editions exi
 **1. Install** — link the plugin into Cursor's local plugins folder:
 
 ```bash
-ln -s "/absolute/path/to/CursorQB" ~/.cursor/plugins/local/cursorqb
+ln -s "/absolute/path/to/QB" ~/.cursor/plugins/local/qb
 ```
 
 **2. Reload Cursor** — `Cmd/Ctrl + Shift + P` → **Developer: Reload Window**.
@@ -65,7 +65,7 @@ ln -s "/absolute/path/to/CursorQB" ~/.cursor/plugins/local/cursorqb
 **3. Plan** — open the chat in your project and run:
 
 ```text
-/cursorqb-plan
+/qb-plan
 ```
 
 Then answer the four short questions and approve each step as you go. That's it.
@@ -78,7 +78,7 @@ Then answer the four short questions and approve each step as you go. That's it.
 
 ```mermaid
 flowchart TD
-    Start(["/cursorqb-plan"]):::start
+    Start(["/qb-plan"]):::start
 
     subgraph PLAN["Planning &nbsp;·&nbsp; writes only inside Planner-docs/"]
         direction TB
@@ -139,10 +139,10 @@ Planner-docs/
 
 | Command | What it does |
 |---|---|
-| `/cursorqb-plan` | Run the full five-step workflow from the start. |
-| `/cursorqb-autopsy` | Analyze an existing repository only (Step 1.5). |
-| `/cursorqb-audit` | Re-run the quality audit only (Step 3). |
-| `/cursorqb-implement` | Implement one reviewed slice (Step 4, gated). |
+| `/qb-plan` | Run the full five-step workflow from the start. |
+| `/qb-autopsy` | Analyze an existing repository only (Step 1.5). |
+| `/qb-audit` | Re-run the quality audit only (Step 3). |
+| `/qb-implement` | Implement one reviewed slice (Step 4, gated). |
 
 ---
 
@@ -152,7 +152,7 @@ Planner-docs/
 - Step 4 is the **only** step that edits code, and only after the audit passes and you approve — one reversible slice at a time.
 - It never commits, pushes, opens a PR, or calls external systems unless you explicitly ask.
 - No secrets, tokens, or credentials are ever written into a file.
-- CursorQB pauses for your explicit approval at every gate.
+- QB pauses for your explicit approval at every gate.
 
 ---
 
@@ -192,7 +192,7 @@ No. `Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and th
 <details>
 <summary><strong>Do I need an API key or a terminal tool?</strong></summary>
 
-No. CursorQB runs entirely in-session inside Cursor.
+No. QB runs entirely in-session inside Cursor.
 </details>
 
 ---

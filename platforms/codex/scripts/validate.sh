@@ -10,23 +10,23 @@ cd "$ROOT"
 
 # 1) Manifests parse as JSON.
 python3 -m json.tool .agents/plugins/marketplace.json >/dev/null
-python3 -m json.tool plugins/codexqb/.codex-plugin/plugin.json >/dev/null
+python3 -m json.tool plugins/qb/.codex-plugin/plugin.json >/dev/null
 
 # 2) Required component files exist (Codex nested plugin layout, including the
 #    synced shared spec/reference/validator paths).
 required_files=(
   ".agents/plugins/marketplace.json"
-  "plugins/codexqb/.codex-plugin/plugin.json"
-  "plugins/codexqb/skills/codexqb/SKILL.md"
-  "plugins/codexqb/skills/codexqb/agents/openai.yaml"
-  "plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py"
-  "plugins/codexqb/skills/codexqb/references/First-Planner.md"
-  "plugins/codexqb/skills/codexqb/references/Autopsy-Planner.md"
-  "plugins/codexqb/skills/codexqb/references/Second-Planner.md"
-  "plugins/codexqb/skills/codexqb/references/Third-Planner.md"
-  "plugins/codexqb/skills/codexqb/references/Fourth-Planner.md"
-  "plugins/codexqb/skills/codexqb/references/repo-aware-intake.md"
-  "plugins/codexqb/skills/codexqb/references/workflow-quality.md"
+  "plugins/qb/.codex-plugin/plugin.json"
+  "plugins/qb/skills/qb/SKILL.md"
+  "plugins/qb/skills/qb/agents/openai.yaml"
+  "plugins/qb/skills/qb/scripts/validate_planner_docs.py"
+  "plugins/qb/skills/qb/references/First-Planner.md"
+  "plugins/qb/skills/qb/references/Autopsy-Planner.md"
+  "plugins/qb/skills/qb/references/Second-Planner.md"
+  "plugins/qb/skills/qb/references/Third-Planner.md"
+  "plugins/qb/skills/qb/references/Fourth-Planner.md"
+  "plugins/qb/skills/qb/references/repo-aware-intake.md"
+  "plugins/qb/skills/qb/references/workflow-quality.md"
   "README.md"
   "docs/INSTALLATION.md"
   "docs/USAGE.md"
@@ -48,14 +48,14 @@ python3 - <<'PY'
 import json
 import sys
 
-data = json.loads(open("plugins/codexqb/.codex-plugin/plugin.json", encoding="utf-8").read())
+data = json.loads(open("plugins/qb/.codex-plugin/plugin.json", encoding="utf-8").read())
 name = data.get("name")
-if name != "codexqb":
+if name != "qb":
     print(f"unexpected_plugin_name={name!r}")
     sys.exit(1)
 
 market = json.loads(open(".agents/plugins/marketplace.json", encoding="utf-8").read())
-if market.get("name") != "codexqb":
+if market.get("name") != "qb":
     print(f"unexpected_marketplace_name={market.get('name')!r}")
     sys.exit(1)
 PY
@@ -74,7 +74,7 @@ def frontmatter_name(text: str):
 
 
 problems = []
-for skill in Path("plugins/codexqb/skills").rglob("SKILL.md"):
+for skill in Path("plugins/qb/skills").rglob("SKILL.md"):
     name = frontmatter_name(skill.read_text(encoding="utf-8"))
     if name != skill.parent.name:
         problems.append(f"skill_name_mismatch={skill}::name={name}::dir={skill.parent.name}")
@@ -90,7 +90,7 @@ python3 - <<'PY'
 from pathlib import Path
 import sys
 
-text = Path("plugins/codexqb/skills/codexqb/agents/openai.yaml").read_text(encoding="utf-8")
+text = Path("plugins/qb/skills/qb/agents/openai.yaml").read_text(encoding="utf-8")
 
 
 def scalar(key: str):
@@ -110,7 +110,7 @@ short_description = scalar("short_description")
 default_prompt = scalar("default_prompt")
 
 errors = []
-if display_name != "CodexQB":
+if display_name != "QB":
     errors.append(f"display_name={display_name!r}")
 if short_description is None:
     errors.append("missing short_description")
@@ -119,7 +119,7 @@ elif len(short_description) > 80:
 if default_prompt is None:
     errors.append("missing default_prompt")
 else:
-    if "$codexqb" not in default_prompt:
+    if "$qb" not in default_prompt:
         errors.append("default_prompt_missing_codex_invocation")
     if len(default_prompt) > 220:
         errors.append(f"default_prompt_too_long={len(default_prompt)}")
@@ -138,9 +138,9 @@ import sys
 
 needles = ("project-" + "planner", "Project " + "Planner", "$" + "project-" + "planner")
 host_files = [
-    Path("plugins/codexqb/skills/codexqb/SKILL.md"),
-    Path("plugins/codexqb/skills/codexqb/agents/openai.yaml"),
-    Path("plugins/codexqb/.codex-plugin/plugin.json"),
+    Path("plugins/qb/skills/qb/SKILL.md"),
+    Path("plugins/qb/skills/qb/agents/openai.yaml"),
+    Path("plugins/qb/.codex-plugin/plugin.json"),
     Path(".agents/plugins/marketplace.json"),
     Path("README.md"),
     Path("docs/INSTALLATION.md"),
@@ -175,15 +175,13 @@ from pathlib import Path
 import sys
 
 forbidden = {
-    "claudeqb_residue": "claudeqb",
-    "cursorqb_residue": "cursorqb",
     "claude_plugin_dir": ".claude-plugin",
     "cursor_plugin_dir": ".cursor-plugin",
 }
 host_files = [
-    Path("plugins/codexqb/skills/codexqb/SKILL.md"),
-    Path("plugins/codexqb/skills/codexqb/agents/openai.yaml"),
-    Path("plugins/codexqb/.codex-plugin/plugin.json"),
+    Path("plugins/qb/skills/qb/SKILL.md"),
+    Path("plugins/qb/skills/qb/agents/openai.yaml"),
+    Path("plugins/qb/.codex-plugin/plugin.json"),
     Path(".agents/plugins/marketplace.json"),
 ]
 problems = []
@@ -261,4 +259,4 @@ if findings:
     sys.exit(1)
 PY
 
-echo "codexqb_repo_validation=passed"
+echo "qb_repo_validation=passed"

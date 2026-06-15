@@ -86,9 +86,9 @@ shared/                         # CANONICAL host-neutral IP — the single sourc
   references/                   #   repo-aware-intake.md, workflow-quality.md
   scripts/validate_planner_docs.py
 platforms/
-  claude-code/                  # plugin id "claudeqb"  — subagents via the Task tool
-  cursor/                       # plugin id "cursorqb"  — Cursor goals via define-goal
-  codex/                        # plugin id "codexqb"   — Goal-mode copy/paste handoff
+  claude-code/                  # plugin id "qb"  — subagents via the Task tool
+  cursor/                       # plugin id "qb"  — Cursor goals via define-goal
+  codex/                        # plugin id "qb"   — Goal-mode copy/paste handoff
 scripts/sync.sh                 # materializes shared/ into every platform (committed copies)
 tests/                          # top-level unified cross-platform invariant tests
 Makefile  README.md  LICENSE  .gitignore  .github/workflows/validate.yml
@@ -104,9 +104,9 @@ Each platform is correct *for its own host*; they intentionally use different la
 
 | Platform | Plugin id | How long steps launch |
 |---|---|---|
-| **Claude Code** (`platforms/claude-code`) | `claudeqb` | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`claudeqb-autopsy`, `claudeqb-subplanner`, `claudeqb-auditor`, `claudeqb-implementer`). |
-| **Cursor** (`platforms/cursor`) | `cursorqb` | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
-| **Codex** (`platforms/codex`) | `codexqb` | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
+| **Claude Code** (`platforms/claude-code`) | `qb` | The orchestrator **delegates** each long step to a matching subagent via the **Task tool** (`qb-autopsy`, `qb-subplanner`, `qb-auditor`, `qb-implementer`). |
+| **Cursor** (`platforms/cursor`) | `qb` | Each long step is launched automatically as a **Cursor goal** through the native `define-goal` skill. |
+| **Codex** (`platforms/codex`) | `qb` | Each long step is handed off as a text-only **Goal-mode** copy/paste prompt block. |
 
 All three run the identical workflow, write the identical `Planner-docs/` artifacts, and share the identical validator behavior.
 
@@ -116,14 +116,14 @@ All three run the identical workflow, write the identical `Planner-docs/` artifa
 
 ```bash
 claude plugin marketplace add /absolute/path/to/qb/platforms/claude-code
-claude plugin install claudeqb@claudeqb
+claude plugin install qb@qb
 ```
 
-Then run `/claudeqb-plan` in your project. See `platforms/claude-code/docs/INSTALLATION.md`.
+Then run `/qb-plan` in your project. See `platforms/claude-code/docs/INSTALLATION.md`.
 
-**Cursor** — install the package at `platforms/cursor` per its README, then run `/cursorqb-plan`. See `platforms/cursor/docs/`.
+**Cursor** — install the package at `platforms/cursor` per its README, then run `/qb-plan`. See `platforms/cursor/docs/`.
 
-**Codex** — install the package at `platforms/codex/plugins/codexqb` per its README, then invoke `$codexqb`. See `platforms/codex/docs/`.
+**Codex** — install the package at `platforms/codex/plugins/qb` per its README, then invoke `$qb`. See `platforms/codex/docs/`.
 
 Each platform directory ships its own README and `docs/` with host-specific install and usage details.
 
@@ -150,7 +150,7 @@ make export-sanitized   # git archive the committed tree to QB-sanitized.zip
 ### Invariants enforced
 
 - **Sync is clean** — every platform copy byte-matches its `shared/` source.
-- **Manifest name == platform id** — `claudeqb` / `cursorqb` / `codexqb`.
+- **Manifest name == platform id** — `qb` / `qb` / `qb`.
 - **Frontmatter name == location** — skills match their directory; commands/agents match their filename stem.
 - **No cross-host residue** — each platform's hand-authored host files mention only its own host (the synced neutral specs/references/validator, which say only "QB", are exempt). READMEs, CHANGELOGs, and docs may mention all three platforms and the upstream attribution.
 - **Preserved artifact names** — `Main-Planning.md`, `Autopsy.md`, `Sub-Planning-Index.md`, `Sub-Planning-Audit.md`, and the `Phase-<n>-Plans/` / `Phase<n>.<m>-*.md` patterns are stable across the workflow and the validator.

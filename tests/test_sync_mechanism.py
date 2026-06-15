@@ -20,7 +20,7 @@ from tests.qb_monorepo import REPO_ROOT, SHARED_DIR
 SYNC_SCRIPT = REPO_ROOT / "scripts/sync.sh"
 
 # A destination that the sync MAP always materializes (Claude Code planner copy).
-SAMPLE_DEST = "platforms/claude-code/skills/claudeqb-planner/planners/first-planner.md"
+SAMPLE_DEST = "platforms/claude-code/skills/qb-planner/planners/first-planner.md"
 
 
 def _run(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:

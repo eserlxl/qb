@@ -1,14 +1,14 @@
 {
-  "name": "codexqb",
+  "name": "qb",
   "interface": {
-    "displayName": "CodexQB"
+    "displayName": "QB"
   },
   "plugins": [
     {
-      "name": "codexqb",
+      "name": "qb",
       "source": {
         "source": "local",
-        "path": "./plugins/codexqb"
+        "path": "./plugins/qb"
       },
       "policy": {
         "installation": "AVAILABLE",

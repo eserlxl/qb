@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# CursorQB repository validator (dependency-free).
+# QB repository validator (dependency-free).
 #
 # Validates the hand-authored Cursor host package plus the synced shared assets:
-#   1) the manifest .cursor-plugin/plugin.json parses and declares name == "cursorqb";
+#   1) the manifest .cursor-plugin/plugin.json parses and declares name == "qb";
 #   2) every required component file exists (manifest, the 5 SKILL.md, the 4 commands,
 #      and the synced planner-spec / reference / validator paths);
 #   3) each skill's frontmatter name == its directory and each command's name == its stem;
@@ -10,7 +10,7 @@
 #      The synced neutral planner specs, references, and validator are NOT brand-scanned.
 #
 # Pure POSIX shell: no python, no jq, no external runtimes. Ends with
-#   cursorqb_repo_validation=passed
+#   qb_repo_validation=passed
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,7 +22,7 @@ fail() {
 }
 
 # ---------------------------------------------------------------------------
-# 1) Manifest exists, parses (balanced + minimally well-formed), name=="cursorqb".
+# 1) Manifest exists, parses (balanced + minimally well-formed), name=="qb".
 # ---------------------------------------------------------------------------
 MANIFEST=".cursor-plugin/plugin.json"
 [ -f "$MANIFEST" ] || fail "missing_required_file=$MANIFEST"
@@ -35,7 +35,7 @@ closes=$(tr -cd '}' < "$MANIFEST" | wc -c | tr -d ' ')
 
 # Extract the top-level "name" value with sed (no JSON parser dependency).
 manifest_name="$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$MANIFEST" | head -n 1)"
-[ "$manifest_name" = "cursorqb" ] || fail "unexpected_plugin_name=$manifest_name"
+[ "$manifest_name" = "qb" ] || fail "unexpected_plugin_name=$manifest_name"
 
 # ---------------------------------------------------------------------------
 # 2) Required component files exist.
@@ -43,20 +43,20 @@ manifest_name="$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' 
 # ---------------------------------------------------------------------------
 required_files="
 .cursor-plugin/plugin.json
-skills/cursorqb-planner/SKILL.md
-skills/cursorqb-autopsy/SKILL.md
-skills/cursorqb-subplanner/SKILL.md
-skills/cursorqb-auditor/SKILL.md
-skills/cursorqb-implementer/SKILL.md
-commands/cursorqb-plan.md
-commands/cursorqb-autopsy.md
-commands/cursorqb-audit.md
-commands/cursorqb-implement.md
-skills/cursorqb-planner/planners/first-planner.md
-skills/cursorqb-autopsy/autopsy-planner.md
-skills/cursorqb-subplanner/second-planner.md
-skills/cursorqb-auditor/third-planner.md
-skills/cursorqb-implementer/fourth-planner.md
+skills/qb-planner/SKILL.md
+skills/qb-autopsy/SKILL.md
+skills/qb-subplanner/SKILL.md
+skills/qb-auditor/SKILL.md
+skills/qb-implementer/SKILL.md
+commands/qb-plan.md
+commands/qb-autopsy.md
+commands/qb-audit.md
+commands/qb-implement.md
+skills/qb-planner/planners/first-planner.md
+skills/qb-autopsy/autopsy-planner.md
+skills/qb-subplanner/second-planner.md
+skills/qb-auditor/third-planner.md
+skills/qb-implementer/fourth-planner.md
 references/repo-aware-intake.md
 references/workflow-quality.md
 scripts/validate_planner_docs.py
@@ -103,23 +103,22 @@ done
 #    planner specs, references, or the validator (those say only "QB").
 # ---------------------------------------------------------------------------
 host_files="
-skills/cursorqb-planner/SKILL.md
-skills/cursorqb-autopsy/SKILL.md
-skills/cursorqb-subplanner/SKILL.md
-skills/cursorqb-auditor/SKILL.md
-skills/cursorqb-implementer/SKILL.md
-commands/cursorqb-plan.md
-commands/cursorqb-autopsy.md
-commands/cursorqb-audit.md
-commands/cursorqb-implement.md
+skills/qb-planner/SKILL.md
+skills/qb-autopsy/SKILL.md
+skills/qb-subplanner/SKILL.md
+skills/qb-auditor/SKILL.md
+skills/qb-implementer/SKILL.md
+commands/qb-plan.md
+commands/qb-autopsy.md
+commands/qb-audit.md
+commands/qb-implement.md
 "
 
 # Forbidden cross-host needles for the Cursor platform.
-#   claudeqb / codexqb       -> sibling-platform brand ids
-#   $codexqb                 -> Codex slash invocation token
+#   $qb                 -> Codex slash invocation token
 #   .claude-plugin           -> Claude Code manifest dir
 #   .codex-plugin            -> Codex manifest dir
-forbidden_needles="claudeqb codexqb \$codexqb .claude-plugin .codex-plugin"
+forbidden_needles="\$qb .claude-plugin .codex-plugin"
 
 for path in $host_files; do
   [ -f "$path" ] || continue
@@ -130,4 +129,4 @@ for path in $host_files; do
   done
 done
 
-echo "cursorqb_repo_validation=passed"
+echo "qb_repo_validation=passed"

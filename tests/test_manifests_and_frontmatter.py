@@ -59,8 +59,8 @@ class ManifestIdTests(unittest.TestCase):
                 )
 
     def test_codex_manifest_is_read_from_the_nested_codex_plugin_dir(self) -> None:
-        # The Codex package nests its manifest under plugins/codexqb/.codex-plugin/.
-        expected = CODEX["root"] / "plugins/codexqb/.codex-plugin/plugin.json"
+        # The Codex package nests its manifest under plugins/qb/.codex-plugin/.
+        expected = CODEX["root"] / "plugins/qb/.codex-plugin/plugin.json"
         self.assertEqual(CODEX["manifest"], expected)
 
 
@@ -104,8 +104,8 @@ class FrontmatterNameTests(unittest.TestCase):
         self.assertEqual(problems, [], "\n".join(problems))
 
     def test_codex_frontmatter_names(self) -> None:
-        # Codex nests its single skill under plugins/codexqb/skills/codexqb/.
-        root = CODEX["root"] / "plugins/codexqb"
+        # Codex nests its single skill under plugins/qb/skills/qb/.
+        root = CODEX["root"] / "plugins/qb"
         if not CODEX["manifest"].exists():
             self.skipTest("codex not built yet")
         problems = self._check_skill_dirs(root / "skills")

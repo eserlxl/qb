@@ -1,27 +1,27 @@
-# CodexQB
+# QB
 
 [![validate](https://github.com/alicankiraz1/CodexQB/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/alicankiraz1/CodexQB/actions/workflows/validate.yml)
 
-**Repo-aware planning for Codex.** CodexQB turns a project repository into a durable planning package: main plan, existing-project autopsy, phase sub-plans, QA audit, and a gated implementation handoff.
+**Repo-aware planning for Codex.** QB turns a project repository into a durable planning package: main plan, existing-project autopsy, phase sub-plans, QA audit, and a gated implementation handoff.
 
-![CodexQB workflow and release validation](docs/assets/codexqb-workflow.png)
+![QB workflow and release validation](docs/assets/qb-workflow.png)
 
-CodexQB is a Codex plugin that installs the `$codexqb` skill. It is built for software, AI, infrastructure, security, and automation projects where planning needs to be evidence-backed, reviewable, and ready for step-by-step execution.
+QB is a Codex plugin that installs the `$qb` skill. It is built for software, AI, infrastructure, security, and automation projects where planning needs to be evidence-backed, reviewable, and ready for step-by-step execution.
 
-This package is the Codex platform build of QB. The planner prompts, reference docs, and the read-only `validate_planner_docs.py` are host-neutral shared sources maintained once in the QB monorepo and materialized into this plugin by the repository sync step. The plugin manifest, `SKILL.md`, `agents/openai.yaml`, docs, and `scripts/validate.sh` are the Codex-specific host files. CodexQB is an attributed port of the original CursorQB/CodexQB planning workflow by Alican Kiraz (MIT).
+This package is the Codex platform build of QB. The planner prompts, reference docs, and the read-only `validate_planner_docs.py` are host-neutral shared sources maintained once in the QB monorepo and materialized into this plugin by the repository sync step. The plugin manifest, `SKILL.md`, `agents/openai.yaml`, docs, and `scripts/validate.sh` are the Codex-specific host files. QB is an attributed port of the original CursorQB/CodexQB planning workflow by Alican Kiraz (MIT).
 
-## Why CodexQB
+## Why QB
 
-- **Repo-aware intake:** CodexQB inspects the current repository before asking questions, then proposes evidence-backed defaults for project name, intent, target end state, and constraints.
+- **Repo-aware intake:** QB inspects the current repository before asking questions, then proposes evidence-backed defaults for project name, intent, target end state, and constraints.
 - **Durable planning docs:** Output is written under `Planner-docs/` so long planning work survives context changes and can be reviewed like normal project documentation.
 - **Project Autopsy:** Existing projects get a focused `Autopsy.md` report covering modules, features, placeholders, technical debt, integration gaps, validation gaps, and readiness risks.
 - **Full phase decomposition:** The main plan can be expanded into ordered phase folders and detailed sub-plan files, using Autopsy feedback when available.
 - **QA before implementation:** The audit step checks coverage, naming, ordering, section structure, readiness, security/governance, and implementation preparedness.
-- **Gated execution handoff:** CodexQB does not implement product changes itself. It prints a separate Goal mode prompt only when the audit says implementation can begin, then guides that run through the READY queue in small verified slices.
+- **Gated execution handoff:** QB does not implement product changes itself. It prints a separate Goal mode prompt only when the audit says implementation can begin, then guides that run through the READY queue in small verified slices.
 
 ## Workflow
 
-| Step | What CodexQB Does | Output |
+| Step | What QB Does | Output |
 | --- | --- | --- |
 | 1. Repo Scan + Main Plan | Reads the repository, asks four enriched intake questions, and creates the master plan. | `Planner-docs/Main-Planning.md` |
 | 1.5 Autopsy | For existing projects, audits current project structure, features, placeholders, technical debt, integrations, validation, security, and readiness. | `Planner-docs/Autopsy.md` |
@@ -37,7 +37,7 @@ Add this repository as a Codex plugin marketplace:
 
 ```bash
 codex plugin marketplace add alicankiraz1/CodexQB --ref main
-codex plugin add codexqb@codexqb
+codex plugin add qb@qb
 ```
 
 If the repository is private, your Codex/GitHub environment must have access to `alicankiraz1/CodexQB`.
@@ -45,23 +45,23 @@ If the repository is private, your Codex/GitHub environment must have access to 
 Start a new Codex thread in the project you want to plan, then ask:
 
 ```text
-Use $codexqb to inspect this repo and plan this project.
+Use $qb to inspect this repo and plan this project.
 ```
 
-CodexQB will inspect the repository briefly, then ask for:
+QB will inspect the repository briefly, then ask for:
 
 - `PROJECT_NAME`
 - `PROJECT_INTENT`
 - `TARGET_END_STATE`
 - `KNOWN_CONSTRAINTS`
 
-CodexQB asks intake questions in the user's language when practical. Generated Planner-docs artifacts are English by default unless the user explicitly requests another body language. Required document headings remain English for validator stability.
+QB asks intake questions in the user's language when practical. Generated Planner-docs artifacts are English by default unless the user explicitly requests another body language. Required document headings remain English for validator stability.
 
-For existing repositories, the questions include repo-derived suggestions. For empty or minimal repositories, CodexQB falls back to concise generic questions and marks repository evidence as limited.
+For existing repositories, the questions include repo-derived suggestions. For empty or minimal repositories, QB falls back to concise generic questions and marks repository evidence as limited.
 
 ## Generated Artifacts
 
-CodexQB writes planning artifacts under the target project's `Planner-docs/` directory:
+QB writes planning artifacts under the target project's `Planner-docs/` directory:
 
 ```text
 Planner-docs/
@@ -82,12 +82,12 @@ The artifact filenames (`Main-Planning.md`, `Sub-Planning-Index.md`, `Sub-Planni
 The skill includes a read-only validator:
 
 ```bash
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
-python3 plugins/codexqb/skills/codexqb/scripts/validate_planner_docs.py --root /path/to/project --mode step4
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
+python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step4
 ```
 
-These commands are for manual validation from a CodexQB repository checkout. When running through an installed plugin, CodexQB should use the bundled validator path exposed by the active skill; if that path is unavailable, it should perform equivalent all-file validation and report the fallback clearly.
+These commands are for manual validation from a QB repository checkout. When running through an installed plugin, QB should use the bundled validator path exposed by the active skill; if that path is unavailable, it should perform equivalent all-file validation and report the fallback clearly.
 
 The validator checks required sections, phase folders, filename conventions, index references, duplicate numbering, unindexed files, length-bounded secret patterns, and Step 4 readiness. P0/P1 audit findings block the implementation handoff.
 
@@ -115,11 +115,11 @@ For sanitized zip sharing, use the tracked-file archive target instead of Finder
 make export-sanitized
 ```
 
-This creates `CodexQB-sanitized.zip` from `git archive`, excluding `.git/`, ignored Python caches, local env files, runtime folders, and other untracked local clutter.
+This creates `QB-sanitized.zip` from `git archive`, excluding `.git/`, ignored Python caches, local env files, runtime folders, and other untracked local clutter.
 
 ## Safety Model
 
-CodexQB is planning-first. Steps 1-3 should not:
+QB is planning-first. Steps 1-3 should not:
 
 - implement product features;
 - refactor source code;
@@ -135,9 +135,9 @@ Generated plans should distinguish documentation readiness, local readiness, liv
 ```text
 .agents/plugins/marketplace.json
 Makefile
-plugins/codexqb/
+plugins/qb/
   .codex-plugin/plugin.json
-  skills/codexqb/
+  skills/qb/
     SKILL.md
     agents/openai.yaml
     scripts/validate_planner_docs.py
@@ -153,7 +153,7 @@ docs/
   INSTALLATION.md
   MAINTAINING.md
   USAGE.md
-  assets/codexqb-workflow.png
+  assets/qb-workflow.png
 scripts/
   validate.sh
 LICENSE
@@ -164,15 +164,15 @@ README.md
 
 - [Installation](docs/INSTALLATION.md)
 - [Usage](docs/USAGE.md)
-- [Maintaining CodexQB](docs/MAINTAINING.md)
+- [Maintaining QB](docs/MAINTAINING.md)
 
 ## Public Plugin Directory Status
 
-CodexQB currently uses repository marketplace distribution. Public directory or workspace sharing distribution can be revisited separately; this release focuses on repo-marketplace installation and local/team validation.
+QB currently uses repository marketplace distribution. Public directory or workspace sharing distribution can be revisited separately; this release focuses on repo-marketplace installation and local/team validation.
 
 ## Attribution
 
-CodexQB is part of the QB monorepo, an attributed port of the original CursorQB and CodexQB planning workflow by Alican Kiraz, distributed under the MIT License.
+QB is part of the QB monorepo, an attributed port of the original CursorQB and CodexQB planning workflow by Alican Kiraz, distributed under the MIT License.
 
 ## License
 

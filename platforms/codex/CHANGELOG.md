@@ -1,9 +1,24 @@
 # Changelog
 
-All notable changes to CodexQB are documented in this file.
+All notable changes to QB are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.0] - 2026-06-15
+
+### Changed
+
+- **BREAKING — unified naming: per-host `*qb` identifiers collapsed to `qb`.** The
+  Claude Code, Cursor, and Codex packages now share one product name (`QB`), one plugin
+  `id` (`qb`), and one command/skill namespace. Upstream attribution to Alican Kiraz's
+  original CursorQB and CodexQB projects is preserved verbatim.
+  - Skill: the `codexqb` skill is now `qb` (`plugins/codexqb/` → `plugins/qb/`,
+    `skills/codexqb/` → `skills/qb/`)
+  - Slash invocation: `$codexqb` → `$qb`
+  - Plugin `name` / display name: `codexqb` / `CodexQB` → `qb` / `QB`
+  - Upstream repository URLs (`alicankiraz1/CodexQB`) are unchanged.
+  - Existing installs must reinstall and update any saved `$codexqb` invocations.
 
 ## [0.2.0] - 2026-06-15
 

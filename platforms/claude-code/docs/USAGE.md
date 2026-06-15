@@ -1,23 +1,23 @@
 # Usage
 
-ClaudeQB runs a repo-aware, five-step planning workflow inside the Claude Code
+QB runs a repo-aware, five-step planning workflow inside the Claude Code
 chat session. Each long autonomous step is delegated to a matching subagent via
 the Task tool, with that step's goal contract (objective, success evidence,
 scope bounds, stop condition) passed as the subagent's task brief — there is no
 copy/paste handoff. If subagents or the Task tool are unavailable in a session,
-ClaudeQB falls back to running the step's skill in-session under the same
+QB falls back to running the step's skill in-session under the same
 in-context goal contract; the behavior is identical. The workflow pauses for
 your explicit approval at each gate.
 
 Open the chat in the project you want to plan and run:
 
 ```text
-/claudeqb-plan
+/qb-plan
 ```
 
 ## Step 1: Main Plan (interactive, repo-aware)
 
-ClaudeQB runs a bounded read-only scan of your workspace, then asks four intake
+QB runs a bounded read-only scan of your workspace, then asks four intake
 questions one at a time, in your language, each with a repo-derived draft to
 confirm or edit:
 
@@ -30,8 +30,8 @@ It writes `Planner-docs/Main-Planning.md` and validates it (`--mode step1`).
 
 ## Step 1.5: Existing-Project Autopsy (automatic for existing repos)
 
-For an existing or partially built project, ClaudeQB then delegates to the
-`claudeqb-autopsy` subagent (or runs the `claudeqb-autopsy` skill in-session as
+For an existing or partially built project, QB then delegates to the
+`qb-autopsy` subagent (or runs the `qb-autopsy` skill in-session as
 the fallback) and writes `Planner-docs/Autopsy.md` - a 13-section technical
 feedback report (modules, feature inventory, placeholders/stubs, technical debt,
 broken integrations, test/CI gaps, security, and alignment with the main plan).
@@ -46,7 +46,7 @@ autopsy feedback to `Autopsy.md` only.
 
 ## Step 2: Phase Sub-Plans (subagent-delegated)
 
-The `claudeqb-subplanner` subagent decomposes every phase into detailed
+The `qb-subplanner` subagent decomposes every phase into detailed
 sub-plans under `Planner-docs/Phase-<n>-Plans/`, plus a full-path
 `Planner-docs/Sub-Planning-Index.md`. When `Autopsy.md` exists, it is read as
 supporting feedback (not a replacement for the main plan). It runs until every
@@ -54,11 +54,11 @@ phase is covered, then validates all files (`--mode step2 --strict`).
 
 ## Gate 2
 
-ClaudeQB asks for explicit approval before auditing.
+QB asks for explicit approval before auditing.
 
 ## Step 3: Sub-Plan QA Audit (subagent-delegated)
 
-The `claudeqb-auditor` subagent runs the validator first, audits the sub-plans
+The `qb-auditor` subagent runs the validator first, audits the sub-plans
 against the master plan, and writes `Planner-docs/Sub-Planning-Audit.md` with a
 status of `PASS`, `PASS_WITH_WARNINGS`, or `BLOCKED`. It never edits the plans
 themselves. Findings are listed as `- AUDIT-FIX-NN | PX | <title>` single-line
@@ -66,20 +66,20 @@ headers.
 
 ## Step 4: Gated Implementation (subagent-delegated)
 
-After the audit, ClaudeQB runs the Step-4 gate (`--mode step4`). Step 4 is
+After the audit, QB runs the Step-4 gate (`--mode step4`). Step 4 is
 offered only when the audit is not `BLOCKED` and has no P0/P1 findings. If
-approved, the `claudeqb-implementer` subagent implements one bounded, reversible
+approved, the `qb-implementer` subagent implements one bounded, reversible
 slice from a single `READY` sub-plan: it determines the validation command
 first, makes a minimal change, runs focused tests plus the relevant `make`
 target, and verifies before claiming done. It never commits, pushes, opens a PR,
 or mutates external systems unless you explicitly ask. Re-run
-`/claudeqb-implement` for each subsequent slice.
+`/qb-implement` for each subsequent slice.
 
 ## Subagent delegation and the goal contract
 
 For each long autonomous step (1.5, 2, 3, and 4), the orchestrator delegates to
-the matching subagent via the Task tool — `claudeqb-autopsy`,
-`claudeqb-subplanner`, `claudeqb-auditor`, and `claudeqb-implementer` — passing
+the matching subagent via the Task tool — `qb-autopsy`,
+`qb-subplanner`, `qb-auditor`, and `qb-implementer` — passing
 that step's goal contract as the task brief:
 
 - **Objective** — what the step must produce.
@@ -95,9 +95,9 @@ zero-setup, and gated at every step.
 
 ## Direct step invocation
 
-- `/claudeqb-autopsy` - run only the autopsy on an existing `Main-Planning.md`.
-- `/claudeqb-audit` - re-run only the audit (for example after repairs).
-- `/claudeqb-implement` - run only the gated implementation for one `READY` sub-plan.
+- `/qb-autopsy` - run only the autopsy on an existing `Main-Planning.md`.
+- `/qb-audit` - re-run only the audit (for example after repairs).
+- `/qb-implement` - run only the gated implementation for one `READY` sub-plan.
 
 ## Validator output
 

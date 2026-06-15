@@ -7,4 +7,4 @@ test:
 	python3 -m unittest discover -s tests -v
 
 export-sanitized:
-	git archive --format=zip --output ClaudeQB-sanitized.zip HEAD
+	git archive --format=zip --output QB-sanitized.zip HEAD
