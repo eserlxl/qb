@@ -56,7 +56,7 @@ It pauses for your explicit approval at every step. No CLI, no API key, no setup
 
 ```bash
 claude plugin marketplace add /absolute/path/to/QB
-claude plugin install qb@qb
+claude plugin install qb@eserlxl
 ```
 
 **2. Plan** — open Claude Code in your project and run:
@@ -258,6 +258,6 @@ QB is an independent project **inspired by** **CursorQB** (the Cursor plugin) an
 
 <div align="center">
 
-**[MIT](LICENSE)** © Alican Kiraz
+**[MIT](LICENSE)** · QB © Eser KUBALI
 
 </div>

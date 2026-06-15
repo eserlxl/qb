@@ -1,10 +1,10 @@
 # Maintaining QB
 
-QB is ported from [CursorQB](https://github.com/alicankiraz1/CursorQB)
+QB is an independent project inspired by [CursorQB](https://github.com/alicankiraz1/CursorQB)
 (its closest analog) with [CodexQB](https://github.com/alicankiraz1/CodexQB) as
-a secondary reference. The planner prompts, specs, intake, workflow-quality
-rules, and validator are tool-agnostic product IP and must stay faithful to the
-upstream prompts.
+a secondary reference; it is not a direct port. The planner prompts, specs, intake,
+workflow-quality rules, and validator are tool-agnostic product IP, reworked from
+those upstream prompts into a host-neutral form.
 
 ## Validate locally
 
@@ -90,8 +90,7 @@ an `actions/setup-python` step before `make check`.
 
 ## Editing the bundled prompts
 
-The bundled planner specs are the source of truth for each step and must stay
-faithful to the upstream prompts:
+The bundled planner specs are the source of truth for each step:
 
 - `skills/qb-planner/planners/first-planner.md` (Step 1)
 - `skills/qb-autopsy/autopsy-planner.md` (Step 1.5)

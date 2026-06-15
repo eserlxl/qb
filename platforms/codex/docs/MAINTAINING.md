@@ -121,7 +121,7 @@ This writes `QB-sanitized.zip` with `git archive`.
 12. Reinstall the plugin in Codex:
 
    ```bash
-   codex plugin add qb@qb
+   codex plugin add qb@eserlxl
    ```
 
 13. Start a new Codex thread before testing.

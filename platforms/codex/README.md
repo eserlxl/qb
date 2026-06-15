@@ -1,6 +1,6 @@
 # QB
 
-[![validate](https://github.com/alicankiraz1/CodexQB/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/alicankiraz1/CodexQB/actions/workflows/validate.yml)
+[![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
 
 **Repo-aware planning for Codex.** QB turns a project repository into a durable planning package: main plan, existing-project autopsy, phase sub-plans, QA audit, and a gated implementation handoff.
 
@@ -36,11 +36,11 @@ Step 1 runs in the current Codex thread. Steps 2, 3, and 4 are intentionally han
 Add this repository as a Codex plugin marketplace:
 
 ```bash
-codex plugin marketplace add alicankiraz1/CodexQB --ref main
-codex plugin add qb@qb
+codex plugin marketplace add eserlxl/qb --ref main
+codex plugin add qb@eserlxl
 ```
 
-If the repository is private, your Codex/GitHub environment must have access to `alicankiraz1/CodexQB`.
+If the repository is private, your Codex/GitHub environment must have access to `eserlxl/qb`.
 
 Start a new Codex thread in the project you want to plan, then ask:
 

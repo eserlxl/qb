@@ -2,9 +2,10 @@
 
 QB is a single Claude Code plugin: Claude Code auto-discovers its
 `commands/`, `agents/`, `skills/`, and `hooks/` from the plugin manifest at
-`.claude-plugin/plugin.json`. It is ported from the
+`.claude-plugin/plugin.json`. It draws on the
 [CursorQB](https://github.com/alicankiraz1/CursorQB) Cursor plugin (with
-[CodexQB](https://github.com/alicankiraz1/CodexQB) as a secondary reference).
+[CodexQB](https://github.com/alicankiraz1/CodexQB) as a secondary reference),
+but is not a direct port.
 
 ## Install from a marketplace (recommended)
 

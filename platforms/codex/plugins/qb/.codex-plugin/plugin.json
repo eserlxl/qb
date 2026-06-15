@@ -3,12 +3,12 @@
   "version": "0.3.0",
   "description": "QB packages a repo-aware Codex planning workflow with an existing-project autopsy and gated implementation handoff prompt.",
   "author": {
-    "name": "Alican Kiraz",
-    "email": "167613664+alicankiraz1@users.noreply.github.com",
-    "url": "https://github.com/alicankiraz1"
+    "name": "Eser KUBALI",
+    "email": "eserlxl@gmail.com",
+    "url": "https://github.com/eserlxl"
   },
-  "homepage": "https://github.com/alicankiraz1/CodexQB",
-  "repository": "https://github.com/alicankiraz1/CodexQB",
+  "homepage": "https://github.com/eserlxl/qb",
+  "repository": "https://github.com/eserlxl/qb",
   "license": "MIT",
   "keywords": [
     "codex",
@@ -22,13 +22,13 @@
     "displayName": "QB",
     "shortDescription": "Run repo-aware planning, autopsy, audit, and handoff.",
     "longDescription": "QB helps Codex inspect a repository, ask repo-aware intake questions, create a master project plan, autopsy existing project state, decompose the plan into phase-level sub-plans, audit the resulting planning package for coverage, ordering, readiness, and governance, then print a gated Goal-mode implementation handoff when the audit allows it.",
-    "developerName": "Alican Kiraz",
+    "developerName": "Eser KUBALI",
     "category": "Productivity",
     "capabilities": [
       "Interactive",
       "Write"
     ],
-    "websiteURL": "https://github.com/alicankiraz1/CodexQB",
+    "websiteURL": "https://github.com/eserlxl/qb",
     "defaultPrompt": [
       "Use $qb to inspect this repo and plan this project.",
       "Use $qb to autopsy this existing project and create phase sub-plans.",

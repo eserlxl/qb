@@ -55,7 +55,7 @@ if name != "qb":
     sys.exit(1)
 
 market = json.loads(open(".agents/plugins/marketplace.json", encoding="utf-8").read())
-if market.get("name") != "qb":
+if market.get("name") != "eserlxl":
     print(f"unexpected_marketplace_name={market.get('name')!r}")
     sys.exit(1)
 PY

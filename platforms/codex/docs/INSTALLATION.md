@@ -5,7 +5,7 @@ QB is distributed as a Codex plugin repository with a repo-local marketplace man
 ## Requirements
 
 - Codex with plugin support.
-- GitHub access to `alicankiraz1/CodexQB`.
+- GitHub access to `eserlxl/qb`.
 - A new Codex thread after installation so the `$qb` skill is loaded into context.
 
 If this repository is private, installation only works for users and workspaces that can access the repository.
@@ -15,8 +15,8 @@ If this repository is private, installation only works for users and workspaces 
 Run these commands in Codex:
 
 ```bash
-codex plugin marketplace add alicankiraz1/CodexQB --ref main
-codex plugin add qb@qb
+codex plugin marketplace add eserlxl/qb --ref main
+codex plugin add qb@eserlxl
 ```
 
 Then start a new Codex thread and test the skill:
@@ -30,7 +30,7 @@ Use $qb to plan this project.
 Clone the repository:
 
 ```bash
-git clone git@github.com:alicankiraz1/CodexQB.git
+git clone git@github.com:eserlxl/qb.git
 cd QB
 ```
 
@@ -38,7 +38,7 @@ Add the local marketplace root:
 
 ```bash
 codex plugin marketplace add .
-codex plugin add qb@qb
+codex plugin add qb@eserlxl
 ```
 
 Start a new Codex thread before testing.
@@ -67,7 +67,7 @@ If `$qb` is not recognized:
 
 - start a new Codex thread;
 - confirm the plugin is installed;
-- reinstall with `codex plugin add qb@qb`;
+- reinstall with `codex plugin add qb@eserlxl`;
 - confirm the repository or local clone is accessible;
 - if installed from a private repository, confirm Codex has GitHub access to that repository.
 

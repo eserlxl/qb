@@ -95,7 +95,7 @@ Each platform is correct *for its own host*: all three install under the plugin 
 
 ```bash
 claude plugin marketplace add /absolute/path/to/qb/platforms/claude-code
-claude plugin install qb@qb
+claude plugin install qb@eserlxl
 ```
 
 Then run `/qb-plan` in your project.

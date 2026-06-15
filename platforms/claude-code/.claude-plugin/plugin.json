@@ -4,7 +4,7 @@
   "version": "0.3.0",
   "description": "Repo-aware, gated, multi-step project planning workflow for Claude Code: a senior-architect master plan, an existing-project autopsy, autonomous phase decomposition, a coverage/quality audit validated by a bundled read-only checker, and a gated implementation step. Produces English planning docs under Planner-docs/. In-session and zero-setup; delegates each long autonomous step to a matching subagent.",
   "author": {
-    "name": "Alican Kiraz"
+    "name": "Eser KUBALI"
   },
   "license": "MIT",
   "keywords": [
