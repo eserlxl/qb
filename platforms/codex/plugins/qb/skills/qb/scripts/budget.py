@@ -130,9 +130,10 @@ def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
                 enable_a3=False, telemetry=None, clock=time.monotonic):
     """Run findings under budget + kill-switch control. items: [(fix_plan, apply_fn), ...].
 
-    ``telemetry`` (prior-run quality record) is threaded to each ``run_finding`` so the
-    declared autonomy level is clamped by the earned ceiling; with no telemetry, the
-    session promotes nothing above A1 (fail-closed)."""
+    ``telemetry`` is the prior-run quality record, loaded by the caller from the
+    previous run store root with ``run_store.load_prior_telemetry``. It is threaded
+    to each ``run_finding`` so the declared autonomy level is clamped by the earned
+    ceiling; with no telemetry, the session promotes nothing above A1 (fail-closed)."""
     meter = BudgetMeter(Budget.from_policy(policy), clock=clock)
     results = []
     trigger = "completed"

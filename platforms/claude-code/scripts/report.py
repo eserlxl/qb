@@ -32,6 +32,14 @@ SUMMARY_TEXT_FILENAME = "summary.txt"
 
 # Fields excluded from byte-for-byte reproducibility comparison (Phase 5.3).
 NON_DETERMINISTIC_FIELDS = ("timing",)
+TIMING_BOUNDARY_DECISION = (
+    "raw wall-clock latency is excluded from the canonical report body; "
+    "callers may place it under provenance.timing, covered by NON_DETERMINISTIC_FIELDS"
+)
+SIGNALS_SURFACING_DECISION = (
+    "signals are surfaced in report.json and summary.txt; report.sarif remains "
+    "standards-conformant SARIF without QB-specific operational signals"
+)
 
 
 def _category_rule(category: str) -> str:
@@ -47,6 +55,50 @@ def _evidence_location(evidence: str):
     return path or evidence, start
 
 
+def _precision_estimate(kept: int, reverted: int):
+    denom = kept + reverted
+    return round(kept / denom, 4) if denom else None
+
+
+def _store_signals(store, findings: list, hardening: list) -> dict:
+    """Operational signals derived only from persisted store artifacts.
+
+    This function deliberately performs no wall-clock reads; render-time timing
+    stays under provenance.timing so report-body re-renders stay byte-identical.
+    """
+    telemetry = store.read_telemetry() if hasattr(store, "read_telemetry") else {}
+    telemetry = telemetry if isinstance(telemetry, dict) else {}
+    quality = telemetry.get("quality") if isinstance(telemetry.get("quality"), dict) else {}
+    cost = telemetry.get("cost") if isinstance(telemetry.get("cost"), dict) else {}
+    summary = store.read_summary()
+
+    severity_counts = {s: 0 for s in _SEVERITIES}
+    for finding in findings:
+        severity = finding.get("severity")
+        if severity in severity_counts:
+            severity_counts[severity] += 1
+
+    fixes = {
+        "kept": sum(1 for e in hardening if e.get("outcome") == "kept"),
+        "reverted": sum(1 for e in hardening if e.get("outcome") == "reverted"),
+        "blocked": sum(1 for e in hardening if e.get("outcome") == "blocked"),
+    }
+    precision = quality.get("precision_estimate", _precision_estimate(fixes["kept"], fixes["reverted"]))
+    fix_safety = quality.get(
+        "fix_safety_ok",
+        all(e.get("after_exit") in (0, None) for e in hardening if e.get("outcome") == "kept"),
+    )
+    return {
+        "severity_counts": severity_counts,
+        "fixes": fixes,
+        "quality": {
+            "precision_estimate": precision,
+            "fix_safety_ok": fix_safety,
+        },
+        "iterations": cost.get("iterations", summary.get("iterations", 0)),
+    }
+
+
 def render_json(store, *, provenance=None) -> dict:
     """Typed JSON report rendered purely from the store (sorted, deterministic)."""
     findings = sorted(store.read_findings(), key=lambda f: f.get("id", ""))
@@ -54,6 +106,7 @@ def render_json(store, *, provenance=None) -> dict:
     report = {
         "schema_version": REPORT_SCHEMA_VERSION,
         "summary": store.read_summary(),
+        "signals": _store_signals(store, findings, hardening),
         "findings": findings,
         "hardening": hardening,
     }
@@ -98,17 +151,18 @@ def render_summary_text(store) -> str:
     findings = store.read_findings()
     evidence = store.read_evidence()
     summary = store.read_summary()
-    sev_counts = {s: 0 for s in _SEVERITIES}
-    for finding in findings:
-        sev = finding.get("severity")
-        if sev in sev_counts:
-            sev_counts[sev] += 1
-    kept = sum(1 for e in evidence if e.get("outcome") == "kept")
-    reverted = sum(1 for e in evidence if e.get("outcome") == "reverted")
+    signals = _store_signals(store, findings, evidence)
+    sev_counts = signals["severity_counts"]
+    fixes = signals["fixes"]
+    quality = signals["quality"]
     lines = [
         "QB audit report",
         f"findings: {len(findings)} (" + ", ".join(f"{s}={sev_counts[s]}" for s in _SEVERITIES) + ")",
-        f"hardening: kept={kept} reverted={reverted}",
+        f"hardening: kept={fixes['kept']} reverted={fixes['reverted']} blocked={fixes['blocked']}",
+        "signals: "
+        f"precision={quality['precision_estimate']} "
+        f"fix_safety_ok={quality['fix_safety_ok']} "
+        f"iterations={signals['iterations']}",
         f"stop: {summary.get('trigger', summary.get('stop', 'completed'))}",
     ]
     return "\n".join(lines) + "\n"
@@ -119,7 +173,7 @@ def validate_report(report: dict) -> list:
     errors = []
     if report.get("schema_version") != REPORT_SCHEMA_VERSION:
         errors.append(f"bad_schema_version={report.get('schema_version')}")
-    for key in ("summary", "findings", "hardening"):
+    for key in ("summary", "signals", "findings", "hardening"):
         if key not in report:
             errors.append(f"missing_key={key}")
     if not isinstance(report.get("findings"), list):

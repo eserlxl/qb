@@ -12,10 +12,16 @@ mirroring the ``.qb/`` convention):
                              keep/revert outcome, and a git reversal handle
   run-log.jsonl           -- append-only orchestration events (seq-ordered)
   summary.json            -- run summary (counts, stop reason)
+  telemetry.json          -- schema-versioned quality/autonomy telemetry
 
 Redaction is mandatory: no secret value is ever persisted (the existing
 length-bounded SECRET_PATTERNS are applied before write). Overwrite is opt-in: a
 new run never silently clobbers a prior run's directory unless ``overwrite=True``.
+
+Prior-run telemetry convention: callers that want earned autonomy across runs
+pass the previous run-store directory itself (the directory containing
+``telemetry.json``) to ``load_prior_telemetry``. Missing, corrupt, or stale-schema
+telemetry fails closed to ``{}``.
 """
 
 from __future__ import annotations
@@ -31,7 +37,6 @@ FINDINGS_FILENAME = "findings.jsonl"
 EVIDENCE_DIRNAME = "evidence"
 RUN_LOG_FILENAME = "run-log.jsonl"
 SUMMARY_FILENAME = "summary.json"
-REQUIRED_SUBPATHS = (FINDINGS_FILENAME, EVIDENCE_DIRNAME, RUN_LOG_FILENAME, SUMMARY_FILENAME)
 
 
 def _load_sibling(module_name: str, filename: str):
@@ -47,7 +52,19 @@ def _load_sibling(module_name: str, filename: str):
 
 _fs = _load_sibling("qb_finding_schema", "finding_schema.py")
 _core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
+_telemetry = _load_sibling("qb_telemetry", "telemetry.py")
 serialize_finding = _fs.serialize_finding
+TELEMETRY_FILENAME = _telemetry.TELEMETRY_FILENAME
+# telemetry.json is required for a completed run: even report-only A0 emits
+# quality/autonomy telemetry, and a missing file should be visible to layout
+# validation instead of silently pinning later runs to cold-start behavior.
+REQUIRED_SUBPATHS = (
+    FINDINGS_FILENAME,
+    EVIDENCE_DIRNAME,
+    RUN_LOG_FILENAME,
+    SUMMARY_FILENAME,
+    TELEMETRY_FILENAME,
+)
 
 
 def redact(value):
@@ -124,6 +141,13 @@ class RunStore:
         (self.root / SUMMARY_FILENAME).write_text(
             json.dumps(redact(dict(summary)), sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
+    def write_telemetry(self, record: dict) -> None:
+        data = redact(dict(record))
+        if "schema_version" not in data:
+            raise RunStoreError("telemetry record requires schema_version")
+        (self.root / TELEMETRY_FILENAME).write_text(
+            json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
     # -- read side (consumed by Phase 5.2 reporting) -----------------------
     def read_findings(self) -> list:
         path = self.root / FINDINGS_FILENAME
@@ -140,6 +164,18 @@ class RunStore:
         path = self.root / SUMMARY_FILENAME
         return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
 
+    def read_telemetry(self) -> dict:
+        path = self.root / TELEMETRY_FILENAME
+        if not path.is_file():
+            return {}
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if record.get("schema_version") != _telemetry.TELEMETRY_SCHEMA_VERSION:
+            return {}
+        return record
+
 
 def validate_store_layout(output_dir) -> list:
     """Identifier check: the required subpaths exist with the fixed names."""
@@ -151,3 +187,15 @@ def validate_store_layout(output_dir) -> list:
         if not (root / sub).exists():
             errors.append(f"missing_store_path={sub}")
     return errors
+
+
+def load_prior_telemetry(prior_store_dir) -> dict:
+    """Load the prior run-store telemetry record, failing closed to ``{}``.
+
+    ``prior_store_dir`` is the previous run store root, conventionally the
+    ``QB-Audit/`` directory containing ``telemetry.json``. The caller owns
+    locating that directory; this helper only performs version-guarded loading.
+    """
+    if prior_store_dir in (None, ""):
+        return {}
+    return RunStore(prior_store_dir).read_telemetry()

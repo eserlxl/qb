@@ -48,6 +48,11 @@ DEPENDENCY_FREE_CORE_GUARD_NOTE = {
     "external_tools_required": (),
 }
 
+SYNC_SEQUENCING_NOTE = (
+    "After shared correctness-adapter changes land, run scripts/sync.sh, then "
+    "scripts/sync.sh --check; antigravity is planning-only and intentionally excluded."
+)
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:

@@ -11,9 +11,9 @@ Autonomy-to-isolation contract (main-planning section 5):
   * A1 (propose):     all writes confined to throwaway isolation; the operator's
                       working tree is never touched.
   * A2 (apply-verified): same isolation for fix attempts; promotion of verified
-                      fixes to the working tree is DEFERRED to Phase 4 enablement
-                      and intentionally not implemented here (this slice provides
-                      only the reversible container + handle the gate acts on).
+                      fixes is intentionally outside this module. Phase 4 enables
+                      it only through ``orchestrator.run_finding`` after the
+                      earned-autonomy clamp leaves the effective level at A2.
 
 Guarantees:
   * Collision-safe branch naming (``qb-fix/<run_id>``), refusing to reuse an
