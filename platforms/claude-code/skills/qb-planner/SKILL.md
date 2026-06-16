@@ -36,10 +36,18 @@ Step 4   qb-implementer -> one reversible code slice           (delegated, gated
   handling, secret/token discipline). After each step, run the bundled validator
   `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode stepN [--strict]`; if
   `python3` or the script is unavailable, fall back to the equivalent manual checks and say so.
-- **Delegated steps use the Task tool, automatically.** Steps 1.5, 2, 3, and 4 are delegated to the
-  matching `qb-*` subagent via the Task tool, in-session and hands-free. There is no copy/paste
-  handoff. If the Task tool or subagents are unavailable this session, the step still runs in-session
-  under its own in-context goal contract - behavior is identical.
+- **Delegated steps use the Task tool, automatically — and delegation is what makes them
+  independent.** Steps 1.5, 2, 3, and 4 are delegated to the matching `qb-*` subagent via the Task
+  tool, in-session and hands-free. There is no copy/paste handoff. **Delegation is mandatory whenever
+  the Task tool is available**: it gives each step a *fresh, independent actor* that did **not** author
+  the upstream artifact — which is the entire point of the audit (Step 3) and the assessment
+  (Step 1.5). Only when the Task tool or the `qb-*` subagents are **genuinely unavailable** may a step
+  run **in-session** as a *degraded* fallback, and that is **not** equivalent: a step the orchestrator
+  runs in-session inspects the very context that produced the plan, so it loses independence and tends
+  to rubber-stamp the orchestrator's own framing (a self-audit is not an audit). When the fallback is
+  used, **disclose it** — emit one line `note: <step> ran in-session (no independent subagent
+  available) — independence reduced` — so the result is never mistaken for an independently-verified
+  one.
 - **Bundled prompt location.** The Step-1 prompt lives next to this skill at `planners/first-planner.md`.
   Read it from there. Never inline its full text into chat.
 - **Output location is the user's workspace, not the plugin.** Write every planning artifact
@@ -73,10 +81,19 @@ Step 0, the Step-1 intake, Gate 1, Gate 2, and the repair loop, and it **disable
    derived with sufficient evidence, do **not** fall back to a prompt - print a single error line
    and stop immediately, creating no `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
-3. **Auto-pass the gates.** Treat Gate 1 and Gate 2 as approved and run Step 1 -> 1.5 -> 2 -> 3
-   straight through. If the audit is `PASS_WITH_WARNINGS` with only P2/P3 findings, continue; do
-   not run the interactive repair loop. Record a `BLOCKED` or P0/P1 audit status in the summary
-   but still produce the export (the export runs regardless of audit status).
+3. **Auto-pass the gates — but DELEGATE every step independently.** Treat Gate 1 and Gate 2 as
+   approved and run Step 1 -> 1.5 -> 2 -> 3 straight through. **Auto mode is the external-consumer
+   path (planwright and other callers), so the delegated steps — above all Step 3, the audit — MUST
+   run via the independent `qb-*` subagents (the Task tool), never as an in-session self-check.** A
+   caller that trusts `QB_PLAN_AUTO_OK` is trusting that the audit was *independent*; an in-session
+   audit run by the same actor that produced the plan rubber-stamps its own framing, and is exactly
+   the failure this mandate prevents (it is how a real coverage gap can be reported as "0 items").
+   Use the in-session fallback **only** if the Task tool is genuinely unavailable — and then you
+   **must** emit, before the result line, the disclosure
+   `QB_PLAN_AUTO_WARN: in-session fallback — audit not independently delegated` so the consumer can
+   downgrade its trust in the result. If the audit is `PASS_WITH_WARNINGS` with only P2/P3 findings,
+   continue; do not run the interactive repair loop. Record a `BLOCKED` or P0/P1 audit status in the
+   summary but still produce the export (the export runs regardless of audit status).
 4. **Planning-only - never touch source.** Auto mode writes only under `.qb/` (plus the one-line
    Step 0 `.gitignore` guard that keeps `.qb/` uncommitted). It runs the
    Step 3.5 export to produce and validate `.qb/plan.md`, then stops. It never runs Step 4, never
@@ -166,8 +183,12 @@ off to the step:
 2. For transparency, show the user the one-line objective you just delegated (in the user's language),
    using the canonical brief below.
 3. Let the subagent run the step to completion and report back its result and validator status.
-4. Fallback: if the Task tool or subagents are unavailable this session, skip delegation and run the
-   step's skill in this session under the same in-context goal contract - behavior is identical.
+4. Fallback (degraded — only when delegation is impossible): if the Task tool or subagents are
+   **genuinely unavailable** this session, run the step's skill in this session under the same
+   in-context goal contract. This is **not** equivalent to delegation — it loses the independence that
+   catches the author's blind spots (an in-session audit/assessment grades the very context that
+   produced the plan). Prefer delegation whenever the Task tool exists; when you must fall back,
+   disclose it per the Execution-model rule above, and in auto mode emit the `QB_PLAN_AUTO_WARN` line.
 
 Canonical per-step goal contract (the subagent task brief), referencing the bundled spec by its
 co-located path:

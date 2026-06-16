@@ -54,10 +54,15 @@ and disables the Step 4 implementation handoff.
    derived with sufficient evidence, do not fall back to a question - print and stop, creating no
    `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
-3. **Run straight through - planning-only.** Execute Step 1 -> 1.5 -> 2 -> 3, then the Step 3.5
-   export, treating the gates as approved. Record a `BLOCKED` or P0/P1 audit status in the summary
-   but still produce the export. Auto mode writes only under `.qb/`: do not emit or run the Step 4
-   implementation handoff, and never modify source code, commit, push, or open PRs.
+3. **Run straight through - planning-only, and be honest about independence.** Execute
+   Step 1 -> 1.5 -> 2 -> 3, then the Step 3.5 export, treating the gates as approved. Auto mode is the
+   external-consumer path (planwright and other callers). Codex runs the whole workflow as **one
+   in-session skill** — the audit (Step 3) is **not** an independent, subagent-isolated actor, so it
+   grades the same context that produced the plan and can rubber-stamp it. So **emit, before the
+   result line, the disclosure `QB_PLAN_AUTO_WARN: in-session audit — not subagent-isolated on this
+   host`** so the consumer can downgrade its trust. Record a `BLOCKED` or P0/P1 audit status in the
+   summary but still produce the export. Auto mode writes only under `.qb/`: do not emit or run the
+   Step 4 implementation handoff, and never modify source code, commit, push, or open PRs.
 4. **Deterministic result line.** Print exactly one final line. Success (only after `.qb/plan.md`
    passed `scripts/validate_planwright_plan.py`):
    `QB_PLAN_AUTO_OK: .qb/plan.md generated (<item-count> items); audit=<PASS|PASS_WITH_WARNINGS|BLOCKED>`

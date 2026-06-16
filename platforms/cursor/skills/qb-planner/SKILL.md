@@ -72,10 +72,16 @@ Step 0, the Step-1 intake, Gate 1, Gate 2, and the repair loop, and it **disable
    derived with sufficient evidence, do **not** fall back to a prompt - print a single error line
    and stop immediately, creating no `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
-3. **Auto-pass the gates.** Treat Gate 1 and Gate 2 as approved and run Step 1 -> 1.5 -> 2 -> 3
-   straight through. If the audit is `PASS_WITH_WARNINGS` with only P2/P3 findings, continue; do
-   not run the interactive repair loop. Record a `BLOCKED` or P0/P1 audit status in the summary
-   but still produce the export (the export runs regardless of audit status).
+3. **Auto-pass the gates — and be honest about independence.** Treat Gate 1 and Gate 2 as approved
+   and run Step 1 -> 1.5 -> 2 -> 3 straight through. Auto mode is the external-consumer path
+   (planwright and other callers). On Cursor the goal-backed steps run **in-session** (the `define-goal`
+   model tracks a goal but does not spawn a subagent-isolated actor), so the audit (Step 3) is **not
+   independently isolated** the way a Task-tool subagent is on other hosts — an in-session audit grades
+   the same context that produced the plan and can rubber-stamp it. So **emit, before the result line,
+   the disclosure `QB_PLAN_AUTO_WARN: in-session audit — not subagent-isolated on this host`** so the
+   consumer can downgrade its trust in the result. If the audit is `PASS_WITH_WARNINGS` with only
+   P2/P3 findings, continue; do not run the interactive repair loop. Record a `BLOCKED` or P0/P1 audit
+   status in the summary but still produce the export (the export runs regardless of audit status).
 4. **Planning-only - never touch source.** Auto mode writes only under `.qb/` (plus the one-line
    Step 0 `.gitignore` guard that keeps `.qb/` uncommitted). It runs the
    Step 3.5 export to produce and validate `.qb/plan.md`, then stops. It never runs Step 4, never
@@ -163,7 +169,11 @@ procedure before handing off to the step skill:
    (in the user's language), using the canonical text below.
 3. Immediately follow the step's skill in this session and run it to completion.
 4. Fallback: if no goal tool (`create_goal`) is available this session, skip goal registration and run
-   the step under its in-context goal contract - behavior is identical.
+   the step under its in-context goal contract. Execution is the same either way — on Cursor the step
+   runs **in-session** regardless; the goal tool adds tracking, **not** independence. Cursor's
+   in-session steps are not subagent-isolated (unlike a Task-tool subagent on other hosts), so the
+   audit's independence is inherently limited on this host — disclose that in auto mode (see Auto mode,
+   step 3).
 
 Canonical goal text, referencing the bundled spec by its real co-located path:
 
