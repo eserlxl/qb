@@ -136,7 +136,7 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
     (``release_gate.permitted_autonomy`` over prior-run ``telemetry``): promotion to
     the working tree requires the level to be earned, not merely declared. With no
     telemetry the ceiling is A1, so a cold-start A2/A3 run isolates and verifies but
-    promotes nothing.
+    promotes nothing, even when A3 delivery is explicitly enabled.
     """
     declared = policy.autonomy_level
     earned = _release.permitted_autonomy(telemetry or {})

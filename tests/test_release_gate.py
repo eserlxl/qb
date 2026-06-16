@@ -104,7 +104,7 @@ class RollbackDrillTests(unittest.TestCase):
                                       evidence=[{"outcome": "kept", "after_exit": 0}] * kept
                                                + [{"outcome": "reverted", "after_exit": 1}] * reverted)
 
-    def _budget_autofix_result(self, telemetry, *, autonomy_level="A2"):
+    def _budget_autofix_result(self, telemetry, *, autonomy_level="A2", enable_a3=False):
         budget = _load("qb_budget_for_release_gate_test", BUDGET_PATH)
         policy_mod = _load("qb_policy_for_release_gate_test", POLICY_PATH)
         fixer = _load("qb_fixer_for_release_gate_test", FIXER_PATH)
@@ -125,7 +125,8 @@ class RollbackDrillTests(unittest.TestCase):
             )
             plan = fixer.plan_fix(finding, repo)
             items = [(plan, lambda iso: iso.write_file("style.txt", "clean\n"))]
-            results, _report = budget.run_session(policy, repo, items, telemetry=telemetry)
+            results, _report = budget.run_session(
+                policy, repo, items, telemetry=telemetry, enable_a3=enable_a3)
             return results[0], (repo / "style.txt").read_text(encoding="utf-8")
 
     def test_precision_gate_fail_closed(self) -> None:
@@ -239,6 +240,15 @@ class RollbackDrillTests(unittest.TestCase):
         self.assertEqual(result["level"], "A0")
         self.assertEqual(result["outcome"], "report-only")
         self.assertEqual(result["promoted"], [])
+        self.assertEqual(content, "messy\n")
+
+    def test_declared_a3_over_empty_telemetry_cannot_bypass_clamp(self) -> None:
+        result, content = self._budget_autofix_result({}, autonomy_level="A3", enable_a3=True)
+        self.assertEqual(result["declared_level"], "A3")
+        self.assertEqual(result["earned_ceiling"], "A1")
+        self.assertEqual(result["level"], "A1")
+        self.assertEqual(result["promoted"], [])
+        self.assertIsNone(result["changeset"])
         self.assertEqual(content, "messy\n")
 
 
