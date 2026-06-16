@@ -97,6 +97,28 @@ class ReportReproducibilityTests(unittest.TestCase):
             self.assertIn('"precision_estimate": null', s1)
             self.assertEqual(r1["signals"]["iterations"], 0)
 
+    def test_raw_latency_stays_out_of_canonical_body(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
+            store.write_telemetry({
+                "schema_version": 1,
+                "quality": {"precision_estimate": 1.0, "fix_safety_ok": True},
+                "cost": {"iterations": 2, "wall_ms": 123456},
+            })
+            policy = self._policy()
+            report = self.report.render_json(
+                store,
+                provenance=self.report.build_provenance(policy, timing={"wall_ms": 999999}),
+            )
+            self.assertEqual(self.report.NON_DETERMINISTIC_FIELDS, ("timing",))
+            self.assertIn("provenance", report)
+            self.assertEqual(report["provenance"]["timing"], {"wall_ms": 999999})
+            self.assertEqual(report["signals"]["iterations"], 2)
+            self.assertNotIn("wall_ms", json.dumps(report["signals"], sort_keys=True))
+            body_without_provenance = dict(report)
+            body_without_provenance.pop("provenance", None)
+            self.assertNotIn("wall_ms", json.dumps(body_without_provenance, sort_keys=True))
+
     def test_provenance_block_contents_and_degradation(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)

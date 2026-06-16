@@ -32,6 +32,10 @@ SUMMARY_TEXT_FILENAME = "summary.txt"
 
 # Fields excluded from byte-for-byte reproducibility comparison (Phase 5.3).
 NON_DETERMINISTIC_FIELDS = ("timing",)
+TIMING_BOUNDARY_DECISION = (
+    "raw wall-clock latency is excluded from the canonical report body; "
+    "callers may place it under provenance.timing, covered by NON_DETERMINISTIC_FIELDS"
+)
 
 
 def _category_rule(category: str) -> str:
