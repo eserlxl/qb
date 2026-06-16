@@ -37,6 +37,11 @@ EXPLICIT_ALLOW_NETWORKED_AUDIT = {
     "gap": "closed: the toggle test now asserts allow_networked true and no networked-disabled skip for net-stub",
 }
 
+NETWORKED_POLICY_INVARIANT_NOTE = {
+    "network": "the networked analyzer under test is the in-memory _networked_stub; it performs no I/O",
+    "mutation_guard": "test_runner_does_not_mutate_the_audited_tree is the read-only guard for this slice",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
