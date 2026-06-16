@@ -32,6 +32,18 @@ from pathlib import Path
 _OUTPUT_CAP = 2000
 _TIMEOUT_EXIT = 124
 
+# Floor-preservation checklist for the default-off confinement extension:
+# - environment minimization: run_verification always passes _cs.minimal_env().
+# - worktree write isolation: gate_fix verifies inside isolation.worktree_path.
+# - secret redaction: gate_fix redacts captured output before evidence storage.
+# - timeout: run_verification keeps the same timeout path and _TIMEOUT_EXIT.
+FLOOR_PRESERVATION_CHECKLIST = (
+    "minimal_env",
+    "worktree_write_isolation",
+    "secret_redaction",
+    "timeout",
+)
+
 
 def _load_sibling(module_name: str, filename: str):
     if module_name in sys.modules:
