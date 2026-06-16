@@ -7,6 +7,7 @@ fail-closed precision + fix-safety release gates and their gate-to-autonomy map.
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import subprocess
 import sys
@@ -18,6 +19,10 @@ from tests.qb_monorepo import SHARED_DIR
 
 GATE_PATH = SHARED_DIR / "scripts/release_gate.py"
 TELEMETRY_PATH = SHARED_DIR / "scripts/telemetry.py"
+BUDGET_PATH = SHARED_DIR / "scripts/budget.py"
+POLICY_PATH = SHARED_DIR / "scripts/policy.py"
+FIXER_PATH = SHARED_DIR / "scripts/fixer.py"
+ORCH_PATH = SHARED_DIR / "scripts/orchestrator.py"
 
 
 def _load(name: str, path: Path):
@@ -42,6 +47,22 @@ def _init_repo(d: Path) -> None:
     (d / "a.txt").write_text("original\n", encoding="utf-8")
     _git(d, "add", "-A")
     _git(d, "commit", "-q", "-m", "init")
+
+
+def _init_autofix_repo(d: Path) -> None:
+    _init_repo(d)
+    (d / "style.txt").write_text("messy\n", encoding="utf-8")
+    tests_dir = d / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "test_style.py").write_text(
+        "import pathlib, unittest\n"
+        "class T(unittest.TestCase):\n"
+        "    def test_clean(self):\n"
+        "        self.assertEqual(pathlib.Path('style.txt').read_text().strip(), 'clean')\n",
+        encoding="utf-8",
+    )
+    _git(d, "add", "-A")
+    _git(d, "commit", "-q", "-m", "autofix fixture")
 
 
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
@@ -110,6 +131,66 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertFalse(self.rg.precision_gate(bad)[0], bad)
             self.assertFalse(self.rg.fix_safety_gate(bad)[0], bad)
             self.assertEqual(self.rg.permitted_autonomy(bad), "A1", bad)
+
+    def test_budget_threads_loaded_telemetry_to_single_orchestrator_clamp(self) -> None:
+        budget = _load("qb_budget_for_release_gate_test", BUDGET_PATH)
+        policy_mod = _load("qb_policy_for_release_gate_test", POLICY_PATH)
+        fixer = _load("qb_fixer_for_release_gate_test", FIXER_PATH)
+        tree = ast.parse(ORCH_PATH.read_text(encoding="utf-8"))
+        clamp_calls = [
+            node for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "permitted_autonomy"
+        ]
+        self.assertEqual(len(clamp_calls), 1)
+
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_autofix_repo(repo)
+            policy = policy_mod.parse_policy({
+                "autonomy_level": "A2",
+                "auto_fixable_categories": ["quality"],
+                "default_min_confidence": "medium",
+                "write_allowlist": ["*.txt"],
+            })
+            finding = fixer.Finding(
+                id=fixer.compute_finding_id("quality", "style.txt:1", "lint"),
+                category="quality", severity="P3", confidence="medium",
+                evidence="style.txt:1", rationale="x", suggested_fix="y",
+                fix_strategy="autofix",
+            )
+            plan = fixer.plan_fix(finding, repo)
+            items = [(plan, lambda iso: iso.write_file("style.txt", "clean\n"))]
+            good_telemetry = self._telemetry(9, 1)
+
+            results, _report = budget.run_session(policy, repo, items, telemetry=good_telemetry)
+            self.assertEqual(results[0]["earned_ceiling"], "A2")
+            self.assertEqual(results[0]["level"], "A2")
+            self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "clean\n")
+
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_autofix_repo(repo)
+            policy = policy_mod.parse_policy({
+                "autonomy_level": "A2",
+                "auto_fixable_categories": ["quality"],
+                "default_min_confidence": "medium",
+                "write_allowlist": ["*.txt"],
+            })
+            finding = fixer.Finding(
+                id=fixer.compute_finding_id("quality", "style.txt:1", "lint"),
+                category="quality", severity="P3", confidence="medium",
+                evidence="style.txt:1", rationale="x", suggested_fix="y",
+                fix_strategy="autofix",
+            )
+            plan = fixer.plan_fix(finding, repo)
+            items = [(plan, lambda iso: iso.write_file("style.txt", "clean\n"))]
+
+            results, _report = budget.run_session(policy, repo, items, telemetry=None)
+            self.assertEqual(results[0]["earned_ceiling"], "A1")
+            self.assertEqual(results[0]["level"], "A1")
+            self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
 
 
 if __name__ == "__main__":
