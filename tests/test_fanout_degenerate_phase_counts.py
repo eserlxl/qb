@@ -209,6 +209,17 @@ class FanoutDegeneratePhaseBehaviorTests(unittest.TestCase):
         self.assertEqual(metric(result.stdout, "phase_folder_count"), "1")
         self.assertEqual(metric(result.stdout, "subplan_count"), "1")
 
+    def test_degenerate_phase_outputs_are_deterministic(self) -> None:
+        for phase_count, mode in ((0, "step1"), (0, "step2"), (1, "step2")):
+            with self.subTest(phase_count=phase_count, mode=mode), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                build_planner_tree(root, phase_count=phase_count, subplans_per_phase=1)
+                first = run_validator(root, mode)
+                second = run_validator(root, mode)
+
+            self.assertEqual(first.returncode, second.returncode)
+            self.assertEqual(first.stdout, second.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
