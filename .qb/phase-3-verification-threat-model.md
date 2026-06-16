@@ -57,3 +57,18 @@ write isolation or environment minimization.
    - Not mitigated by the current floor: `verification_gate.py` applies a
      timeout, but the current path does not impose memory, process-count, file
      size, or network-resource limits.
+
+## Mechanism Options Matrix
+
+| Option | Stdlib-only | Deterministic | Fail-closed shape | Cross-platform | Default-off opt-in | Pros | Cons / invariant conflict |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Process confinement with stdlib primitives (`resource`, process groups, cwd/env hardening, explicit refusal when unsupported) | Preserved on POSIX for available primitives; Windows support must be feature-gated | High when the selected primitive set is reported in the outcome | Straightforward: if a requested primitive is unavailable, refuse or record a distinct degraded outcome | Partial; some primitives are POSIX-only | Natural extension of `command_safety.run_command` | Keeps QB dependency-free, layers onto `minimal_env()`, and can preserve existing argv/timeout semantics | Does not fully solve filesystem or network isolation by itself; capability varies by OS |
+| OS namespaces (`unshare` for user/mount/pid/net) | Broken if shelling out to host tools; no stdlib namespace API | Medium; host kernel and permissions vary | Must refuse when namespace creation is unavailable or denied | Linux-specific | Possible but host-dependent | Stronger network and filesystem boundary than process limits | Breaks cross-platform expectations and depends on host namespace availability outside Python stdlib |
+| Container-based confinement | Broken; requires Docker/Podman or equivalent | Medium; daemon state and image availability vary | Must refuse when runtime/image is unavailable | Runtime-dependent, not universal | Possible but heavyweight | Strong boundary when correctly configured | Violates dependency-free core, introduces image/runtime management, and risks network or daemon policy drift |
+
+Recommendation pressure: the only option that can preserve QB's current
+dependency-free core is a stdlib process-confinement wrapper with explicit
+capability reporting and fail-closed behavior. Namespace or container approaches
+may be stronger security mechanisms, but they conflict with the stdlib-only
+invariant enforced by `shared/scripts/least_privilege.py` and should not become
+the default engine path without a deliberate product decision.
