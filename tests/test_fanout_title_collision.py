@@ -8,6 +8,11 @@ import unittest
 from pathlib import Path
 
 from tests.qb_monorepo import SHARED_DIR
+from tests.test_fanout_degenerate_phase_counts import (
+    build_planner_tree,
+    metric,
+    run_validator as run_docs_validator,
+)
 
 PLAN_VALIDATOR_PATH = SHARED_DIR / "scripts/validate_planwright_plan.py"
 
@@ -79,6 +84,19 @@ class FanoutTitleCollisionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("pending_item_count=1", result.stdout)
         self.assertNotIn("duplicate pending title", result.stdout)
+
+    def test_step2_indexes_same_slug_across_phase_scoped_files(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            build_planner_tree(root, phase_count=2, subplans_per_phase=1)
+            result = run_docs_validator(root, "step2")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(metric(result.stdout, "main_phase_count"), "2")
+        self.assertEqual(metric(result.stdout, "phase_folder_count"), "2")
+        self.assertEqual(metric(result.stdout, "subplan_count"), "2")
+        self.assertNotIn("duplicate_subplan_number=", result.stdout)
+        self.assertNotIn("invalid_subplan_filename=", result.stdout)
 
 
 if __name__ == "__main__":
