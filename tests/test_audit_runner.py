@@ -190,6 +190,55 @@ class AuditRunnerTests(unittest.TestCase):
             )["summary"]
             self.assertEqual(enabled, enabled_again)
 
+    def test_combined_fail_closed_policy_defaults(self) -> None:
+        quality = self.runner._quality
+        missing_optional = quality.ToolAdapter(
+            name="missing-pyflakes",
+            executable="qb-nonexistent-pyflakes",
+            category="correctness",
+            build_argv=lambda root: ["qb-nonexistent-pyflakes", root],
+            parse=lambda stdout, stderr: [],
+        )
+        optional_analyzer = quality.QualityAnalyzer([missing_optional])
+        with tempfile.TemporaryDirectory() as d:
+            try:
+                optional_findings = optional_analyzer.analyze(d, None)
+            except Exception as exc:  # pragma: no cover - unexpected failure reports context
+                self.fail(f"missing optional tool should skip without raising: {exc!r}")
+        self.assertEqual(optional_findings, [])
+        self.assertEqual(optional_analyzer.last_capability_report["ran"], [])
+        self.assertEqual(optional_analyzer.last_capability_report["skipped"], [
+            {"adapter": "missing-pyflakes", "reason": "tool-unavailable"}
+        ])
+
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            _make_fixture(repo)
+            reg = self.runner.AnalyzerRegistry()
+            reg.register(self.runner.ReferenceAnalyzer())
+            reg.register(_networked_stub(self.runner, emit=True))
+
+            offline = self.runner.run_audit(
+                repo, config=self.runner.AnalyzerConfig(), registry=reg,
+                output_dir=Path(d) / "off" / self.runner.OUTPUT_DIR_NAME,
+            )["summary"]
+            self.assertFalse(offline["allow_networked"])
+            self.assertTrue(any(s["id"] == "net-stub" and s["reason"] == "networked-disabled"
+                                for s in offline["analyzers_skipped"]))
+            self.assertNotIn("dependency", offline["category_counts"])
+
+            reg2 = self.runner.AnalyzerRegistry()
+            reg2.register(self.runner.ReferenceAnalyzer())
+            reg2.register(_networked_stub(self.runner, emit=True))
+            enabled = self.runner.run_audit(
+                repo, config=self.runner.AnalyzerConfig(allow_networked=True), registry=reg2,
+                output_dir=Path(d) / "on" / self.runner.OUTPUT_DIR_NAME,
+            )["summary"]
+            self.assertTrue(enabled["allow_networked"])
+            self.assertIn("net-stub", enabled["analyzers_run"])
+            self.assertEqual(enabled["category_counts"].get("dependency"), 1)
+
     def test_output_identifier_check(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d) / "repo"
