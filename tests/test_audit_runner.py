@@ -21,6 +21,16 @@ from tests.qb_monorepo import SHARED_DIR
 
 MODULE_PATH = SHARED_DIR / "scripts/audit_runner.py"
 
+DEFAULT_OFF_NETWORKED_AUDIT = {
+    "stub": "net-stub is registered with offline=False",
+    "asserted": (
+        "default AnalyzerConfig leaves net-stub out of analyzers_run",
+        "analyzers_skipped records id=net-stub",
+        "analyzers_skipped records reason=networked-disabled",
+    ),
+    "gap": "does not explicitly assert total_findings/category_counts are unaffected by the skipped stub",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
