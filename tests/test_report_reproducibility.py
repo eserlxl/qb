@@ -119,6 +119,37 @@ class ReportReproducibilityTests(unittest.TestCase):
             body_without_provenance.pop("provenance", None)
             self.assertNotIn("wall_ms", json.dumps(body_without_provenance, sort_keys=True))
 
+    def test_report_rerenders_byte_identically_with_signals_present(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store, finding = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
+            store.record_evidence({
+                "finding_id": finding.id,
+                "outcome": "kept",
+                "rollback_handle": "h",
+                "after_exit": 0,
+            })
+            store.write_telemetry({
+                "schema_version": 1,
+                "quality": {"precision_estimate": 1.0, "fix_safety_ok": True},
+                "cost": {"iterations": 4},
+            })
+            policy = self._policy()
+            r1 = self.report.render_json(store, provenance=self.report.build_provenance(policy, timing={"t": "one"}))
+            r2 = self.report.render_json(store, provenance=self.report.build_provenance(policy, timing={"t": "two"}))
+
+            def strip_non_deterministic(report):
+                clean = copy.deepcopy(report)
+                provenance = clean.get("provenance", {})
+                for field in self.report.NON_DETERMINISTIC_FIELDS:
+                    provenance.pop(field, None)
+                return json.dumps(clean, sort_keys=True)
+
+            self.assertEqual(strip_non_deterministic(r1), strip_non_deterministic(r2))
+            self.assertEqual(r1["signals"]["severity_counts"], {"P0": 0, "P1": 1, "P2": 0, "P3": 0})
+            self.assertEqual(r1["signals"]["fixes"], {"kept": 1, "reverted": 0, "blocked": 0})
+            self.assertEqual(r1["signals"]["quality"], {"precision_estimate": 1.0, "fix_safety_ok": True})
+            self.assertEqual(r1["signals"]["iterations"], 4)
+
     def test_provenance_block_contents_and_degradation(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
