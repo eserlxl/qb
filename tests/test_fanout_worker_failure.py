@@ -74,6 +74,28 @@ class FanoutWorkerFailureTests(unittest.TestCase):
             self.assertIn(expected, result.stdout)
             self.assertNotIn("planner_docs_validation=passed", result.stdout)
 
+    def test_worker_failure_outputs_are_deterministic(self) -> None:
+        for case in ("missing", "empty", "malformed"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                build_planner_tree(root, phase_count=1, subplans_per_phase=1)
+                phase_dir = root / ".qb/phase-1-plans"
+                if case == "missing":
+                    shutil.rmtree(phase_dir)
+                else:
+                    for path in phase_dir.glob("*.md"):
+                        path.unlink()
+                    if case == "malformed":
+                        (phase_dir / "worker-output.md").write_text(
+                            "# Worker Output\n\nMalformed output stays deterministic.\n",
+                            encoding="utf-8",
+                        )
+                first = run_validator(root, "step2")
+                second = run_validator(root, "step2")
+
+            self.assertEqual(first.returncode, second.returncode)
+            self.assertEqual(first.stdout, second.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
