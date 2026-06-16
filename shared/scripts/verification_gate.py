@@ -79,14 +79,16 @@ class EvidenceRecord:
         }
 
 
-def run_verification(command, cwd, timeout=120):
+def run_verification(command, cwd, timeout=120, confinement=None):
     """Run the verification command (argv); return (exit_code, combined_output)."""
     assert_argv(command)
     try:
         # The verification command runs the audited repo's own code; give it a
         # minimized environment so QB's secrets are never inherited by repo code.
+        # Confinement is an explicit opt-in and defaults off, preserving the
+        # current verification path for existing callers.
         completed = _cs.run_command(command, cwd=str(cwd), timeout=timeout,
-                                    env=_cs.minimal_env())
+                                    env=_cs.minimal_env(), confinement=confinement)
     except subprocess.TimeoutExpired:
         return _TIMEOUT_EXIT, "verification timed out"
     except _cs.ConfinementUnavailable as exc:
@@ -97,7 +99,7 @@ def run_verification(command, cwd, timeout=120):
     return completed.returncode, output
 
 
-def gate_fix(isolation, fix_plan, apply_fn, timeout=120) -> EvidenceRecord:
+def gate_fix(isolation, fix_plan, apply_fn, timeout=120, confinement=None) -> EvidenceRecord:
     """Apply one fix in isolation and keep it only if verification is green."""
     finding_id = getattr(fix_plan.finding, "id", "unknown")
     command = fix_plan.verify_command
@@ -109,7 +111,9 @@ def gate_fix(isolation, fix_plan, apply_fn, timeout=120) -> EvidenceRecord:
 
     handle = isolation.capture_handle()
     apply_fn(isolation)
-    exit_code, output = run_verification(command, cwd=isolation.worktree_path, timeout=timeout)
+    exit_code, output = run_verification(
+        command, cwd=isolation.worktree_path, timeout=timeout, confinement=confinement
+    )
     redacted = redact(output)[:_OUTPUT_CAP]
 
     if exit_code == 0:
