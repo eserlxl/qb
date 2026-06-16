@@ -9,6 +9,7 @@ is derived from a source of truth rather than a hardcoded duplicate:
 - four-platform / planning-only -> filesystem (host packages + sync.sh exclusion)
 - absence of "synced verbatim" -> filesystem (root + host READMEs)
 - CHANGELOG version lockstep    -> filesystem (platforms/<host>/CHANGELOG.md)
+- README version badge          -> root VERSION file
 
 Scope: analyzer-naming is asserted against the root README (the product
 source-of-truth doc for the audit/harden engine). Antigravity is planning-only
@@ -34,6 +35,7 @@ import audit_runner  # noqa: E402  (path set above)
 import finding_schema  # noqa: E402
 
 ROOT_README = REPO_ROOT / "README.md"
+ROOT_VERSION = REPO_ROOT / "VERSION"
 
 # Derived sources of truth (computed once, not copied into the test).
 PRODUCER_ANALYZERS = sorted(
@@ -42,6 +44,10 @@ PRODUCER_ANALYZERS = sorted(
 FINDING_CATEGORIES = sorted(finding_schema.CATEGORIES)
 HOST_NAMES = ("Claude Code", "Cursor", "Codex", "Antigravity")
 _VERSION_HEADER = re.compile(r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\]", re.MULTILINE)
+# The shields.io badge: label 'version', the (possibly escaped) message, a
+# 6-hex color, then the closing markdown-link paren. Mirrors the rewrite in
+# scripts/bump-version.sh.
+_README_BADGE = re.compile(r"https://img\.shields\.io/badge/version-(.+?)-[0-9A-Fa-f]{6}\)")
 
 
 class DocConsistencyTest(unittest.TestCase):
@@ -67,6 +73,26 @@ class DocConsistencyTest(unittest.TestCase):
         missing = [c for c in FINDING_CATEGORIES if c not in text]
         self.assertEqual(
             missing, [], f"root README omits finding categories: {missing}"
+        )
+
+    def test_root_readme_version_badge_matches_version_file(self):
+        # The shields.io version badge is prose, not frontmatter, so the manifest
+        # lockstep does not cover it; scripts/bump-version.sh rewrites it and this
+        # invariant guarantees it never drifts from VERSION.
+        declared = self._read(ROOT_VERSION).strip()
+        text = self._read(ROOT_README)
+        match = _README_BADGE.search(text)
+        self.assertIsNotNone(
+            match, "root README has no shields.io version badge to check"
+        )
+        # shields.io escapes '-' as '--' and '_' as '__' in the message field;
+        # undo that before comparing to the raw VERSION value.
+        badge = match.group(1).replace("--", "-").replace("__", "_")
+        self.assertEqual(
+            badge,
+            declared,
+            f"README version badge ({badge}) != VERSION ({declared}); "
+            f"run scripts/bump-version.sh --sync",
         )
 
     def test_root_readme_states_four_platform_model(self):

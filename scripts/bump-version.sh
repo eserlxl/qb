@@ -11,7 +11,9 @@
 #   - the JSON plugin manifests of the manifest-bearing platforms (claude-code /
 #     cursor / codex); antigravity is a bare skill folder with no JSON manifest,
 #   - the `metadata: version:` line in every platform SKILL.md (antigravity
-#     included; its install.sh derives the installed version from there), and
+#     included; its install.sh derives the installed version from there),
+#   - the shields.io version badge in the root README.md (kept in lockstep by
+#     tests/test_doc_consistency.py), and
 #   - a new entry at the top of every platform CHANGELOG.md.
 #
 # It does NOT create a git tag or GitHub release. Tags belong at release
@@ -41,6 +43,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION_FILE="$ROOT/VERSION"
+README_FILE="$ROOT/README.md"
 
 # Platform manifests, keyed for reporting. Codex nests its manifest under
 # plugins/qb/.codex-plugin/ (an accepted structural asymmetry, pinned by
@@ -109,6 +112,7 @@ done
 for f in "${MANIFESTS[@]}"; do
   [ -f "$f" ] || { echo "Missing required manifest: $f" >&2; exit 1; }
 done
+[ -f "$README_FILE" ] || { echo "Missing required file: $README_FILE" >&2; exit 1; }
 if [ -z "$SYNC_ONLY" ]; then
   for f in "${CHANGELOGS[@]}"; do
     [ -f "$f" ] || { echo "Missing required file: $f" >&2; exit 1; }
@@ -125,6 +129,7 @@ root = sys.argv[1]
 targets = []
 targets += glob.glob(os.path.join(root, "platforms", "*", "CHANGELOG.md"))
 targets += glob.glob(os.path.join(root, "platforms", "**", "SKILL.md"), recursive=True)
+targets.append(os.path.join(root, "README.md"))
 for path in sorted(set(targets)):
     try:
         with open(path, encoding="utf-8") as fh:
@@ -187,7 +192,7 @@ mapfile -t SKILLS < <(skill_files)
 # them ALL if any step fails or the run is interrupted, so a partial bump is
 # impossible. (Skipped on --dry-run, which writes nothing.)
 if [ -z "$DRY_RUN" ]; then
-  _bump_targets=("$VERSION_FILE" "${MANIFESTS[@]}")
+  _bump_targets=("$VERSION_FILE" "$README_FILE" "${MANIFESTS[@]}")
   [ "${#SKILLS[@]}" -gt 0 ] && _bump_targets+=("${SKILLS[@]}")
   [ -z "$SYNC_ONLY" ] && _bump_targets+=("${CHANGELOGS[@]}")
   BUMP_BACKUP="$(mktemp -d)"
@@ -235,6 +240,53 @@ for path in manifests:
     atomic_write(path, json.dumps(data, indent=2) + "\n")
 PY
 fi
+
+# --- Rewrite the root README shields.io version badge ----------------------
+# The badge message must track VERSION, but it lives in prose rather than the
+# manifest/SKILL.md frontmatter lockstep, so it is rewritten here on a real bump
+# and on --sync alike. Handles its own dry-run (prints "would") so the report is
+# accurate without writing, exactly like the SKILL.md step below.
+README_STATUS="$(python3 - "$README_FILE" "$NEW" "${DRY_RUN:-0}" <<'PY'
+import os, re, sys, tempfile
+path, new, dry = sys.argv[1], sys.argv[2], sys.argv[3]
+
+def atomic_write(path, data):
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".bump-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
+
+# shields.io escapes '-' as '--' and '_' as '__' inside the message field; a
+# plain X.Y.Z version is unaffected, but a pre-release like 1.0.0-rc1 is not.
+message = new.replace("-", "--").replace("_", "__")
+with open(path, encoding="utf-8") as f:
+    text = f.read()
+# label 'version', then the message, then a 6-hex color, then the closing paren.
+pat = re.compile(r"(https://img\.shields\.io/badge/version-).+?(-[0-9A-Fa-f]{6}\))")
+# A function replacement avoids re.sub interpreting backslashes in `message`.
+new_text, n = pat.subn(lambda m: m.group(1) + message + m.group(2), text)
+if n == 0:
+    print("nobadge"); raise SystemExit
+if new_text == text:
+    print("same"); raise SystemExit
+if dry != "0":
+    print("would"); raise SystemExit
+atomic_write(path, new_text)
+print("changed")
+PY
+)"
+case "$README_STATUS" in
+  nobadge) echo "warning: no shields.io version badge in $(relpath "$README_FILE"); skipped" >&2 ;;
+  "") echo "warning: README badge sync produced no result; skipped" >&2 ;;
+esac
 
 # --- Sync SKILL.md `metadata: version:` frontmatter ------------------------
 # Insert-or-replace the version inside the leading YAML frontmatter block only,
@@ -376,6 +428,7 @@ if [ -n "$DRY_RUN" ]; then
   # if/fi (not `[ ] && echo`): as the branch's last statement under set -e, a
   # false test would otherwise become the script's exit status.
   if [ -n "$SKILLS_SYNCED" ]; then echo "  would sync$SKILLS_SYNCED"; fi
+  if [ "$README_STATUS" = "would" ]; then echo "  would update $(relpath "$README_FILE") version badge -> $NEW"; fi
 else
   if [ -n "$SYNC_ONLY" ]; then
     echo "Synced: all manifests + SKILL.md re-propagated to $CURRENT"
@@ -384,6 +437,7 @@ else
     echo "  updated $(relpath "$VERSION_FILE")"
   fi
   for m in "${MANIFESTS[@]}"; do echo "  updated $(relpath "$m")"; done
+  [ "$README_STATUS" = "changed" ] && echo "  updated $(relpath "$README_FILE") (version badge)"
   [ -n "$SKILLS_SYNCED" ] && echo "  updated$SKILLS_SYNCED"
   [ -z "$SYNC_ONLY" ] && echo "  changelog entry added to all platforms ($DATE)"
   echo

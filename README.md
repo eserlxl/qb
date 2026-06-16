@@ -293,6 +293,7 @@ its expected value from a source of truth rather than a hardcoded duplicate:
 | Four-platform model + Antigravity planning-only stated | filesystem (host packages, `sync.sh` exclusion) | root `README.md`, `platforms/antigravity/README.md` |
 | Per-host READMEs not claimed byte-identical copies | filesystem | root + host READMEs |
 | All four CHANGELOGs share the latest version header | filesystem (`platforms/*/CHANGELOG.md`) | the four CHANGELOGs |
+| Root README version badge equals `VERSION` | root `VERSION` file | root `README.md` |
 
 The guard is dependency-free (Python standard library only) and is a root
 monorepo invariant test, not a synced per-package file, so it runs once under the
