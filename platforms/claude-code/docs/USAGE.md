@@ -114,6 +114,20 @@ The Step 3.5 planwright export has no dedicated command (it runs automatically a
 audit on every `/qb-plan` run). To refresh `.qb/plan.md` on its own, re-run `/qb-plan`, or ask
 QB to run only the Step 3.5 export against the existing `.qb/` sub-plans.
 
+## Hardening autonomy
+
+`/qb-harden` runs the separate audit → harden engine. It defaults to **A0**
+(report-only: findings, no writes); the higher levels — **A1** (try fixes in
+disposable git write isolation), **A2** (promote only verified fixes), and **A3**
+(A2 plus a reviewable changeset) — must be requested explicitly.
+
+The level you request is a **ceiling, not a grant**. QB clamps the declared
+autonomy at the orchestrator chokepoint to the level its release gates have
+*earned* from the run's telemetry, so A2/A3 take effect only when that evidence
+(sufficient finding precision, no fix-safety breach) permits; otherwise the run
+is held lower. Declaring A3 never bypasses the gates — the QB RUNBOOK documents
+the full earned-ceiling model.
+
 ## Validator output
 
 The validator prints deterministic summary lines, for example:
