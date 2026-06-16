@@ -100,7 +100,14 @@ Use `git diff --no-index` only as a read-only comparison helper.
 ## Step Handoffs (in-session, automatic)
 
 - Every step runs in the current session. Step 1 is interactive; Steps 2 and 3 are launched automatically by the workflow under each step's goal contract (objective, success evidence, scope bounds, stop condition). There is no copy/paste handoff.
+- Treat validation as a barrier after each planning step. Step 1 must pass
+  `validate_planner_docs.py --mode step1 --strict` before Step 2 starts; Step 2 must pass
+  `--mode step2 --strict` before Step 3 starts; Step 3 must pass `--mode step4` before
+  Step 3.5 exports planwright items.
 - Step 3 may create or update only `.qb/sub-planning-audit.md`.
+- Step 3.5 exports only post-audit implementation-ready items. It must not emit items
+  whose editable surfaces are `.qb/` planning files; those are local planning state, not
+  normal committed implementation work.
 - Step 4 (implementation) starts only after `--mode step4` validation passes: the audit is not `BLOCKED` and has no P0/P1 findings. Step 4 is a separate goal-backed implementation run, not a planning-file generation step.
 
 ## Step 4 Token Discipline

@@ -26,7 +26,7 @@ Checked invariants (the structural subset; semantic judgement stays the agent's 
   * Evidence never cites graph memory (graph.json / digest.md — routing, never proof);
   * a `repair` item's Evidence carries a file:line anchor to an existing file;
   * Surfaces are existing, repo-relative files (not absolute, no `..`, not a directory,
-    never under .planwright/); New Surfaces do not already exist; no path is in both;
+    never under .qb/ or .planwright/); New Surfaces do not already exist; no path is in both;
   * Verification is present, non-empty, and not a bare placeholder / prose;
   * no two pending items share a title.
 
@@ -244,6 +244,8 @@ def lint_item(item, root):
         np = p.replace("\\", "/")
         if np == ".planwright" or np.startswith(".planwright/"):
             v.append(f"'{p}' is tool-owned planwright state (.planwright/), not an editable Surface")
+        if np == ".qb" or np.startswith(".qb/"):
+            v.append(f"'{p}' is QB planning state (.qb/), not an executable item Surface")
     return v
 
 

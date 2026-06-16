@@ -216,6 +216,24 @@ Step 4 will likely create detailed implementation task files with:
 
 Your audit must say which phases/sub-plans are ready for Step 4 and which need repair first.
 
+11. Planwright-item readiness
+This audit is the verification barrier before QB exports items for planwright.
+For every `## 7. Planned Work Breakdown` entry, check whether it can become a
+normal executor item after this audit:
+- it names a concrete implementation, hardening, test, committed-doc, config,
+  script, CI, or runtime-artifact change;
+- it can be grounded to existing repository evidence and likely source/test/doc
+  surfaces outside `.qb/`;
+- it has or can cite a real runnable verification command;
+- its expected output is not another `.qb/` planning note, decision record,
+  ledger row, audit finding, or spec-only artifact.
+
+Flag sub-plans whose work breakdown mostly describes planning-file edits rather
+than implementation work. These are not ready for planwright export even if their
+section structure is valid. A documentation item is acceptable only when it edits
+committed project documentation such as `README.md`, `RUNBOOK.md`, package docs,
+or another tracked documentation surface outside `.qb/`.
+
 Audit output file:
 
 Create or update:

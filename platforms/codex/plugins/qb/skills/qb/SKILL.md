@@ -54,8 +54,11 @@ and disables the Step 4 implementation handoff.
    derived with sufficient evidence, do not fall back to a question - print and stop, creating no
    `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
-3. **Run straight through - planning-only, and be honest about independence.** Execute
-   Step 1 -> 1.5 -> 2 -> 3, then the Step 3.5 export, treating the gates as approved. Auto mode is the
+3. **Run straight through - planning-only, verify every planning step, and be honest about independence.** Execute
+   Step 1 -> 1.5 -> 2 -> 3, then the Step 3.5 export, treating the gates as approved but not
+   bypassing validation. Step 1 must pass `validate_planner_docs.py --mode step1 --strict`
+   before Step 2 starts; Step 2 must pass `--mode step2 --strict` before Step 3 starts; Step
+   3 must pass `--mode step4` before Step 3.5 exports planwright items. Auto mode is the
    external-consumer path (planwright and other callers). Codex runs the whole workflow as **one
    in-session skill** — the audit (Step 3) is **not** an independent, subagent-isolated actor, so it
    grades the same context that produced the plan and can rubber-stamp it. So **emit, before the
@@ -64,7 +67,8 @@ and disables the Step 4 implementation handoff.
    summary but still produce the export. Auto mode writes only under `.qb/`: do not emit or run the
    Step 4 implementation handoff, and never modify source code, commit, push, or open PRs. No
    approval, confirmation, human-review marker, or implementation-gate question may block
-   `.qb/plan.md` generation once Step 2 has produced sub-plans.
+   `.qb/plan.md` generation once Step 2 has produced sub-plans, but failed validation must
+   fail closed with `QB_PLAN_AUTO_ERROR`.
 4. **Deterministic result line.** Print exactly one final line. Success (only after `.qb/plan.md`
    passed `scripts/validate_planwright_plan.py`):
    `QB_PLAN_AUTO_OK: .qb/plan.md generated (<item-count> items); audit=<PASS|PASS_WITH_WARNINGS|BLOCKED>`
@@ -189,17 +193,23 @@ When Step 3 completes:
 
 ## Step 3.5 Export to planwright
 
-Step 3.5 is an automatic, read-only export that projects the `.qb/` sub-plans into a single flat checkbox plan, `.qb/plan.md`, in the exact item format an external planwright executor consumes. Unlike Step 4 it never changes source code, so it runs automatically once Step 3 completes (whenever Step 2 produced sub-plans), before the optional gated Step 4 implement — no gate, no copy/paste prompt.
+Step 3.5 is an automatic, read-only export that projects the verified `.qb/` sub-plans into a single flat checkbox plan, `.qb/plan.md`, in the exact item format an external planwright executor consumes. Unlike Step 4 it never changes source code, so it runs automatically once Step 3 completes and the Step 4-readiness validator passes (whenever Step 2 produced sub-plans), before the optional gated Step 4 implement — no gate, no copy/paste prompt.
 
 When the export runs:
 
 1. Read `references/export-planner.md`.
-2. Read every `.qb/phase-*-plans/phase-<n>.<m>-*.md` and emit one planwright item per `## 7. Planned Work Breakdown` entry, across all phases, into `.qb/plan.md` in the required 8-field item format. Modify only `.qb/plan.md`.
-3. Skip only when there are no sub-plans (no `.qb/phase-*-plans/`); then say there was nothing to export.
-4. Run the bundled validator when available:
+2. Run the validation barrier (`validate_planner_docs.py --mode step1 --strict`,
+   `--mode step2 --strict`, and `--mode step4`) before item generation.
+3. Read every `.qb/phase-*-plans/phase-<n>.<m>-*.md` and emit one planwright item per verified,
+   implementation-ready `## 7. Planned Work Breakdown` entry, across all phases, into `.qb/plan.md`
+   in the required 8-field item format. Skip planning-only entries and any entry whose editable
+   surfaces would be `.qb/`. Modify only `.qb/plan.md`.
+4. Skip only when there are no sub-plans (no `.qb/phase-*-plans/`) or when the validation barrier
+   blocks export; then say there was nothing executable to export.
+5. Run the bundled validator when available:
    `python3 plugins/qb/skills/qb/scripts/validate_planwright_plan.py --root . --strict`
    If no script path is accessible, perform the equivalent manual checks and report that fallback clearly. Fix every flagged item and re-run until it passes.
-5. Tell the user the hand-off: to run the plan with planwright, copy it into place and execute, e.g. `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`). QB does not write to `.planwright/` or invoke planwright itself.
+6. Tell the user the hand-off: to run the plan with planwright, copy it into place and execute, e.g. `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`). QB does not write to `.planwright/` or invoke planwright itself.
 
 ## Quality and Validation
 

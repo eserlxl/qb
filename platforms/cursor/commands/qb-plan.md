@@ -11,8 +11,8 @@ Invoke the `qb-planner` skill and run its workflow from the beginning.
 `qb-planner` skill in its **"Auto mode (non-interactive)"** path: do not prompt for anything;
 auto-derive the four Step-1 fields from the repository and, if any field cannot be derived,
 print `QB_PLAN_AUTO_ERROR: missing required field(s): …` and stop; auto-pass Gate 1 and Gate 2;
-skip Step 4; run the automatic Step 3.5 export whenever Step 2 produced sub-plans;
-produce and validate `.qb/plan.md`; then print the single final result line
+skip Step 4; validate Step 1, Step 2, and Step 3 before running the automatic Step 3.5 export
+whenever Step 2 produced sub-plans; produce and validate `.qb/plan.md`; then print the single final result line
 (`QB_PLAN_AUTO_OK:` on success, `QB_PLAN_AUTO_ERROR:` on failure) so an external caller such as
 planwright can detect the outcome. No approval, confirmation, or implementation-gate
 question may block `.qb/plan.md` generation in auto mode. Without the flag, run the
@@ -25,8 +25,10 @@ interactive flow below.
 - On approval, run Step 2 (`qb-subplanner`, goal-backed), pause at Gate 2, then run
   Step 3 (`qb-auditor`, goal-backed). Offer targeted repairs if the audit is
   `PASS_WITH_WARNINGS`.
-- As the automatic Step 3.5 (after the audit, before the optional implement), export the sub-plans to `.qb/plan.md` in planwright's
-  plan format and validate it with `validate_planwright_plan.py`. Tell the user the hand-off:
+- As the automatic Step 3.5 (after the verified audit, before the optional implement), export
+  only implementation-ready items to `.qb/plan.md` in planwright's plan format and validate it
+  with `validate_planwright_plan.py`. The export must not emit items that edit `.qb/` planning
+  state. Tell the user the hand-off:
   `cp .qb/plan.md .planwright/plan.md` then run planwright `execute` (or `cycle <N>`).
 
 Write all planning output under `.qb/` in the user's active workspace, in English.

@@ -157,6 +157,23 @@ The plan must drive real delivery.
 Avoid creating endless documentation-only work.
 Each sub-plan should define a path toward observable implementation, validation, or operational readiness.
 
+Planwright-item readiness:
+Step 2 is the first source of future executor items. After Step 2 is verified and
+Step 3 audits it, every entry in `## 7. Planned Work Breakdown` must be able to
+become a normal implementation item without editing `.qb/` planning state.
+The sub-plan file itself is where planning notes, decisions, inventories, and
+specs belong. Do not create work-breakdown entries whose expected output is
+"write this `.qb/` note", "decide in the plan", "record a planning ledger row",
+or another generated planning artifact. If a phase needs a decision before
+implementation, record that decision as a dependency, risk, or transition
+criterion in the sub-plan, not as an executable work item.
+
+Valid work-breakdown entries should name repository changes outside `.qb/`, such
+as source code, tests, committed project docs (`README.md`, `RUNBOOK.md`, package
+docs), configs, scripts, CI, or generated runtime/audit artifacts. Documentation
+items are allowed only when they target committed project documentation, not QB's
+local planning files.
+
 For each sub-plan file, use exactly this top-level structure:
 
 # Phase X.Y — <Sub-Phase Title>
@@ -257,11 +274,16 @@ Each item should include:
 - title
 - description
 - expected output
+- likely implementation surfaces outside `.qb/`
+- a real validation command or existing gate that would prove the item after
+  implementation
 
 Example:
 - F2.3-01 — Task state schema clarification
   - Description: Defines ASF task lifecycle states as queued/running/review/completed/failed/cancelled.
-  - Output: schema document, DB model draft, lifecycle state diagram note.
+  - Output: committed schema docs and model/test changes outside `.qb/`.
+  - Surfaces: `docs/task-state.md`, `src/models/task.py`, `tests/test_task_state.py`.
+  - Validation: `make check`.
 
 Do not create implementation code.
 

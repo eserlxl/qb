@@ -169,6 +169,14 @@ class ValidatePlanwrightPlanTests(unittest.TestCase):
         errors = self._errors(render(Surfaces=".planwright/plan.md"))
         self.assertTrue(any("tool-owned planwright state" in e for e in errors), errors)
 
+    def test_qb_planning_surface_fails(self) -> None:
+        errors = self._errors(render(Surfaces=".qb/phase-1-plans/phase-1.1-plan.md"))
+        self.assertTrue(any("QB planning state" in e for e in errors), errors)
+
+    def test_qb_planning_new_surface_fails(self) -> None:
+        errors = self._errors(render(**{"New Surfaces": ".qb/generated-plan.md"}))
+        self.assertTrue(any("QB planning state" in e for e in errors), errors)
+
     def test_graph_memory_evidence_fails(self) -> None:
         errors = self._errors(render(Evidence="graph.json says the node is hot"))
         self.assertTrue(any("graph memory" in e for e in errors), errors)

@@ -67,6 +67,13 @@ references, audit status, secret-shaped values, and Step 4 readiness.
 `validate_planwright_plan.py` checks the Step 3.5 export against the
 machine-checkable subset of planwright's plan format.
 
+Validation is a barrier at every planning step, not only at the final export:
+Step 1 must pass `validate_planner_docs.py --mode step1 --strict`, Step 2 must
+pass `--mode step2 --strict`, and Step 3 must pass `--mode step4` before Step
+3.5 writes executable items. The Step 3.5 export contains only post-audit,
+implementation-ready work against normal repository surfaces; `.qb/` planning
+files may provide context but are never editable planwright item surfaces.
+
 The planning filenames are part of the public contract. Keep these names stable:
 `main-planning.md`, `assessment.md`, `sub-planning-index.md`,
 `sub-planning-audit.md`, `plan.md`, `phase-<n>-plans/`, and
