@@ -53,6 +53,13 @@ COMBINED_FAIL_CLOSED_GUARD_DECISION = {
     "reuse": "uses analyzer_quality.ToolAdapter for optional-tool absence and _networked_stub for networked policy",
 }
 
+COMBINED_GUARD_ENGINE_INVARIANTS = {
+    "dependency_free": "validated by python3 -m unittest tests.test_least_privilege",
+    "deterministic": "test_run_is_deterministic_across_two_runs stays green",
+    "read_only": "test_runner_does_not_mutate_the_audited_tree stays green",
+    "side_effects": "combined guard uses only in-memory/nonexistent-tool stubs; no network call or install",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
