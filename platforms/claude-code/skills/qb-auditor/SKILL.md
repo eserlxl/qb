@@ -2,7 +2,7 @@
 name: qb-auditor
 description: Goal-backed Step 3 of the QB planning workflow - a quality, coverage, consistency, and readiness audit of the Step 2 sub-plans. Use to verify that .qb/phase-*-plans/*.md and sub-planning-index.md are faithful to main-planning.md, complete, ordered, well-structured, and ready for implementation. Delegated automatically to the qb-auditor subagent via the Task tool and runs until every phase and sub-plan is inspected; produces only .qb/sub-planning-audit.md and returns PASS / PASS_WITH_WARNINGS / BLOCKED. Safe to run standalone for re-audits.
 metadata:
-  version: "0.11.0"
+  version: "0.12.0"
 ---
 
 # QB Auditor (Step 3, goal-backed)
