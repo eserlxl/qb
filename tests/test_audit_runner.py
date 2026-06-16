@@ -31,6 +31,12 @@ DEFAULT_OFF_NETWORKED_AUDIT = {
     "gap": "does not explicitly assert total_findings/category_counts are unaffected by the skipped stub",
 }
 
+EXPLICIT_ALLOW_NETWORKED_AUDIT = {
+    "stub": "net-stub is registered with offline=False and AnalyzerConfig(allow_networked=True)",
+    "asserted": ("enabled summary includes net-stub in analyzers_run",),
+    "gap": "does not explicitly assert allow_networked true or absence of a networked-disabled skip for net-stub",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
