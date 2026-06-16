@@ -191,6 +191,7 @@ class AuditRunnerTests(unittest.TestCase):
             self.assertEqual(enabled, enabled_again)
 
     def test_combined_fail_closed_policy_defaults(self) -> None:
+        """Optional tools degrade when absent; networked analyzers stay disabled unless explicitly allowed."""
         quality = self.runner._quality
         missing_optional = quality.ToolAdapter(
             name="missing-pyflakes",
