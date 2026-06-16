@@ -123,6 +123,12 @@ Run only read-only or safe local commands such as:
 You may use ripgrep/grep to discover important project markers:
 - rg "TODO|FIXME|Phase|phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|Linear|GitHub|Temporal|LangGraph|LiteLLM|Antigravity|OpenCode|Claude|Gemini|API|database|Postgres|queue|artifact|approval|review" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**'
 
+These inspection commands are independent and read-only, so the evidence may be gathered in
+parallel (for example via concurrent read-only actors) and merged into a single evidence
+bundle before writing. Reuse that one bundle rather than re-scanning the repository several
+times. The document itself is still composed by a single writer in one pass: this parallelism
+applies only to evidence gathering and never changes the required output sections below.
+
 If the repo is empty or almost empty:
 - Do not fail.
 - Treat it as a new project.

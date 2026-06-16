@@ -472,3 +472,44 @@ important fix (if any); the recommended next prompt direction; and confirmation 
 Remember: this is an audit-and-analysis step — do not fix the sub-plans, create new
 phase plans, or change the master plan. Only create or update
 .qb/sub-planning-audit.md.
+
+Parallel shard mode (optional):
+
+This audit is normally run once over all phases (the default behavior described above).
+When the launching orchestrator can fan the work out across independent actors, it may
+instead launch one run of this prompt per phase folder, in parallel, followed by exactly
+one reduce run that assembles the final audit. A run is in shard mode only when its
+launching brief sets an explicit phase scope, for example:
+
+PHASE SCOPE: 2
+
+In shard mode, for the single assigned phase <n>:
+- Inspect ONLY .qb/phase-<n>-plans/ (plus read-only .qb/main-planning.md for grounding).
+- Do NOT write any file under .qb/. In particular do NOT create or modify
+  .qb/sub-planning-audit.md and do NOT write fragment files. Return your findings in-band
+  as your final message, as structured partial findings.
+- Report, for your phase: the phase number; whether the folder exists and its sub-plan
+  count; for each sub-plan file its filename, detected H1 title, phase-number match,
+  required-section-structure status, and a content-quality verdict with notes; intra-phase
+  numbering gaps or duplicates; naming-convention issues; readiness-realism and
+  security/governance flags; and a per-phase Step 4 readiness verdict.
+- Tag each finding with a LOCAL id of the form PH<n>-<seq> (for example PH2-01) and a
+  severity P0-P3. Do NOT mint AUDIT-FIX-NN ids and do NOT emit a bare overall status line
+  (PASS / PASS_WITH_WARNINGS / BLOCKED); those belong to the reduce run only.
+- Do NOT compute the global checks: main-phase coverage (section 3), index consistency
+  (section 6), cross-phase ordering, or the overall audit status. A single-phase shard
+  cannot see a phase that has no folder, so coverage must be computed at reduce time.
+
+The reduce run (an unscoped run of this prompt, or the orchestrator acting as the sole
+audit writer) is the only writer of .qb/sub-planning-audit.md. It consumes the per-phase
+partial-findings blocks, recomputes the global checks from the full file set on disk
+(main-phase coverage, cross-phase ordering, index consistency), flattens every local
+PH<n>-<seq> finding into one globally renumbered AUDIT-FIX-NN | PX list in section 13
+(sorted by severity then phase), rolls the worst per-phase verdict plus the global findings
+into a single overall status, writes all 15 sections in the exact required order with one
+canonical status line, then runs validate_planner_docs.py --mode step3 --strict and --mode
+step4 once over the complete audit, and confirms git status shows only
+.qb/sub-planning-audit.md changed.
+
+When no phase scope is given, this section does not apply: behave exactly as the default
+above - audit every phase and write the single sub-planning-audit.md in a single run.

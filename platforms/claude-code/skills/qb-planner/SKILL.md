@@ -82,7 +82,10 @@ Step 0, the Step-1 intake, Gate 1, Gate 2, and the repair loop, and it **disable
    and stop immediately, creating no `.qb/` artifacts:
    `QB_PLAN_AUTO_ERROR: missing required field(s): <comma-separated names> (insufficient repo evidence)`
 3. **Auto-pass the gates — but DELEGATE every step independently.** Treat Gate 1 and Gate 2 as
-   approved and run Step 1 -> 1.5 -> 2 -> 3 straight through. **Auto mode is the external-consumer
+   approved and run Step 1 -> 1.5 -> 2 -> 3 straight through. When the Task tool is available, run
+   Steps 2 and 3 with the **parallel fan-out above** (per-phase workers plus a single reduce); the
+   reduce must finish writing `sub-planning-index.md` / `sub-planning-audit.md` and pass its
+   validators before any gate decision or the final result line. **Auto mode is the external-consumer
    path (planwright and other callers), so the delegated steps — above all Step 3, the audit — MUST
    run via the independent `qb-*` subagents (the Task tool), never as an in-session self-check.** A
    caller that trusts `QB_PLAN_AUTO_OK` is trusting that the audit was *independent*; an in-session
@@ -122,7 +125,12 @@ Without the `auto` flag, ignore this section and follow the interactive Step 0 -
 ## Step 1 - repo-aware intake (interactive)
 
 Follow `references/repo-aware-intake.md` (resolve plugin root). Before asking, run a bounded read-only
-scan of the user's workspace. Then follow its **Well-Structured Fast Path**: on a well-structured repo,
+scan of the user's workspace. When the Task tool is available, gather that scan with the reference's
+**Parallel Pre-Intake Evidence Fan-Out** - spawn the read-only lanes (STRUCTURE, MANIFESTS, TESTS+CI,
+DOCS, GIT-HISTORY, MARKERS) concurrently and merge them into one shared evidence bundle; otherwise run
+the same probes sequentially. Reuse that single bundle for the intake questions, the First-Planner
+write, and (for existing repos) the Step 1.5 assessment instead of re-scanning the repo each time.
+Then follow its **Well-Structured Fast Path**: on a well-structured repo,
 auto-derive all four fields and present a single consolidated confirmation; otherwise (or for any
 weak-evidence field) ask that field per turn, in the user's language, as a plain-text question (no
 multiple-choice), offering your repo-derived draft to confirm or edit. Mark clearly when a value is
@@ -200,6 +208,62 @@ co-located path:
 - Step 3 (`qb-auditor`, spec `skills/qb-auditor/third-planner.md`):
   > Run Step 3 per the qb-auditor third-planner.md spec. Audit .qb/main-planning.md, sub-planning-index.md, and all phase-*-plans/*.md files; analyze main-phase coverage, file naming, ordering, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan file; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans are reviewed.
 
+## Parallel fan-out for Steps 2 and 3 (Task tool available)
+
+Steps 2 and 3 decompose into per-phase work that is independent across phases, so when the
+Task tool is available run each as a **map -> barrier -> reduce** instead of one subagent over
+all phases. This collapses the wall-clock cost from the sum of all phases to the slowest single
+phase plus the reduce. The bundled specs (`second-planner.md`, `third-planner.md`) carry a
+"Parallel shard mode (optional)" section that this procedure drives by adding a `PHASE SCOPE: <n>`
+line to each worker's brief; with no scope they run the full sequential default (the fallback
+below). Step 1.5 (assessment) and Step 4 are **not** fanned out (no phases exist at 1.5 time;
+Step 4 is one gated slice by design).
+
+**Step 2 (subplanner) fan-out:**
+
+1. **Map.** Read `.qb/main-planning.md` and enumerate its main phases. Spawn **one `qb-subplanner`
+   Task per phase, in parallel** (issue the Task calls together in one turn), each brief carrying
+   `PHASE SCOPE: <n>` plus the Step-2 shard contract below. Distinct phases write distinct
+   `.qb/phase-<n>-plans/` folders, so there are no write conflicts.
+2. **Barrier.** Wait for every phase Task to finish.
+3. **Reduce (sole index writer).** Acting in-session (or via one unscoped `qb-subplanner` Task),
+   write `.qb/sub-planning-index.md` as the **only** index writer: enumerate the actual
+   `.qb/phase-*-plans/*.md` files on disk, emit one reference per real file, perform the global
+   Coverage Check and Prioritized Elaboration Order, then run
+   `python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step2 --strict` **once**
+   over the complete tree. No per-phase worker writes the index or runs the whole-tree validator.
+
+**Step 3 (auditor) fan-out:**
+
+1. **Map.** Spawn **one `qb-auditor` Task per detected phase folder, in parallel**, each with
+   `PHASE SCOPE: <n>` and the Step-3 shard contract below. Each worker returns **structured partial
+   findings in-band and writes no file under `.qb/`**.
+2. **Barrier.** Wait for every phase audit to finish.
+3. **Reduce (sole audit writer, non-authoring).** Acting in-session (or via one unscoped
+   `qb-auditor` Task that did **not** author any sub-plan), write `.qb/sub-planning-audit.md` as the
+   only writer: recompute the global checks from the full file set (main-phase coverage section 3,
+   cross-phase ordering, index consistency section 6), flatten every local `PH<n>-<seq>` finding
+   into one globally renumbered `AUDIT-FIX-NN | PX` list in section 13, roll the worst per-phase
+   verdict plus the global findings into one overall status with a single canonical status line,
+   write all 15 sections in order, then run `--mode step3 --strict` and `--mode step4` **once**.
+   Confirm `git status --short` shows only `sub-planning-audit.md` changed.
+
+**Independence (mandatory).** The Step-2 author of phase n and the Step-3 auditor of phase n must be
+different actors, and the Step-3 reduce writer must not have authored any sub-plan - this is the
+entire point of the audit. Fan-out preserves independence because every worker is a fresh Task.
+
+**Per-phase shard briefs:**
+
+- Step 2 shard (`qb-subplanner`, with `PHASE SCOPE: <n>`):
+  > Run Step 2 in parallel shard mode per the qb-subplanner second-planner.md spec, for phase <n> ONLY. Read .qb/main-planning.md (and .qb/assessment.md if present). Create only .qb/phase-<n>-plans/phase-<n>.<m>-*.md. Do NOT write .qb/sub-planning-index.md and do NOT run the whole-tree step2 validator; the index is written once by the reduce step. Change only files under .qb/.
+- Step 3 shard (`qb-auditor`, with `PHASE SCOPE: <n>`):
+  > Run Step 3 in parallel shard mode per the qb-auditor third-planner.md spec, for phase <n> ONLY. Inspect only .qb/phase-<n>-plans/ plus read-only .qb/main-planning.md. Write NO file under .qb/; return structured partial findings in-band with LOCAL PH<n>-<seq> ids and P0-P3 severities. Do NOT compute coverage, index consistency, cross-phase ordering, or the overall status; the reduce step does that.
+
+**Fallback (no Task tool).** Run the existing single unscoped pass over all phases (Step 2 writes
+all folders plus the index; Step 3 audits all phases plus writes the audit) and disclose per the
+Execution-model rule (and the `QB_PLAN_AUTO_WARN` line in auto mode). No `PHASE SCOPE` is passed, so
+the specs take their default branch - identical to today.
+
 ## Gate 1 - feedback, then approve Step 2
 
 1. Present a concise summary of `main-planning.md` (current-state conclusion, number of high-level phases,
@@ -213,8 +277,9 @@ co-located path:
    `.qb/phase-<n>-plans/` folders and `phase-<n>.<m>-*.md` detailed sub-plan files. Do not stop until
    all phases are covered. Only change files under `.qb/`."
    - Decline -> stop gracefully; the user can resume with `/qb-plan` or the `qb-subplanner` skill.
-   - Approve -> launch Step 2 via the **delegation procedure above** (Canonical Step-2 brief), then
-     run the **`qb-subplanner`** subagent/skill to completion across all phases.
+   - Approve -> when the Task tool is available, launch Step 2 via the **parallel fan-out above**
+     (one `qb-subplanner` per phase with `PHASE SCOPE: <n>`, then the index reduce); otherwise fall
+     back to a single unscoped `qb-subplanner` run across all phases.
 
 ## Gate 2 - approve Step 3 (audit)
 
@@ -224,8 +289,10 @@ After `qb-subplanner` reports completion, present this confirmation, then ask wi
 > In the third step, we will now audit whether the sub-plans produced by Step 2 are faithful to the master plan, complete, ordered, actionable, and meet the quality bar. Do you approve?
 
 - Decline -> stop gracefully; the user can run the audit later via the `qb-auditor` skill or `/qb-audit`.
-- Approve -> launch Step 3 via the **delegation procedure above** (Canonical Step-3 brief), then
-  run the **`qb-auditor`** subagent/skill until it produces `.qb/sub-planning-audit.md` and returns a status.
+- Approve -> when the Task tool is available, launch Step 3 via the **parallel fan-out above** (one
+  `qb-auditor` per phase with `PHASE SCOPE: <n>`, then the non-authoring audit reduce that produces
+  `.qb/sub-planning-audit.md`); otherwise fall back to a single unscoped `qb-auditor` run over all
+  phases. Either way it ends with `.qb/sub-planning-audit.md` and a returned status.
 
 ## After the audit - status, repair loop, and Step 4 gate
 

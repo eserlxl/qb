@@ -105,6 +105,12 @@ You may use ripgrep/grep to discover project markers, e.g. TODO/FIXME, phase/roa
 architecture/runbook, readiness/production, security/policy, test/smoke/CI, and
 API/database/queue/artifact terms.
 
+These inspection commands are independent and read-only, so the evidence may be gathered in
+parallel (for example via concurrent read-only actors) and merged into a single evidence
+bundle before writing. Reuse that one bundle rather than re-scanning the repository several
+times. The document itself is still composed by a single writer in one pass: this parallelism
+applies only to evidence gathering and never changes the required output sections below.
+
 If the repo is empty or almost empty:
 - Do not fail.
 - Treat it as a new project.

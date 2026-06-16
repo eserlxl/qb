@@ -483,3 +483,39 @@ any unexpected modifications).
 Remember: only create or update files under .qb/, never modify source code or create
 implementation files, by default do not change main-planning.md, and do not commit,
 push, install, deploy, or open PRs.
+
+Parallel shard mode (optional):
+
+This step is normally run once over all phases (the default behavior described above).
+When the launching orchestrator can fan the work out across independent actors, it may
+instead launch one run of this prompt per main phase, in parallel, followed by exactly one
+reduce run that writes the index. A run is in shard mode only when its launching brief sets
+an explicit phase scope, for example:
+
+PHASE SCOPE: 2
+
+In shard mode, for the single assigned phase <n>:
+- Create or update ONLY .qb/phase-<n>-plans/phase-<n>.<m>-*.md for that one phase.
+- Do NOT create or modify .qb/sub-planning-index.md. The index is written exactly once, by
+  a separate reduce run (an unscoped run of this prompt, or the orchestrator) after all
+  shards finish.
+- Do NOT run the whole-tree validator (validate_planner_docs.py --mode step2 --strict): the
+  tree is intentionally incomplete until every shard and the index reduce have finished.
+- Skip the global outputs that require seeing every phase - the Coverage Check, the
+  Prioritized Elaboration Order, and the cross-phase index sections - they belong to the
+  reduce run.
+- You may self-check only your own phase folder: confirm your filenames follow the naming
+  convention, each H1 title matches its filename, and every required section heading is
+  present in each file you wrote.
+- Every other rule above still applies: planning only, English, secret-safe, changes only
+  under .qb/, the 3-7 sub-phase sizing guidance, the required 13-section sub-plan structure,
+  and grounding in main-planning.md and assessment.md.
+
+The reduce run (an unscoped run of this prompt, or the orchestrator acting as the sole
+index writer) is the only writer of .qb/sub-planning-index.md. It enumerates the actual
+.qb/phase-*-plans/*.md files on disk, emits the full index (sections 1-7) with one
+reference per real file, performs the Coverage Check across every phase, and only then runs
+validate_planner_docs.py --mode step2 --strict once over the complete tree.
+
+When no phase scope is given, this section does not apply: behave exactly as the default
+above - decompose every phase and write the index in a single run.

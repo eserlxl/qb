@@ -44,6 +44,27 @@ rg -n "architecture|roadmap|runbook|production|security|policy|workflow|worker|s
 Keep this pass brief. Its purpose is to make the intake questions smarter, not to replace
 the full repository analysis in `first-planner.md`.
 
+### Parallel Pre-Intake Evidence Fan-Out (optional)
+
+The Pre-Intake Scan is a bag of independent read-only probes, so it can be gathered in
+parallel when the orchestrator can fan work out across independent actors (for example via
+the Task tool). When available, run these lanes concurrently and merge their results into a
+single shared evidence bundle:
+
+- **STRUCTURE**: directory tree and top-level service/app/config/script/test/infra dirs.
+- **MANIFESTS**: `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Makefile`, and
+  the detected stack.
+- **TESTS+CI**: `tests/`, `.github/workflows/*.yml`, and any smoke/coverage commands.
+- **DOCS**: `README*`, `AGENTS.md`, `RUNBOOK*`, and docs index/architecture/roadmap/security.
+- **GIT-HISTORY**: `git status --short --branch`, `git branch --show-current`, `git log --oneline -n 10`.
+- **MARKERS**: one `rg` discovery pass plus TODO/FIXME markers.
+
+Every lane is strictly read-only and must not write any file. Merge the lanes into one
+evidence bundle and reuse that single bundle for the intake questions, the `first-planner.md`
+analysis, and (for existing repos) the Step 1.5 assessment, instead of re-scanning the
+repository several times. When parallel actors are not available, run the same probes
+sequentially in one pass - the bundle and its downstream use are identical either way.
+
 ## What To Infer
 
 Infer a draft answer only when there is evidence.
