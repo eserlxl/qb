@@ -2,7 +2,6 @@
 
 Repo planning, plan export, and guarded repository hardening for AI coding hosts.
 
-[![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
 [![version](https://img.shields.io/badge/version-0.13.0-2563EB)](VERSION)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 [![platforms](https://img.shields.io/badge/platforms-claude--code%20%C2%B7%20cursor%20%C2%B7%20codex%20%C2%B7%20antigravity-2563EB)](#platform-packages)
