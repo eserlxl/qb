@@ -98,6 +98,28 @@ class FanoutTitleCollisionTests(unittest.TestCase):
         self.assertNotIn("duplicate_subplan_number=", result.stdout)
         self.assertNotIn("invalid_subplan_filename=", result.stdout)
 
+    def test_reduce_dedup_backstop_fails_without_mutating_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            write_plan(
+                root,
+                [
+                    plan_item("Reduce Must Dedup This Title"),
+                    plan_item("Reduce Must Dedup This Title"),
+                ],
+            )
+            plan_path = root / ".qb/plan.md"
+            before = plan_path.read_text(encoding="utf-8")
+            result = run_plan_validator(root)
+            after = plan_path.read_text(encoding="utf-8")
+
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            "duplicate pending title: 'Reduce Must Dedup This Title'",
+            result.stdout,
+        )
+        self.assertEqual(before, after)
+
 
 if __name__ == "__main__":
     unittest.main()
