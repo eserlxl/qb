@@ -47,6 +47,12 @@ NETWORKED_POLICY_SYNC_NOTE = (
     "scripts/sync.sh --check; antigravity is planning-only and intentionally excluded."
 )
 
+COMBINED_FAIL_CLOSED_GUARD_DECISION = {
+    "home": "tests/test_audit_runner.py::test_combined_fail_closed_policy_defaults",
+    "shape": "one named test composes the optional-tool-absent and networked-default/allow stubs",
+    "reuse": "uses analyzer_quality.ToolAdapter for optional-tool absence and _networked_stub for networked policy",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
