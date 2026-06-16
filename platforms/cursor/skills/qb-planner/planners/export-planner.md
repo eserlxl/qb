@@ -145,3 +145,36 @@ independently executable and verifiable — a faithful, lint-clean projection of
 sub-plans, not a generic template and not a coarse one-item-per-phase summary.
 
 Remember: only create or modify .qb/plan.md; do not modify anything else.
+
+Parallel shard mode (optional):
+
+This export is normally run once over all phases (the default behavior described above).
+When the launching orchestrator can fan the work out across independent actors, it may
+instead launch one run of this prompt per phase folder, in parallel, followed by exactly
+one reduce run that writes .qb/plan.md. A run is in shard mode only when its launching brief
+sets an explicit phase scope, for example:
+
+PHASE SCOPE: 2
+
+In shard mode, for the single assigned phase <n>:
+- Read ONLY .qb/phase-<n>-plans/phase-<n>.<m>-*.md (plus .qb/main-planning.md and the
+  relevant phase rows of .qb/sub-planning-audit.md for context), and inspect the repository
+  read-only to ground Surfaces / New Surfaces / Verification for that phase.
+- Emit, in-band as your final message, the planwright item blocks for that phase ONLY, in
+  phase/subphase/entry order - one item per "## 7. Planned Work Breakdown" entry, in the
+  exact target item format with all required fields. Because titles are phase-prefixed
+  (Phase <n>.<m> - ...), they are already unique across phases.
+- Do NOT write .qb/plan.md or any other file, and do NOT run the validator: a single phase
+  is not the final plan. List any work-breakdown entries you skipped (and why) at the end of
+  your findings so the reduce run can surface them.
+
+The reduce run (an unscoped run of this prompt, or the orchestrator acting as the sole plan
+writer) is the only writer of .qb/plan.md. It collects every phase's item blocks, orders
+them by the prioritized elaboration order in .qb/sub-planning-index.md (within a phase,
+phase/subphase/entry order), enforces global title uniqueness across the merged set, writes
+the single .qb/plan.md (optionally with the one leading comment line), then runs
+validate_planwright_plan.py --root . --strict once over the complete plan and fixes any
+flagged item before reporting. Surface every phase's skipped entries in the closing summary.
+
+When no phase scope is given, this section does not apply: behave exactly as the default
+above - export every phase and write .qb/plan.md in a single run.

@@ -208,16 +208,16 @@ co-located path:
 - Step 3 (`qb-auditor`, spec `skills/qb-auditor/third-planner.md`):
   > Run Step 3 per the qb-auditor third-planner.md spec. Audit .qb/main-planning.md, sub-planning-index.md, and all phase-*-plans/*.md files; analyze main-phase coverage, file naming, ordering, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan file; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans are reviewed.
 
-## Parallel fan-out for Steps 2 and 3 (Task tool available)
+## Parallel fan-out for Steps 2, 3, and 3.5 (Task tool available)
 
-Steps 2 and 3 decompose into per-phase work that is independent across phases, so when the
+Steps 2, 3, and 3.5 decompose into per-phase work that is independent across phases, so when the
 Task tool is available run each as a **map -> barrier -> reduce** instead of one subagent over
 all phases. This collapses the wall-clock cost from the sum of all phases to the slowest single
-phase plus the reduce. The bundled specs (`second-planner.md`, `third-planner.md`) carry a
-"Parallel shard mode (optional)" section that this procedure drives by adding a `PHASE SCOPE: <n>`
-line to each worker's brief; with no scope they run the full sequential default (the fallback
-below). Step 1.5 (assessment) and Step 4 are **not** fanned out (no phases exist at 1.5 time;
-Step 4 is one gated slice by design).
+phase plus the reduce. The bundled specs (`second-planner.md`, `third-planner.md`,
+`export-planner.md`) carry a "Parallel shard mode (optional)" section that this procedure drives
+by adding a `PHASE SCOPE: <n>` line to each worker's brief; with no scope they run the full
+sequential default (the fallback below). Step 1.5 (assessment) and Step 4 are **not** fanned out
+(no phases exist at 1.5 time; Step 4 is one gated slice by design).
 
 **Step 2 (subplanner) fan-out:**
 
@@ -248,6 +248,20 @@ Step 4 is one gated slice by design).
    write all 15 sections in order, then run `--mode step3 --strict` and `--mode step4` **once**.
    Confirm `git status --short` shows only `sub-planning-audit.md` changed.
 
+**Step 3.5 (export) fan-out:**
+
+1. **Map.** Spawn **one `qb-planner` export Task per detected phase folder, in parallel** (following
+   `planners/export-planner.md`), each with `PHASE SCOPE: <n>` and the Step-3.5 shard contract below.
+   Each worker returns its phase's planwright item blocks **in-band and writes no file**. Titles are
+   phase-prefixed (`Phase <n>.<m> - ...`), so they are unique across phases by construction.
+2. **Barrier.** Wait for every phase export to finish.
+3. **Reduce (sole plan writer).** Acting in-session (or via one unscoped export run), write
+   `.qb/plan.md` as the **only** writer: collect every phase's item blocks, order them by the
+   prioritized elaboration order in `.qb/sub-planning-index.md` (within a phase, phase/subphase/entry
+   order), enforce global title uniqueness across the merged set, then run
+   `python3 <plugin-root>/scripts/validate_planwright_plan.py --root . --strict` **once** and fix any
+   flagged item. Surface every phase's skipped entries in the summary.
+
 **Independence (mandatory).** The Step-2 author of phase n and the Step-3 auditor of phase n must be
 different actors, and the Step-3 reduce writer must not have authored any sub-plan - this is the
 entire point of the audit. Fan-out preserves independence because every worker is a fresh Task.
@@ -258,6 +272,8 @@ entire point of the audit. Fan-out preserves independence because every worker i
   > Run Step 2 in parallel shard mode per the qb-subplanner second-planner.md spec, for phase <n> ONLY. Read .qb/main-planning.md (and .qb/assessment.md if present). Create only .qb/phase-<n>-plans/phase-<n>.<m>-*.md. Do NOT write .qb/sub-planning-index.md and do NOT run the whole-tree step2 validator; the index is written once by the reduce step. Change only files under .qb/.
 - Step 3 shard (`qb-auditor`, with `PHASE SCOPE: <n>`):
   > Run Step 3 in parallel shard mode per the qb-auditor third-planner.md spec, for phase <n> ONLY. Inspect only .qb/phase-<n>-plans/ plus read-only .qb/main-planning.md. Write NO file under .qb/; return structured partial findings in-band with LOCAL PH<n>-<seq> ids and P0-P3 severities. Do NOT compute coverage, index consistency, cross-phase ordering, or the overall status; the reduce step does that.
+- Step 3.5 shard (export per `planners/export-planner.md`, with `PHASE SCOPE: <n>`):
+  > Run Step 3.5 export in parallel shard mode per the export-planner.md spec, for phase <n> ONLY. Read only .qb/phase-<n>-plans/ (plus .qb/main-planning.md and the phase's audit rows for context) and ground Surfaces/Verification read-only. Write NO file; return this phase's planwright item blocks in-band, one per Planned Work Breakdown entry, in the exact item format, and list any skipped entries. Do NOT order across phases, enforce global title uniqueness, write .qb/plan.md, or run the validator; the reduce step does that.
 
 **Fallback (no Task tool).** Run the existing single unscoped pass over all phases (Step 2 writes
 all folders plus the index; Step 3 audits all phases plus writes the audit) and disclose per the
@@ -322,7 +338,10 @@ sub-plans; it needs no gate or approval (it only writes `.qb/plan.md`).
    to export. Otherwise run regardless of audit status (note any unresolved blocker in the summary).
 2. Read `planners/export-planner.md` (relative to this skill) and follow it end to end. Read every
    `.qb/phase-*-plans/phase-<n>.<m>-*.md` and emit one planwright item per `## 7. Planned Work
-   Breakdown` entry, across all phases, into `.qb/plan.md` in the exact 8-field item format.
+   Breakdown` entry, across all phases, into `.qb/plan.md` in the exact 8-field item format. When the
+   Task tool is available, run this via the **Step 3.5 export fan-out above** (one export worker per
+   phase returning item blocks in-band, then the single plan reduce that orders, de-dupes titles, and
+   writes `.qb/plan.md`); otherwise export all phases in one unscoped pass.
 3. Run the bundled validator:
    `python3 <plugin-root>/scripts/validate_planwright_plan.py --root . --strict`
    (fallback: the manual checks the spec lists). Fix every flagged item and re-run until it passes.
