@@ -104,6 +104,30 @@ class RollbackDrillTests(unittest.TestCase):
                                       evidence=[{"outcome": "kept", "after_exit": 0}] * kept
                                                + [{"outcome": "reverted", "after_exit": 1}] * reverted)
 
+    def _budget_autofix_result(self, telemetry, *, autonomy_level="A2"):
+        budget = _load("qb_budget_for_release_gate_test", BUDGET_PATH)
+        policy_mod = _load("qb_policy_for_release_gate_test", POLICY_PATH)
+        fixer = _load("qb_fixer_for_release_gate_test", FIXER_PATH)
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_autofix_repo(repo)
+            policy = policy_mod.parse_policy({
+                "autonomy_level": autonomy_level,
+                "auto_fixable_categories": ["quality"],
+                "default_min_confidence": "medium",
+                "write_allowlist": ["*.txt"],
+            })
+            finding = fixer.Finding(
+                id=fixer.compute_finding_id("quality", "style.txt:1", "lint"),
+                category="quality", severity="P3", confidence="medium",
+                evidence="style.txt:1", rationale="x", suggested_fix="y",
+                fix_strategy="autofix",
+            )
+            plan = fixer.plan_fix(finding, repo)
+            items = [(plan, lambda iso: iso.write_file("style.txt", "clean\n"))]
+            results, _report = budget.run_session(policy, repo, items, telemetry=telemetry)
+            return results[0], (repo / "style.txt").read_text(encoding="utf-8")
+
     def test_precision_gate_fail_closed(self) -> None:
         self.assertFalse(self.rg.precision_gate(self._telemetry(0, 0))[0])      # no data
         self.assertTrue(self.rg.precision_gate(self._telemetry(9, 1))[0])       # 0.9 >= 0.8
@@ -193,6 +217,29 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertEqual(results[0]["level"], "A1")
             self.assertEqual(results[0]["promoted"], [])
             self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
+
+    def test_loaded_telemetry_ceiling_controls_declared_autonomy(self) -> None:
+        result, content = self._budget_autofix_result(self._telemetry(9, 1))
+        self.assertEqual(result["earned_ceiling"], "A2")
+        self.assertEqual(result["level"], "A2")
+        self.assertEqual(result["promoted"], ["style.txt"])
+        self.assertEqual(content, "clean\n")
+
+        for bad in (self._telemetry(1, 9), {}, {"quality": None},
+                    {"quality": {"precision_estimate": True, "fix_safety_ok": True}},
+                    "not-a-dict"):
+            result, content = self._budget_autofix_result(bad)
+            self.assertEqual(result["earned_ceiling"], "A1", bad)
+            self.assertEqual(result["level"], "A1", bad)
+            self.assertEqual(result["promoted"], [], bad)
+            self.assertEqual(content, "messy\n", bad)
+
+        result, content = self._budget_autofix_result(self._telemetry(9, 1), autonomy_level="A0")
+        self.assertEqual(result["earned_ceiling"], "A2")
+        self.assertEqual(result["level"], "A0")
+        self.assertEqual(result["outcome"], "report-only")
+        self.assertEqual(result["promoted"], [])
+        self.assertEqual(content, "messy\n")
 
 
 if __name__ == "__main__":
