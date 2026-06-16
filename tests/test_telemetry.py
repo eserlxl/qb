@@ -18,6 +18,9 @@ from tests.qb_monorepo import SHARED_DIR
 
 MODULE_PATH = SHARED_DIR / "scripts/telemetry.py"
 STORE_PATH = SHARED_DIR / "scripts/run_store.py"
+BUDGET_PATH = SHARED_DIR / "scripts/budget.py"
+POLICY_PATH = SHARED_DIR / "scripts/policy.py"
+FIXER_PATH = SHARED_DIR / "scripts/fixer.py"
 
 
 def _load(name: str, path: Path):
@@ -82,6 +85,30 @@ class _TwoRunAccrualFixture:
                      + [{"outcome": "reverted", "after_exit": 1}],
             cost={"wall_ms": 250, "iterations": 1, "tokens": 0},
         )
+
+    def run_autofix(self, telemetry):
+        budget = _load("qb_budget_for_telemetry_test", BUDGET_PATH)
+        policy_mod = _load("qb_policy_for_telemetry_test", POLICY_PATH)
+        fixer = _load("qb_fixer_for_telemetry_test", FIXER_PATH)
+        policy = policy_mod.parse_policy({
+            "autonomy_level": "A2",
+            "auto_fixable_categories": ["quality"],
+            "default_min_confidence": "medium",
+            "write_allowlist": ["*.txt"],
+        })
+        finding = fixer.Finding(
+            id=fixer.compute_finding_id("quality", "style.txt:1", "lint"),
+            category="quality", severity="P3", confidence="medium",
+            evidence="style.txt:1", rationale="x", suggested_fix="y",
+            fix_strategy="autofix",
+        )
+        plan = fixer.plan_fix(finding, self.repo)
+        results, report = budget.run_session(
+            policy, self.repo, [(plan, lambda iso: iso.write_file("style.txt", "clean\n"))],
+            telemetry=telemetry,
+            clock=self.clock,
+        )
+        return results[0], report
 
 
 class TelemetryTests(unittest.TestCase):
@@ -150,6 +177,23 @@ class TelemetryTests(unittest.TestCase):
         record = fixture.a2_eligible_telemetry("run-1")
         fixture.run1.write_telemetry(record)
         self.assertEqual(self.rs.load_prior_telemetry(fixture.run1.root), record)
+
+    @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
+    def test_run1_cold_start_clamps_a2_and_writes_a2_eligible_record(self) -> None:
+        fixture = _TwoRunAccrualFixture(self)
+        self.assertEqual(fixture.run1.read_telemetry(), {})
+
+        result, _report = fixture.run_autofix(fixture.run1.read_telemetry())
+        self.assertEqual(result["declared_level"], "A2")
+        self.assertEqual(result["earned_ceiling"], "A1")
+        self.assertEqual(result["level"], "A1")
+        self.assertEqual(result["promoted"], [])
+        self.assertEqual((fixture.repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
+
+        record = fixture.a2_eligible_telemetry("run-1")
+        self.assertEqual(self.t.max_permitted_autonomy(record), "A2")
+        fixture.run1.write_telemetry(record)
+        self.assertEqual(fixture.run1.read_telemetry(), record)
 
 
 if __name__ == "__main__":
