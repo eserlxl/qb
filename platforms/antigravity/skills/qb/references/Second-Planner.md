@@ -128,11 +128,16 @@ Run only safe read-only commands such as:
 - if [ -f .qb/project-ontology.md ]; then cat .qb/project-ontology.md; fi
 - if [ -f .qb/planning-ledger.md ]; then cat .qb/planning-ledger.md; fi
 - ls
-- find . -maxdepth 3 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type f -print | sort | head -300
-- for d in .qb docs configs scripts services packages tests infra .github; do [ -d "$d" ] && find "$d" -maxdepth 2 -type f | sort | head -80; done
+- git ls-files --cached --others --exclude-standard | sort | head -300
+- for d in docs configs scripts services packages tests infra .github; do [ -d "$d" ] && git ls-files --cached --others --exclude-standard "$d" | sort | head -80; done
 - cat README.md if present
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, test files, config examples, service skeletons, package skeletons, and policy files if present
+
+Use git-aware file lists that respect ignored paths; do not scan ignored local
+artifact directories such as `.qb/`, `.planwright/`, or `QB-Audit/` as
+repository implementation evidence. Read `.qb/` only for the QB planning and
+continuity inputs named above.
 
 You may use ripgrep/grep for discovery:
 - rg "Phase|Phase|Stage|roadmap|plan|architecture|maturity|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|API|database|Postgres|queue|artifact|approval|review|risk|acceptance|Linear|GitHub|Temporal|LangGraph|LiteLLM|Antigravity|OpenCode|Claude|Gemini" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**'

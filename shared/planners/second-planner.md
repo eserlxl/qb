@@ -97,13 +97,17 @@ Run only safe read-only commands such as:
 - find .qb -maxdepth 3 -type f | sort
 - cat .qb/main-planning.md
 - ls
-- find . -maxdepth 3 -type f | sort | head -300
+- git ls-files --cached --others --exclude-standard | sort | head -300
 - cat README.md if present
 - cat AGENTS.md if present
 - inspect pyproject.toml, package.json, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, test files, config examples, service skeletons, package skeletons, and policy files if present
 
 You may use ripgrep/grep for discovery, e.g. searching for phase/roadmap/architecture,
 readiness/production, security/policy, API/database/queue, and test/CI/artifact terms.
+Use git-aware repository file lists that respect ignored paths; do not scan
+ignored local artifact directories such as `.qb/`, `.planwright/`, or
+`QB-Audit/` as implementation evidence. Read `.qb/` only for the QB planning
+inputs named above.
 
 If .qb/main-planning.md is missing:
 - Do not attempt full Step 2 decomposition.

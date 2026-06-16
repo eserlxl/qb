@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import bisect
 import importlib.util
+import os
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -47,6 +49,95 @@ validate_finding = _ai.validate_finding
 compute_finding_id = _ai.compute_finding_id
 
 SEVERITIES: tuple[str, ...] = ("P0", "P1", "P2", "P3")
+
+# Directories QB must never audit as repository implementation source.
+_TOOL_OWNED_SCAN_DIRS = frozenset({
+    ".git",
+    ".hg",
+    ".svn",
+    ".qb",
+    ".planwright",
+    "QB-Audit",
+})
+
+# Non-git fallback pruning. In git worktrees, iter_repo_files instead follows
+# git's own ignored/non-ignored view and applies only _TOOL_OWNED_SCAN_DIRS.
+_FALLBACK_SKIP_SCAN_DIRS = _TOOL_OWNED_SCAN_DIRS | frozenset({
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "dist",
+    "build",
+    "artifacts",
+})
+
+
+def _has_skipped_part(path: Path, skipped: frozenset[str]) -> bool:
+    return any(part in skipped for part in path.parts)
+
+
+def _git_list_files(root: Path) -> list[str] | None:
+    """Return git-tracked/non-ignored files, or None outside usable git."""
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    return [rel for rel in completed.stdout.split("\0") if rel]
+
+
+def _is_safe_file(root: Path, candidate: Path) -> bool:
+    try:
+        candidate.resolve().relative_to(root)
+    except (OSError, ValueError):
+        return False
+    return candidate.is_file()
+
+
+def iter_repo_files(repo_root: str | Path):
+    """Yield files QB may scan, excluding git-ignored/tool-owned paths.
+
+    In git worktrees this follows git's own view of source files: tracked files
+    plus untracked files that are not ignored by .gitignore or other standard
+    ignore mechanisms. That keeps generated local planning state such as .qb/
+    out of audits. Outside git, fall back to deterministic os.walk pruning.
+    """
+    root = Path(repo_root).resolve()
+    if not root.is_dir():
+        return
+
+    git_files = _git_list_files(root)
+    if git_files is not None:
+        seen: set[str] = set()
+        for rel in sorted(git_files):
+            rel_path = Path(rel)
+            if rel in seen or _has_skipped_part(rel_path, _TOOL_OWNED_SCAN_DIRS):
+                continue
+            seen.add(rel)
+            candidate = root / rel_path
+            if _is_safe_file(root, candidate):
+                yield candidate
+        return
+
+    for dirpath, dirnames, filenames in os.walk(root):
+        current = Path(dirpath)
+        rel_dir = current.relative_to(root)
+        if rel_dir != Path(".") and _has_skipped_part(rel_dir, _FALLBACK_SKIP_SCAN_DIRS):
+            dirnames[:] = []
+            continue
+        dirnames[:] = sorted(name for name in dirnames if name not in _FALLBACK_SKIP_SCAN_DIRS)
+        for filename in sorted(filenames):
+            candidate = current / filename
+            if _is_safe_file(root, candidate):
+                yield candidate
 
 # --- Length-bounded secret patterns (the single source) -----------------------
 # Relocated verbatim from validate_planner_docs.py; the planning validator now
@@ -117,11 +208,9 @@ class SecretHygieneAnalyzer:
     )
 
     def analyze(self, repo_root: str, config) -> list:
-        root = Path(repo_root)
+        root = Path(repo_root).resolve()
         findings: list = []
-        for path in sorted(root.rglob("*")):
-            if not path.is_file() or ".git" in path.parts:
-                continue
+        for path in iter_repo_files(root):
             try:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):

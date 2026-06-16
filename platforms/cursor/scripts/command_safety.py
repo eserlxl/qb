@@ -61,10 +61,12 @@ def _load_sibling(module_name: str, filename: str):
 
 
 _ai = _load_sibling("qb_analyzer_interface", "analyzer_interface.py")
+_core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 Analyzer = _ai.Analyzer
 AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
+iter_repo_files = _core.iter_repo_files
 
 
 # --- Structured argv convention -----------------------------------------------
@@ -173,11 +175,9 @@ class CommandInjectionAnalyzer:
     )
 
     def analyze(self, repo_root: str, config) -> list:
-        root = Path(repo_root)
+        root = Path(repo_root).resolve()
         findings: list = []
-        for path in sorted(root.rglob("*")):
-            if not path.is_file() or ".git" in path.parts:
-                continue
+        for path in iter_repo_files(root):
             try:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):

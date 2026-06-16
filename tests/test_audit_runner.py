@@ -10,6 +10,8 @@ audited tree.
 from __future__ import annotations
 
 import importlib.util
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -44,6 +46,12 @@ def _make_fixture(root: Path) -> None:
     (root / "clean.txt").write_text("nothing to see here\n", encoding="utf-8")
     token = "ghp_" + "F" * 30  # github_legacy_pat; split so it is not a committed literal
     (root / "leak.txt").write_text(f"api_key = {token}\n", encoding="utf-8")
+
+
+def _git_init(path: Path) -> None:
+    if shutil.which("git") is None:
+        raise unittest.SkipTest("git not available")
+    subprocess.run(["git", "init"], cwd=str(path), text=True, capture_output=True, check=True)
 
 
 class AuditRunnerTests(unittest.TestCase):
@@ -149,6 +157,38 @@ class AuditRunnerTests(unittest.TestCase):
             self.runner.run_audit(repo, output_dir=Path(d) / "out" / self.runner.OUTPUT_DIR_NAME)
             after = {p.name: p.stat().st_mtime_ns for p in repo.iterdir()}
             self.assertEqual(before, after, "the audited tree must be unchanged after a run")
+
+    def test_gitignored_qb_artifacts_are_not_scanned(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            _git_init(repo)
+            (repo / ".gitignore").write_text(".qb/\n", encoding="utf-8")
+            (repo / ".qb").mkdir()
+            ignored_token = "ghp_" + "I" * 30
+            (repo / ".qb" / "ignored.py").write_text(
+                f"api_key = '{ignored_token}'\nsubprocess.run(cmd, shell=True)\n",
+                encoding="utf-8",
+            )
+            visible_token = "ghp_" + "V" * 30
+            (repo / "leak.txt").write_text(f"api_key = {visible_token}\n", encoding="utf-8")
+
+            registry = self.runner.AnalyzerRegistry()
+            registry.register(self.runner.SecretHygieneAnalyzer())
+            registry.register(self.runner.CommandInjectionAnalyzer())
+            result = self.runner.run_audit(
+                repo,
+                registry=registry,
+                output_dir=Path(d) / "out" / self.runner.OUTPUT_DIR_NAME,
+            )
+            evidences = [finding.evidence for finding in result["findings"]]
+
+            self.assertTrue(any(evidence.startswith("leak.txt:") for evidence in evidences), evidences)
+            self.assertFalse(any(evidence.startswith(".qb/") for evidence in evidences), evidences)
+            findings_text = (
+                Path(result["output_dir"]) / self.runner.FINDINGS_FILENAME
+            ).read_text(encoding="utf-8")
+            self.assertNotIn(ignored_token, findings_text)
 
 
 if __name__ == "__main__":

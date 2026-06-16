@@ -18,6 +18,9 @@ The goal is to ask the same four required fields, but make the questions active,
 ## Pre-Intake Scan
 
 Before asking `PROJECT_NAME`, inspect the repository with a bounded read-only pass.
+Prefer git-aware commands that respect `.gitignore` and other standard ignore rules;
+do not scan ignored local artifact directories such as `.qb/`, `.planwright/`, or
+`QB-Audit/` as repository evidence.
 
 Prefer commands like:
 
@@ -25,8 +28,8 @@ Prefer commands like:
 pwd
 git status --short --branch
 git branch --show-current
-find . -maxdepth 2 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type f -print | sort | head -120
-find . -maxdepth 2 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type d -print | sort | head -80
+git ls-files --cached --others --exclude-standard | sort | head -120
+git ls-files --cached --others --exclude-standard | awk -F/ 'NF>1 {print $1"/"}' | sort -u | head -80
 ls
 ```
 
@@ -47,7 +50,7 @@ Read likely evidence files when they exist:
 Use `rg` only for targeted discovery when useful:
 
 ```bash
-rg -n "architecture|roadmap|runbook|production|security|policy|workflow|worker|scheduler|gateway|adapter|dashboard|test|smoke|deploy|Kubernetes|Docker|Postgres|queue|approval|audit|artifact|observability" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**'
+rg -n "architecture|roadmap|runbook|production|security|policy|workflow|worker|scheduler|gateway|adapter|dashboard|test|smoke|deploy|Kubernetes|Docker|Postgres|queue|approval|audit|artifact|observability" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!QB-Audit/**'
 ```
 
 Keep this pass brief. Its purpose is to make the intake questions smarter, not to replace the full repository analysis in `First-Planner.md`.

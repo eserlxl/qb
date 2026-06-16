@@ -39,8 +39,8 @@ Run only read-only or safe local commands such as:
 - git status --short --branch
 - git branch --show-current
 - git log --oneline -n 10
-- find . -maxdepth 3 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type f -print | sort | head -300
-- for d in .qb docs configs scripts services packages tests infra .github; do [ -d "$d" ] && find "$d" -maxdepth 2 -type f | sort | head -80; done
+- git ls-files --cached --others --exclude-standard | sort | head -300
+- for d in docs configs scripts services packages tests infra .github; do [ -d "$d" ] && git ls-files --cached --others --exclude-standard "$d" | sort | head -80; done
 - if [ -d .qb ]; then find .qb -maxdepth 3 -type f | sort; fi
 - cat .qb/main-planning.md
 - cat README.md if present
@@ -51,7 +51,7 @@ You may use ripgrep/grep for discovery, e.g. searching for TODO/FIXME/TBD and
 placeholder/stub/mock/skeleton/not-implemented markers, phase/roadmap/architecture terms,
 readiness/production/security/policy terms, test/CI/artifact terms, and
 secret/token/credential terms (excluding .git, node_modules, .venv, dist, build,
-artifacts).
+artifacts, and ignored local artifact directories such as .qb, .planwright, and QB-Audit).
 
 Do not print or copy secret values. If a secret-like value is detected, report only the file path and line number with the value redacted.
 

@@ -37,18 +37,18 @@ def _load_sibling(module_name: str, filename: str):
 
 
 _ai = _load_sibling("qb_analyzer_interface", "analyzer_interface.py")
+_core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
 validate_finding = _ai.validate_finding
+iter_repo_files = _core.iter_repo_files
 
 # A dotenv file: ".env" or ".env.<seg>[.<seg>...]" (e.g. .env.local, .env.production,
 # .env.production.local -- Next.js/CRA layer their secrets across multiple segments).
 _ENV_NAME_RE = re.compile(r"^\.env(?:\.[A-Za-z0-9_-]+)*$")
 # Legitimate, commit-safe templates -- never flagged.
 _TEMPLATE_SUFFIXES = frozenset({"example", "sample", "template", "dist", "defaults"})
-# Directories an audit should never descend into for this check.
-_SKIP_DIRS = frozenset({".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build"})
 
 
 def _is_committed_env(path: Path) -> bool:
@@ -72,18 +72,13 @@ class ConfigHygieneAnalyzer:
     _RULE = "committed-dotenv-file"
 
     def analyze(self, repo_root: str, config) -> list:
-        root = Path(repo_root)
+        root = Path(repo_root).resolve()
         findings: list = []
         if not root.is_dir():
             return findings
-        for path in sorted(root.rglob("*")):
+        for path in iter_repo_files(root):
             rel_path = path.relative_to(root)
-            # Skip vendored/VCS dirs by their position WITHIN the repo, not the
-            # absolute path: a repo checked out under an ancestor named e.g. "build"
-            # must not silence the whole scan.
-            if any(part in _SKIP_DIRS for part in rel_path.parts):
-                continue
-            if not path.is_file() or not _is_committed_env(path):
+            if not _is_committed_env(path):
                 continue
             rel = rel_path.as_posix()
             evidence = f"{rel}:1"

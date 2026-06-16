@@ -62,7 +62,9 @@ and disables the Step 4 implementation handoff.
    result line, the disclosure `QB_PLAN_AUTO_WARN: in-session audit — not subagent-isolated on this
    host`** so the consumer can downgrade its trust. Record a `BLOCKED` or P0/P1 audit status in the
    summary but still produce the export. Auto mode writes only under `.qb/`: do not emit or run the
-   Step 4 implementation handoff, and never modify source code, commit, push, or open PRs.
+   Step 4 implementation handoff, and never modify source code, commit, push, or open PRs. No
+   approval, confirmation, human-review marker, or implementation-gate question may block
+   `.qb/plan.md` generation once Step 2 has produced sub-plans.
 4. **Deterministic result line.** Print exactly one final line. Success (only after `.qb/plan.md`
    passed `scripts/validate_planwright_plan.py`):
    `QB_PLAN_AUTO_OK: .qb/plan.md generated (<item-count> items); audit=<PASS|PASS_WITH_WARNINGS|BLOCKED>`

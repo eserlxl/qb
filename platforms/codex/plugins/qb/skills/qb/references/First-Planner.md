@@ -89,7 +89,7 @@ Run only read-only or safe local commands such as:
 - git status --short --branch
 - git branch --show-current
 - git log --oneline -n 10
-- find . -maxdepth 3 -type f | sort | head -200
+- git ls-files --cached --others --exclude-standard | sort | head -200
 - ls
 - ls .qb
 - ls configs
@@ -104,6 +104,10 @@ Run only read-only or safe local commands such as:
 You may use ripgrep/grep to discover project markers, e.g. TODO/FIXME, phase/roadmap/
 architecture/runbook, readiness/production, security/policy, test/smoke/CI, and
 API/database/queue/artifact terms.
+Use git-aware file lists and ripgrep globs that respect ignored paths; do not
+scan ignored local artifact directories such as `.qb/`, `.planwright/`, or
+`QB-Audit/` as repository implementation evidence. Read `.qb/` only for QB's
+own prior planning artifacts when reconciling an existing QB plan.
 
 These inspection commands are independent and read-only, so the evidence may be gathered in
 parallel (for example via concurrent read-only actors) and merged into a single evidence

@@ -86,6 +86,8 @@ Step 0, the Step-1 intake, Gate 1, Gate 2, and the repair loop, and it **disable
    Step 0 `.gitignore` guard that keeps `.qb/` uncommitted). It runs the
    Step 3.5 export to produce and validate `.qb/plan.md`, then stops. It never runs Step 4, never
    modifies source code, and never commits, pushes, or opens PRs - regardless of audit status.
+   No approval, confirmation, human-review marker, or Step-4 implementation gate may block
+   `.qb/plan.md` generation once Step 2 has produced sub-plans.
 5. **Deterministic result line.** Print exactly one machine-detectable result line and nothing
    after it. Success (only after `.qb/plan.md` exists and passed `validate_planwright_plan.py`):
    `QB_PLAN_AUTO_OK: .qb/plan.md generated (<item-count> items); audit=<PASS|PASS_WITH_WARNINGS|BLOCKED>`

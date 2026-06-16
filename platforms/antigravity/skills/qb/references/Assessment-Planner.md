@@ -49,8 +49,8 @@ Run only read-only or safe local commands such as:
 - git status --short --branch
 - git branch --show-current
 - git log --oneline -n 10
-- find . -maxdepth 3 \( -path './.git' -o -path './node_modules' -o -path './.venv' -o -path './dist' -o -path './build' -o -path './artifacts' \) -prune -o -type f -print | sort | head -300
-- for d in .qb docs configs scripts services packages tests infra .github; do [ -d "$d" ] && find "$d" -maxdepth 2 -type f | sort | head -80; done
+- git ls-files --cached --others --exclude-standard | sort | head -300
+- for d in docs configs scripts services packages tests infra .github; do [ -d "$d" ] && git ls-files --cached --others --exclude-standard "$d" | sort | head -80; done
 - if [ -d .qb ]; then find .qb -maxdepth 3 -type f | sort; fi
 - cat .qb/main-planning.md
 - if [ -f .qb/planning-ledger.md ]; then cat .qb/planning-ledger.md; fi
@@ -60,7 +60,12 @@ Run only read-only or safe local commands such as:
 - inspect pyproject.toml, package.json, Cargo.toml, go.mod, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, tests, config examples, service skeletons, package skeletons, and policy files if present
 
 You may use ripgrep/grep for discovery:
-- rg "TODO|FIXME|TBD|placeholder|stub|mock|fake|skeleton|not implemented|NotImplemented|pass$|Phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|API|database|Postgres|queue|artifact|approval|review|secret|token|credential" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**'
+- rg "TODO|FIXME|TBD|placeholder|stub|mock|fake|skeleton|not implemented|NotImplemented|pass$|Phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|API|database|Postgres|queue|artifact|approval|review|secret|token|credential" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!QB-Audit/**'
+
+Use git-aware file lists that respect ignored paths; do not scan ignored local
+artifact directories such as `.qb/`, `.planwright/`, or `QB-Audit/` as
+repository implementation evidence. Read `.qb/` only for QB's own planning and
+continuity artifacts named above.
 
 Do not print or copy secret values. If a secret-like value is detected, report only the file path and line number with the value redacted. Do not run grep/ripgrep commands that print matching secret-bearing lines; prefer the bundled validator or file-name-only scans such as `rg -l` when fallback discovery is needed.
 
