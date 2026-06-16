@@ -42,6 +42,11 @@ NETWORKED_POLICY_INVARIANT_NOTE = {
     "mutation_guard": "test_runner_does_not_mutate_the_audited_tree is the read-only guard for this slice",
 }
 
+NETWORKED_POLICY_SYNC_NOTE = (
+    "After networked-policy shared/runtime changes land, run scripts/sync.sh, then "
+    "scripts/sync.sh --check; antigravity is planning-only and intentionally excluded."
+)
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
