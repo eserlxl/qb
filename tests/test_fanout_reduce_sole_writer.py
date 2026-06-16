@@ -95,6 +95,19 @@ class FanoutReduceSoleWriterTests(unittest.TestCase):
         for ref in expected_refs:
             self.assertEqual(found_refs.count(ref), 1, ref)
 
+    def test_reduce_validator_output_is_idempotent(self) -> None:
+        for mode in ("step2", "all"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                build_planner_tree(root, phase_count=2, subplans_per_phase=2)
+                write_single_reference_index(root)
+                write_audit(root)
+                first = run_validator(root, mode)
+                second = run_validator(root, mode)
+
+            self.assertEqual(first.returncode, second.returncode)
+            self.assertEqual(first.stdout, second.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
