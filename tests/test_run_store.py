@@ -185,6 +185,15 @@ class RunStoreTests(unittest.TestCase):
             (store.root / self.rs.TELEMETRY_FILENAME).write_text("{not-json\n", encoding="utf-8")
             self.assertEqual(store.read_telemetry(), {})
 
+    def test_load_prior_telemetry_uses_prior_store_directory_convention(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            prior = self.rs.RunStore(Path(d) / "previous" / self.rs.OUTPUT_DIR_NAME).open()
+            record = {"schema_version": 1, "run_id": "previous", "quality": {"fix_safety_ok": True}}
+            prior.write_telemetry(record)
+            self.assertEqual(self.rs.load_prior_telemetry(prior.root), record)
+            self.assertEqual(self.rs.load_prior_telemetry(Path(d) / "missing" / self.rs.OUTPUT_DIR_NAME), {})
+            self.assertEqual(self.rs.load_prior_telemetry(None), {})
+
     def test_write_telemetry_redacts_secret_shaped_values(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)

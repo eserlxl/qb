@@ -17,6 +17,11 @@ mirroring the ``.qb/`` convention):
 Redaction is mandatory: no secret value is ever persisted (the existing
 length-bounded SECRET_PATTERNS are applied before write). Overwrite is opt-in: a
 new run never silently clobbers a prior run's directory unless ``overwrite=True``.
+
+Prior-run telemetry convention: callers that want earned autonomy across runs
+pass the previous run-store directory itself (the directory containing
+``telemetry.json``) to ``load_prior_telemetry``. Missing, corrupt, or stale-schema
+telemetry fails closed to ``{}``.
 """
 
 from __future__ import annotations
@@ -182,3 +187,15 @@ def validate_store_layout(output_dir) -> list:
         if not (root / sub).exists():
             errors.append(f"missing_store_path={sub}")
     return errors
+
+
+def load_prior_telemetry(prior_store_dir) -> dict:
+    """Load the prior run-store telemetry record, failing closed to ``{}``.
+
+    ``prior_store_dir`` is the previous run store root, conventionally the
+    ``QB-Audit/`` directory containing ``telemetry.json``. The caller owns
+    locating that directory; this helper only performs version-guarded loading.
+    """
+    if prior_store_dir in (None, ""):
+        return {}
+    return RunStore(prior_store_dir).read_telemetry()
