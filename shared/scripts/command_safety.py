@@ -9,7 +9,10 @@ with two halves:
    run WITHOUT an intervening system shell and WITHOUT interpolating untrusted
    strings into a command line. ``assert_argv`` and ``run_command`` enforce this;
    Phase 2.3 (tool adapters) and Phase 3 (the fixer's verification commands) MUST
-   use ``run_command`` rather than any shell-string form. A companion rule:
+   use ``run_command`` rather than any shell-string form. ``run_command`` also
+   owns the default-off stdlib process-confinement seam: requested confinement
+   is established before spawn, and unavailable required controls raise
+   ``ConfinementUnavailable`` before any child process runs. A companion rule:
    ``AUTO_RUN_REPO_SCRIPTS`` is False -- QB never auto-executes scripts provided
    by the repository under audit absent explicit, sandboxed authorization.
 
@@ -137,12 +140,12 @@ def _establish_confinement(spec: ConfinementSpec) -> tuple[tuple[str, ...], obje
     unsupported = requested - {"process_group", "resource_limits"}
     if unsupported:
         names = ", ".join(sorted(unsupported))
-        raise ConfinementUnavailable(f"unsupported confinement control(s): {names}")
+        raise ConfinementUnavailable(f"unsupported confinement control(s): {names}; command not run")
 
     missing = requested - available
     if missing:
         names = ", ".join(sorted(missing))
-        raise ConfinementUnavailable(f"confinement unavailable: {names}")
+        raise ConfinementUnavailable(f"confinement unavailable: {names}; command not run")
 
     established: list[str] = []
     start_new_session = False
@@ -162,7 +165,7 @@ def _establish_confinement(spec: ConfinementSpec) -> tuple[tuple[str, ...], obje
         established.append("resource_limits")
 
     if not established:
-        raise ConfinementUnavailable("confinement unavailable: no stdlib controls")
+        raise ConfinementUnavailable("confinement unavailable: no stdlib controls; command not run")
     return tuple(established), preexec_fn, start_new_session
 
 

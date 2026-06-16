@@ -89,6 +89,8 @@ def run_verification(command, cwd, timeout=120):
                                     env=_cs.minimal_env())
     except subprocess.TimeoutExpired:
         return _TIMEOUT_EXIT, "verification timed out"
+    except _cs.ConfinementUnavailable as exc:
+        return 1, f"verification confinement unavailable: {exc}"
     except Exception as exc:  # command error counts as non-green
         return 1, f"verification error: {type(exc).__name__}: {exc}"
     output = (completed.stdout or "") + (completed.stderr or "")
