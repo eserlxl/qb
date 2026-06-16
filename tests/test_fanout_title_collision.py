@@ -63,6 +63,23 @@ class FanoutTitleCollisionTests(unittest.TestCase):
             result.stdout,
         )
 
+    def test_duplicate_checked_titles_do_not_fail_pending_title_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            write_plan(
+                root,
+                [
+                    plan_item("Historical Collision Title", checked=True),
+                    plan_item("Historical Collision Title", checked=True),
+                    plan_item("Current Unique Title"),
+                ],
+            )
+            result = run_plan_validator(root)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("pending_item_count=1", result.stdout)
+        self.assertNotIn("duplicate pending title", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
