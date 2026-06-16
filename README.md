@@ -292,7 +292,7 @@ its expected value from a source of truth rather than a hardcoded duplicate:
 | Every registered producer analyzer is named | `shared/scripts/audit_runner.py` registry (`build_default_registry`) | root `README.md` |
 | Every finding category is named | `shared/scripts/finding_schema.py` `CATEGORIES` | root `README.md` |
 | Four-platform model + Antigravity planning-only stated | filesystem (host packages, `sync.sh` exclusion) | root `README.md`, `platforms/antigravity/README.md` |
-| No "synced verbatim" phrasing | filesystem | root + host READMEs |
+| Per-host READMEs not claimed byte-identical copies | filesystem | root + host READMEs |
 | All four CHANGELOGs share the latest version header | filesystem (`platforms/*/CHANGELOG.md`) | the four CHANGELOGs |
 
 The guard is dependency-free (Python standard library only) and is a root
