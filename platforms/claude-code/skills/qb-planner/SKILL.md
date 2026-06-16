@@ -77,7 +77,8 @@ Step 0, the Step-1 intake, Gate 1, Gate 2, and the repair loop, and it **disable
    straight through. If the audit is `PASS_WITH_WARNINGS` with only P2/P3 findings, continue; do
    not run the interactive repair loop. Record a `BLOCKED` or P0/P1 audit status in the summary
    but still produce the export (the export runs regardless of audit status).
-4. **Planning-only - never touch source.** Auto mode writes only under `.qb/`. It runs the
+4. **Planning-only - never touch source.** Auto mode writes only under `.qb/` (plus the one-line
+   Step 0 `.gitignore` guard that keeps `.qb/` uncommitted). It runs the
    Step 3.5 export to produce and validate `.qb/plan.md`, then stops. It never runs Step 4, never
    modifies source code, and never commits, pushes, or opens PRs - regardless of audit status.
 5. **Deterministic result line.** Print exactly one machine-detectable result line and nothing
@@ -95,6 +96,11 @@ Without the `auto` flag, ignore this section and follow the interactive Step 0 -
 3. In 2-3 sentences, explain the steps and that you will pause for approval at each gate.
 4. Check the user's workspace for an existing `.qb/main-planning.md`. If it exists, say you will
    reconcile and update it rather than blindly duplicate (First-Planner handles reconciliation).
+5. Ensure `.qb/` is git-ignored before creating any `.qb/` artifact: inside a git working tree,
+   if `git check-ignore -q .qb/` fails, append a `.qb/` line to the workspace `.gitignore`
+   (creating it if absent) without touching the user's other entries. Skip outside a git repo.
+   See `references/workflow-quality.md` ("Ignore the `.qb/` Planning Directory") for the exact,
+   idempotent commands. Note this one-line change in your Gate 1 summary.
 
 ## Step 1 - repo-aware intake (interactive)
 
@@ -239,7 +245,9 @@ sub-plans; it needs no gate or approval (it only writes `.qb/plan.md`).
 ## Stop rules
 
 - During planning (Steps 1-3) and the Step 3.5 export, do not modify any file outside `.qb/`, and never
-  modify the bundled template prompts. Only Step 4 may change source code, after its gate passes and the user approves.
+  modify the bundled template prompts. The sole exception is the Step 0 `.gitignore` guard, which may
+  append a single `.qb/` line to the workspace `.gitignore` so planning artifacts stay uncommitted.
+  Only Step 4 may change source code, after its gate passes and the user approves.
 - Never write secrets, tokens, credentials, or private endpoints into any file.
 - Never auto-commit, push, merge, or open pull requests unless the user explicitly asks in a Step 4 run.
 - Always pause for explicit user approval at each gate.

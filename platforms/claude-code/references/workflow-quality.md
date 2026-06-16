@@ -55,6 +55,30 @@ unavailable and checks were manual.
 - Build large documents incrementally (create the file, then add section by section) instead of one oversized write.
 - Validate every generated file; do not rely on sampled reads. Step 2 requires all-file structure validation.
 
+## Ignore the `.qb/` Planning Directory
+
+`.qb/` holds workspace-local planning artifacts that should not be committed.
+Before creating any `.qb/` file (at the start of planning, e.g. Step 0 of
+`qb-plan`), ensure the target project's `.gitignore` ignores it. Do this
+exactly once, idempotently, and only inside a git working tree:
+
+```bash
+# Skip entirely if this is not a git repository.
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+# Probe with a trailing slash so a directory-only rule (`.qb/`) matches; this
+# honors every pattern form (.qb, .qb/, **/.qb/, ...), so it is a no-op when
+# .qb is already ignored by any existing rule.
+if ! git check-ignore -q .qb/; then
+  # Create .gitignore if absent; append on its own line without clobbering
+  # existing content (ensure a trailing newline first).
+  [ -f .gitignore ] && [ -n "$(tail -c1 .gitignore)" ] && printf '\n' >> .gitignore
+  printf '.qb/\n' >> .gitignore
+fi
+```
+
+Add only `.qb/`; never reorder, dedupe, or rewrite the user's other
+`.gitignore` entries. Mention the one-line `.gitignore` change in your summary.
+
 ## Handle Untracked Planner Docs Correctly
 
 `.qb/` is usually untracked on first use, and `git diff -- .qb` does

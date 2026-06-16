@@ -101,12 +101,13 @@ After all four values are available:
 1. Read `references/First-Planner.md`.
 2. Substitute the four collected values into the matching placeholders.
 3. Follow the substituted Step 1 prompt exactly.
-4. Create or update only `.qb/main-planning.md`, as required by the Step 1 prompt.
-5. After completing Step 1, decide whether Step 1.5 Assessment applies.
-6. Run Step 1.5 automatically only when the repository is an existing or partially built project: it is not empty and contains meaningful evidence such as README, manifests, source/service/package directories, tests, docs, configs, or CI.
-7. Skip Step 1.5 for new or nearly empty projects; do not create `.qb/assessment.md` in that case.
-8. After Step 1 and any Step 1.5 Assessment work, ask the user in plain text whether they have feedback for the main plan and assessment.
-9. If feedback is provided, apply it under the same file boundary: update only `.qb/main-planning.md` for main plan feedback and only `.qb/assessment.md` for assessment feedback.
+4. Before creating any `.qb/` artifact, ensure `.qb/` is git-ignored: inside a git working tree, if `git check-ignore -q .qb/` fails, append a `.qb/` line to the workspace `.gitignore` (creating it if absent) without touching the user's other entries. Skip outside a git repo. See `references/workflow-quality.md` ("Ignore the `.qb/` Planning Directory") for the exact, idempotent commands, and note the one-line change in your completion report.
+5. Create or update only `.qb/main-planning.md`, as required by the Step 1 prompt.
+6. After completing Step 1, decide whether Step 1.5 Assessment applies.
+7. Run Step 1.5 automatically only when the repository is an existing or partially built project: it is not empty and contains meaningful evidence such as README, manifests, source/service/package directories, tests, docs, configs, or CI.
+8. Skip Step 1.5 for new or nearly empty projects; do not create `.qb/assessment.md` in that case.
+9. After Step 1 and any Step 1.5 Assessment work, ask the user in plain text whether they have feedback for the main plan and assessment.
+10. If feedback is provided, apply it under the same file boundary: update only `.qb/main-planning.md` for main plan feedback and only `.qb/assessment.md` for assessment feedback.
 
 ## Step 1.5 Assessment
 
@@ -207,7 +208,7 @@ When the export runs:
 
 - Treat the current working directory as the project being planned.
 - Inspect the repository before writing any planning file, using the safe read-only commands required by the active planner prompt.
-- Do not implement product features, refactor source code, install dependencies, commit, push, deploy, or open pull requests.
+- Do not implement product features, refactor source code, install dependencies, commit, push, deploy, or open pull requests. The only write permitted outside `.qb/` is the Step 1 `.gitignore` guard, which may append a single `.qb/` line so planning artifacts stay uncommitted.
 - Do not write secrets, tokens, credentials, private keys, or local sensitive environment values into planning files.
 - Preserve the exact required filenames: `main-planning.md`, `sub-planning-index.md`, and `sub-planning-audit.md`.
 - Preserve `.qb/assessment.md` as the Step 1.5 assessment filename, and `.qb/plan.md` as the Step 3.5 planwright-format export filename.
