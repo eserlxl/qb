@@ -2,7 +2,7 @@
 name: qb-subplanner
 description: Goal-backed Step 2 of the QB planning workflow. Use to decompose every main phase in .qb/main-planning.md into detailed sub-plans under .qb/phase-<n>-plans/ plus sub-planning-index.md. Launched automatically as a Cursor goal via the define-goal skill and runs until ALL phases are covered - it does not stop after one phase. Invoke from qb-planner Gate 1, or directly to (re)generate sub-plans. Only changes files under .qb/.
 metadata:
-  version: "0.13.0"
+  version: "0.14.0"
 ---
 
 # QB Sub-Planner (Step 2, goal-backed)
