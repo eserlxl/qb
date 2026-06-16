@@ -190,7 +190,10 @@ From the QB monorepo root, `make check` first verifies that shared sources are s
 
 Beyond planning, the package ships the QB audit → harden engine (`/qb-harden`,
 `scripts/audit_runner.py`), which inspects a repository read-only by default
-(autonomy `A0`) and promotes fixes only when you explicitly raise the level. Its
+(autonomy `A0`) and promotes fixes only when you explicitly raise the level.
+Proposed fixes are tried in disposable git **write isolation** (the working tree
+is untouched until a fix verifies); execution sandboxing of analyzed code is a
+**Phase 3** item and is not yet shipped. Its
 six producer analyzers — `SecretHygieneAnalyzer`, `CommandInjectionAnalyzer`,
 `QualityAnalyzer`, `DependencyAnalyzer`, `LicenseAnalyzer`, and
 `ConfigHygieneAnalyzer` — cover the eight finding categories `secret`,

@@ -110,6 +110,12 @@ repository context.
 | A2 | Promote only verified fixes that satisfy policy and rollback requirements. |
 | A3 | A2 plus a reviewable delivery path; commit, push, and PR actions remain opt-in. |
 
+Proposed fixes are tried in disposable git **write isolation** (a throwaway
+worktree; the target working tree is never touched until a fix verifies and is
+promoted), which is delivered today. Execution sandboxing of analyzed code is a
+**Phase 3** boundary item and is **not yet shipped**, so QB confines *writes*,
+not arbitrary code execution — do not rely on it to contain untrusted code.
+
 The built-in producer analyzers are `SecretHygieneAnalyzer`,
 `CommandInjectionAnalyzer`, `QualityAnalyzer`, `DependencyAnalyzer`,
 `LicenseAnalyzer`, and `ConfigHygieneAnalyzer`. Together they cover the frozen
