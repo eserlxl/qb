@@ -120,6 +120,28 @@ class FanoutTitleCollisionTests(unittest.TestCase):
         )
         self.assertEqual(before, after)
 
+    def test_title_collision_outputs_are_deterministic(self) -> None:
+        cases = {
+            "pending-duplicate": [
+                plan_item("Deterministic Collision Title"),
+                plan_item("Deterministic Collision Title"),
+            ],
+            "checked-duplicate": [
+                plan_item("Deterministic Historical Title", checked=True),
+                plan_item("Deterministic Historical Title", checked=True),
+                plan_item("Deterministic Current Title"),
+            ],
+        }
+        for case, items in cases.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                write_plan(root, items)
+                first = run_plan_validator(root)
+                second = run_plan_validator(root)
+
+            self.assertEqual(first.returncode, second.returncode)
+            self.assertEqual(first.stdout, second.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
