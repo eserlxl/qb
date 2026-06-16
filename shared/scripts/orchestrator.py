@@ -78,6 +78,11 @@ def _evidence_path(finding) -> str:
 def _promote(isolation, repo_root):
     """The sole working-tree write path: apply isolation's verified changes to repo_root.
 
+    This is the Phase-4 enablement for the A2 promotion deferred by
+    ``isolation.py``: callers reach it only after ``run_finding`` clamps the
+    declared level to an earned effective A2+ and the verification gate keeps the
+    fix.
+
     Promotion is driven off ``git status --porcelain -z --no-renames``: ``--no-renames``
     decomposes a rename into a delete + add (so there is no fragile rename-pair parse),
     ``-z`` is NUL-delimited (no path quoting), and the two-char XY status distinguishes

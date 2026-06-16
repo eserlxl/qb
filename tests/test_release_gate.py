@@ -167,6 +167,7 @@ class RollbackDrillTests(unittest.TestCase):
             results, _report = budget.run_session(policy, repo, items, telemetry=good_telemetry)
             self.assertEqual(results[0]["earned_ceiling"], "A2")
             self.assertEqual(results[0]["level"], "A2")
+            self.assertEqual(results[0]["promoted"], ["style.txt"])
             self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "clean\n")
 
         with tempfile.TemporaryDirectory() as d:
@@ -190,6 +191,7 @@ class RollbackDrillTests(unittest.TestCase):
             results, _report = budget.run_session(policy, repo, items, telemetry=None)
             self.assertEqual(results[0]["earned_ceiling"], "A1")
             self.assertEqual(results[0]["level"], "A1")
+            self.assertEqual(results[0]["promoted"], [])
             self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
 
 
