@@ -158,5 +158,24 @@ class FanoutDegenerateFixtureBuilderTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
+class FanoutDegeneratePhaseBehaviorTests(unittest.TestCase):
+    def test_zero_phase_fixture_fails_closed_for_step1_and_step2(self) -> None:
+        for mode in ("step1", "step2"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                build_planner_tree(root, phase_count=0)
+                result = run_validator(root, mode)
+
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("main_phase_count=0", result.stdout)
+            self.assertIn(
+                "main_plan_has_no_detected_phases=.qb/main-planning.md",
+                result.stdout,
+            )
+            if mode == "step2":
+                self.assertIn("phase_folder_count=0", result.stdout)
+                self.assertNotIn("missing_phase_folder=.qb/phase-1-plans", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()
