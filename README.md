@@ -281,6 +281,26 @@ workflow behind the badge above — is **disabled on the account**, so a passing
 local `make check` / `scripts/validate.sh`, not the cloud badge, is the
 authoritative signal.
 
+### Documentation consistency
+
+A stdlib drift guard (`tests/test_doc_consistency.py`, discovered and run by
+`make check`) keeps these docs aligned with the engine. Each invariant derives
+its expected value from a source of truth rather than a hardcoded duplicate:
+
+| Invariant | Source of truth | Asserted in |
+|---|---|---|
+| Every registered producer analyzer is named | `shared/scripts/audit_runner.py` registry (`build_default_registry`) | root `README.md` |
+| Every finding category is named | `shared/scripts/finding_schema.py` `CATEGORIES` | root `README.md` |
+| Four-platform model + Antigravity planning-only stated | filesystem (host packages, `sync.sh` exclusion) | root `README.md`, `platforms/antigravity/README.md` |
+| No "synced verbatim" phrasing | filesystem | root + host READMEs |
+| All four CHANGELOGs share the latest version header | filesystem (`platforms/*/CHANGELOG.md`) | the four CHANGELOGs |
+
+The guard is dependency-free (Python standard library only) and is a root
+monorepo invariant test, not a synced per-package file, so it runs once under the
+local gate of record. Antigravity is checked for the platform-model and CHANGELOG
+invariants but is excluded from the analyzer-naming assertion, since it is
+planning-only and ships no audit engine.
+
 ## Attribution
 
 QB is an independent project inspired by Alican Kiraz's
