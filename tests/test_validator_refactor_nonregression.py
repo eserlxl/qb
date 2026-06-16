@@ -18,10 +18,86 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.qb_monorepo import REPO_ROOT, SHARED_DIR
+from tests.qb_monorepo import SHARED_DIR
 
 CORE_PATH = SHARED_DIR / "scripts/analyzer_core.py"
 VALIDATOR_PATH = SHARED_DIR / "scripts/validate_planner_docs.py"
+
+
+def _write_heading_document(
+    path: Path,
+    headings: list[str],
+    bodies: dict[str, str] | None = None,
+) -> None:
+    bodies = bodies or {}
+    lines: list[str] = []
+    for index, heading in enumerate(headings, start=1):
+        lines.extend(
+            [
+                heading,
+                "",
+                bodies.get(
+                    heading,
+                    f"Fixture content for section {index} is intentionally complete enough "
+                    "for the planner document validator.",
+                ),
+                "",
+            ]
+        )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _build_valid_planner_tree(root: Path, validator) -> None:
+    qb = root / ".qb"
+    phase_dir = qb / "phase-1-plans"
+    phase_dir.mkdir(parents=True)
+
+    _write_heading_document(
+        qb / "main-planning.md",
+        validator.STEP1_HEADINGS,
+        {
+            validator.ROADMAP_HEADING: (
+                "| Phase | Summary |\n"
+                "| --- | --- |\n"
+                "| 1 | Build the validator fixture coverage. |"
+            )
+        },
+    )
+    _write_heading_document(
+        qb / "sub-planning-index.md",
+        validator.INDEX_HEADINGS,
+        {
+            "## 3. Phase and Sub-Plan Map": (
+                "- .qb/phase-1-plans/phase-1.1-validator-fixture.md"
+            ),
+            "## 4. Prioritized Elaboration Order": (
+                "1. .qb/phase-1-plans/phase-1.1-validator-fixture.md"
+            ),
+        },
+    )
+    _write_heading_document(qb / "sub-planning-audit.md", validator.AUDIT_HEADINGS)
+
+    subplan = phase_dir / "phase-1.1-validator-fixture.md"
+    subplan.write_text(
+        "\n".join(
+            [
+                "# Phase 1.1 - Validator Fixture",
+                "",
+                *(
+                    line
+                    for index, heading in enumerate(validator.SUBPLAN_HEADINGS, start=1)
+                    for line in (
+                        heading,
+                        "",
+                        f"Fixture body {index} contains enough concrete planning detail "
+                        "to satisfy structure and minimum-length checks.",
+                        "",
+                    )
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
 def _load(name: str, path: Path):
@@ -81,16 +157,15 @@ class ValidatorRefactorNonRegressionTests(unittest.TestCase):
             self.assertGreaterEqual(state.metrics["secret_findings"], 1)
 
     def test_mode_all_still_passes_over_repo_planner_docs(self) -> None:
-        # The generated plan tree (.qb/) is local-only (gitignored); skip when it
-        # is absent (e.g. a fresh CI checkout) rather than reporting a failure.
-        if not (REPO_ROOT / ".qb").is_dir():
-            self.skipTest(".qb plan tree is local-only (gitignored); nothing to validate")
-        result = subprocess.run(
-            ["python3", str(VALIDATOR_PATH), "--root", str(REPO_ROOT), "--mode", "all"],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            _build_valid_planner_tree(root, self.validator)
+            result = subprocess.run(
+                ["python3", str(VALIDATOR_PATH), "--root", str(root), "--mode", "all"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("secret_findings=0", result.stdout)
 
