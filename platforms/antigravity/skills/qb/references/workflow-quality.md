@@ -16,12 +16,12 @@ prompt; they clarify reliability practices observed from first real use.
 - Use `references/repo-aware-intake.md` to infer helpful defaults, but do not treat inferred values as final until the user confirms or edits them.
 - Keep the intake conversational and sequential: one plain-text question at a time.
 - If the repository is empty or evidence is weak, say so and fall back to concise generic questions.
-- Do not let the pre-intake scan replace the full Step 1 inspection required by `First-Planner.md`.
+- Do not let the pre-intake scan replace the full Step 1 inspection required by `first-planner.md`.
 
 ## Step 1.5 Assessment
 
 - Run Step 1.5 only for existing or partially built projects with meaningful repo evidence.
-- Use `references/Assessment-Planner.md` and write only `.qb/assessment.md`.
+- Use `references/assessment-planner.md` and write only `.qb/assessment.md`.
 - Treat `assessment.md` as Step 2 feedback, not as a replacement for `main-planning.md`.
 - Skip Assessment for new or nearly empty repositories; do not create a speculative assessment file.
 - Step 2 must read `assessment.md` when it exists and must not block when it is absent.

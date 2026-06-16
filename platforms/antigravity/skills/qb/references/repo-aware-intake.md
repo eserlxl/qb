@@ -1,6 +1,6 @@
 # Repo-Aware Step 1 Intake
 
-Use this reference before `First-Planner.md` when QB starts a normal Step 1 planning run.
+Use this reference before `first-planner.md` when QB starts a normal Step 1 planning run.
 
 The goal is to ask the same four required fields, but make the questions active, evidence-backed, and useful for an existing repository.
 
@@ -53,7 +53,7 @@ Use `rg` only for targeted discovery when useful:
 rg -n "architecture|roadmap|runbook|production|security|policy|workflow|worker|scheduler|gateway|adapter|dashboard|test|smoke|deploy|Kubernetes|Docker|Postgres|queue|approval|audit|artifact|observability" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!QB-Audit/**'
 ```
 
-Keep this pass brief. Its purpose is to make the intake questions smarter, not to replace the full repository analysis in `First-Planner.md`.
+Keep this pass brief. Its purpose is to make the intake questions smarter, not to replace the full repository analysis in `first-planner.md`.
 
 ### Parallel Pre-Intake Evidence Fan-Out (optional)
 
@@ -70,7 +70,7 @@ run these lanes concurrently and merge their results into a single shared eviden
 - **MARKERS**: one `rg` discovery pass plus TODO/FIXME markers.
 
 Every lane is strictly read-only and must not write any file. Merge the lanes into one
-evidence bundle and reuse that single bundle for the intake questions, the `First-Planner.md`
+evidence bundle and reuse that single bundle for the intake questions, the `first-planner.md`
 analysis, and (for existing repos) the Step 1.5 assessment, instead of re-scanning the
 repository several times. When parallel actors are not available, run the same probes
 sequentially in one pass - the bundle and its downstream use are identical either way.
@@ -208,11 +208,11 @@ KNOWN_CONSTRAINTS saved: <brief normalized summary>.
 
 When all four fields are confirmed:
 
-1. Read `references/First-Planner.md`.
+1. Read `references/first-planner.md`.
 2. Substitute the confirmed field values.
 3. Treat user-confirmed field values as source of truth.
 4. Treat repo-inferred intake notes as supporting context only.
-5. Continue with the full Step 1 repository analysis required by `First-Planner.md`.
+5. Continue with the full Step 1 repository analysis required by `first-planner.md`.
 
 
 ## Vibecoding and Continuity Note

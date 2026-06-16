@@ -66,7 +66,7 @@ references/workflow-quality.md
 Implementation handoff reference:
 If available, read this only after the audit is written and Step 4 readiness is known:
 
-references/Fourth-Planner.md
+references/fourth-planner.md
 
 Language:
 Write .qb/sub-planning-audit.md in English by default unless the user explicitly requests another body language. Required document headings remain English for validator stability.
@@ -489,7 +489,7 @@ Do not modify affected files. Only report fixes.
 Provide a concise recommendation for the next Antigravity prompt.
 
 If audit PASS:
-- Recommend the Step 4 implementation Antigravity task handoff prompt from references/Fourth-Planner.md.
+- Recommend the Step 4 implementation Antigravity task handoff prompt from references/fourth-planner.md.
 - Name the first phase/sub-plan in the implementation queue.
 - Print the copy-ready Step 4 prompt for Antigravity task.
 - Remind the user that Step 4 should continue through the READY/READY_WITH_WARNINGS queue in small verified slices while avoiding loading all sub-plans at once.

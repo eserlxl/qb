@@ -13,12 +13,12 @@ Run the bundled planning workflow for a project repository. Keep Step 1 conversa
 
 The bundled prompts are:
 
-- `references/First-Planner.md` for Step 1 main planning.
-- `references/Assessment-Planner.md` for Step 1.5 existing-project assessment.
-- `references/Second-Planner.md` for Step 2 phase sub-planning.
-- `references/Third-Planner.md` for Step 3 sub-plan QA and coverage audit.
-- `references/Fourth-Planner.md` for the Step 4 implementation Goal handoff prompt template.
-- `references/Export-Planner.md` for the Step 3.5 planwright-format plan export.
+- `references/first-planner.md` for Step 1 main planning.
+- `references/assessment-planner.md` for Step 1.5 existing-project assessment.
+- `references/second-planner.md` for Step 2 phase sub-planning.
+- `references/third-planner.md` for Step 3 sub-plan QA and coverage audit.
+- `references/fourth-planner.md` for the Step 4 implementation Goal handoff prompt template.
+- `references/export-planner.md` for the Step 3.5 planwright-format plan export.
 
 Bundled support files:
 
@@ -30,9 +30,9 @@ Bundled support files:
 ## Workflow Selection
 
 1. If the user asks for normal planner startup, run Step 1.
-2. If the user directly asks for Step 1.5 or Assessment, read `references/Assessment-Planner.md` and execute it.
-3. If the user directly asks for Step 2, read `references/Second-Planner.md` and execute it.
-4. If the user directly asks for Step 3, read `references/Third-Planner.md` and execute it.
+2. If the user directly asks for Step 1.5 or Assessment, read `references/assessment-planner.md` and execute it.
+3. If the user directly asks for Step 2, read `references/second-planner.md` and execute it.
+4. If the user directly asks for Step 3, read `references/third-planner.md` and execute it.
 5. If the user asks only for the Goal mode prompt text, print the matching Step 2, Step 3, or gated Step 4 copy block without modifying files.
 6. If the user asks to audit and harden the repository (rather than plan it), launch the QB engine loop described under "Audit and Harden" below instead of the planner.
 7. If the invocation includes the `auto` flag (for example "Use $qb auto"), run the planning workflow non-interactively per **Auto Mode (non-interactive)** below instead of the conversational flow.
@@ -105,7 +105,7 @@ QB asks intake questions in the user's language when practical. Generated .qb ar
 
 After all four values are available:
 
-1. Read `references/First-Planner.md`.
+1. Read `references/first-planner.md`.
 2. Substitute the four collected values into the matching placeholders.
 3. Follow the substituted Step 1 prompt exactly.
 4. Before creating any `.qb/` artifact, ensure `.qb/` is git-ignored: inside a git working tree, if `git check-ignore -q .qb/` fails, append a `.qb/` line to the workspace `.gitignore` (creating it if absent) without touching the user's other entries. Skip outside a git repo. See `references/workflow-quality.md` ("Ignore the `.qb/` Planning Directory") for the exact, idempotent commands, and note the one-line change in your completion report.
@@ -122,7 +122,7 @@ Step 1.5 is for existing or partially built projects. It should not run for genu
 
 When Step 1.5 applies:
 
-1. Read `references/Assessment-Planner.md`.
+1. Read `references/assessment-planner.md`.
 2. Read `.qb/main-planning.md`.
 3. Inspect the repository with read-only commands.
 4. Create or update only `.qb/assessment.md`.
@@ -134,14 +134,14 @@ When Step 1.5 applies:
 After Step 1 feedback is handled, ask whether the user wants to continue to Step 2. If yes, tell the user to copy the following text, open Goal mode, and send it:
 
 ```text
-Use $qb. Run Step 2 according to references/Second-Planner.md.
+Use $qb. Run Step 2 according to references/second-planner.md.
 
 Read all main phases in .qb/main-planning.md. If .qb/assessment.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
 ```
 
 When executing Step 2 directly:
 
-1. Read `references/Second-Planner.md`.
+1. Read `references/second-planner.md`.
 2. Read `references/workflow-quality.md`.
 3. Read `.qb/assessment.md` when it exists; do not block Step 2 when it is absent.
 4. Follow repository inspection, file-boundary, naming, all-file validation, and stopping rules exactly.
@@ -156,21 +156,21 @@ When executing Step 2 directly:
 After Step 2 is complete, ask whether the user wants to continue to Step 3. If yes, tell the user to copy the following text, open Goal mode, and send it:
 
 ```text
-Use $qb. Run Step 3 according to references/Third-Planner.md.
+Use $qb. Run Step 3 according to references/third-planner.md.
 
 Audit .qb/main-planning.md, .qb/sub-planning-index.md, and .qb/phase-*-plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans have been reviewed.
 ```
 
 When executing Step 3 directly:
 
-1. Read `references/Third-Planner.md`.
+1. Read `references/third-planner.md`.
 2. Read `references/workflow-quality.md`.
 3. Run the bundled validator first when available and incorporate its findings into the audit. When manually validating from a QB repository checkout, use:
    `python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root . --mode step3 --strict`
    If no script path is accessible, perform equivalent all-file validation and report that fallback clearly.
 4. Follow audit, file-boundary, validation, and stopping rules exactly.
 5. Modify only `.qb/sub-planning-audit.md`.
-6. After the Step 3 summary, print the Step 4 handoff prompt from `references/Fourth-Planner.md` only if the audit permits implementation.
+6. After the Step 3 summary, print the Step 4 handoff prompt from `references/fourth-planner.md` only if the audit permits implementation.
 
 ## Step 4 Handoff
 
@@ -178,7 +178,7 @@ Step 4 is not a QB planning step and must not be executed automatically by this 
 
 When Step 3 completes:
 
-1. Read `references/Fourth-Planner.md`.
+1. Read `references/fourth-planner.md`.
 2. Run the bundled validator when available. When manually validating from a QB repository checkout, use:
    `python3 plugins/qb/skills/qb/scripts/validate_planner_docs.py --root . --mode step4`
    If no script path is accessible, perform equivalent all-file validation and report that fallback clearly.
@@ -193,7 +193,7 @@ Step 3.5 is an automatic, read-only export that projects the `.qb/` sub-plans in
 
 When the export runs:
 
-1. Read `references/Export-Planner.md`.
+1. Read `references/export-planner.md`.
 2. Read every `.qb/phase-*-plans/phase-<n>.<m>-*.md` and emit one planwright item per `## 7. Planned Work Breakdown` entry, across all phases, into `.qb/plan.md` in the required 8-field item format. Modify only `.qb/plan.md`.
 3. Skip only when there are no sub-plans (no `.qb/phase-*-plans/`); then say there was nothing to export.
 4. Run the bundled validator when available:

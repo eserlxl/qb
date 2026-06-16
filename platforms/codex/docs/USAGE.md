@@ -23,7 +23,7 @@ QB asks intake questions in the user's language when practical. Generated .qb ar
 
 For existing repositories, the questions should include repo-derived defaults or draft summaries. For example, QB may say that the README and package manifests suggest a specific project name, then ask whether to use that name or a different official name. For empty or minimal repositories, QB should clearly say repository evidence is limited and ask the concise generic version of each question.
 
-After the answers are collected, QB loads `First-Planner.md`, substitutes the values, inspects the repository, and creates or updates:
+After the answers are collected, QB loads `first-planner.md`, substitutes the values, inspects the repository, and creates or updates:
 
 ```text
 .qb/main-planning.md
@@ -33,7 +33,7 @@ Step 1 is allowed to modify only that file.
 
 ## Step 1.5: Existing Project Assessment
 
-When the target repository is an existing or partially built project, QB runs `Assessment-Planner.md` after Step 1.
+When the target repository is an existing or partially built project, QB runs `assessment-planner.md` after Step 1.
 
 Expected output:
 
@@ -52,7 +52,7 @@ After Step 1, QB prints a text block for Goal mode. Copy it, open Goal mode, and
 The prompt is:
 
 ```text
-Use $qb. Run Step 2 according to references/Second-Planner.md.
+Use $qb. Run Step 2 according to references/second-planner.md.
 
 Read all main phases in .qb/main-planning.md. If .qb/assessment.md exists, read it fully as a supporting feedback source and account for it in the sub-phase plans. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
 ```
@@ -85,7 +85,7 @@ After Step 2, QB prints another text block for Goal mode. Copy it, open Goal mod
 The prompt is:
 
 ```text
-Use $qb. Run Step 3 according to references/Third-Planner.md.
+Use $qb. Run Step 3 according to references/third-planner.md.
 
 Audit .qb/main-planning.md, .qb/sub-planning-index.md, and .qb/phase-*-plans/*.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, security/governance, and Step 4 readiness. Do not fix any plan files; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans have been reviewed.
 ```

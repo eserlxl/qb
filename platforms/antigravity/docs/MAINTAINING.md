@@ -51,8 +51,8 @@ python3 -m unittest discover -s tests -v
 
 1. Update `skills/qb/SKILL.md` and references as needed.
 2. Update `skills/qb/references/repo-aware-intake.md` if Step 1 intake behavior changes.
-3. Update `skills/qb/references/Assessment-Planner.md` if Step 1.5 assessment behavior changes.
-4. Update `skills/qb/references/Fourth-Planner.md` if implementation handoff behavior changes.
+3. Update `skills/qb/references/assessment-planner.md` if Step 1.5 assessment behavior changes.
+4. Update `skills/qb/references/fourth-planner.md` if implementation handoff behavior changes.
 5. Update `skills/qb/references/vibecoding-principles.md`, `task-delegation-playbook.md`, `planning-ledger.md`, `project-ontology.md`, `assessment-and-budget.md`, or `engineering-principles.md` when planning behavior changes.
 6. Update `skills/qb/scripts/validate_planner_docs.py` if planner structure, continuity docs, or readiness gates change.
 7. Run `make check`.

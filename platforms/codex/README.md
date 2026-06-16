@@ -154,11 +154,11 @@ plugins/qb/
     agents/openai.yaml
     scripts/validate_planner_docs.py
     references/
-      First-Planner.md
-      Assessment-Planner.md
-      Second-Planner.md
-      Third-Planner.md
-      Fourth-Planner.md
+      first-planner.md
+      assessment-planner.md
+      second-planner.md
+      third-planner.md
+      fourth-planner.md
       repo-aware-intake.md
       workflow-quality.md
 docs/

@@ -93,10 +93,10 @@ class StructuralInvariantTests(unittest.TestCase):
     def test_codex_accepted_nested_shape(self) -> None:
         if not CODEX["manifest"].exists():
             self.skipTest("codex not built")
-        # Accepted asymmetry: nested plugins/qb/ + capitalized references + openai.yaml.
+        # Accepted asymmetry: nested plugins/qb/ + openai.yaml.
         self._require(CODEX["root"], [
             "plugins/qb/.codex-plugin/plugin.json",
-            "plugins/qb/skills/qb/references/First-Planner.md",
+            "plugins/qb/skills/qb/references/first-planner.md",
             "plugins/qb/skills/qb/scripts/validate_planner_docs.py",
         ])
         self.assertTrue(any(CODEX["root"].rglob("openai.yaml")),
@@ -111,8 +111,8 @@ class StructuralInvariantTests(unittest.TestCase):
         self._require(ANTIGRAVITY["root"], [
             "skills/qb/SKILL.md",
             "skills/qb/scripts/validate_planner_docs.py",
-            "skills/qb/references/First-Planner.md",
-            "skills/qb/references/Assessment-Planner.md",
+            "skills/qb/references/first-planner.md",
+            "skills/qb/references/assessment-planner.md",
             "scripts/install.sh",
             "scripts/validate.sh",
             "CHANGELOG.md",

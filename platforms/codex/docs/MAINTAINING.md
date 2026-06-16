@@ -66,11 +66,11 @@ When changing Step 1 behavior, verify that:
 
 - `SKILL.md` references `references/repo-aware-intake.md`;
 - the intake reference still asks only the four stable fields;
-- `SKILL.md` references `references/Assessment-Planner.md` for Step 1.5;
-- `Second-Planner.md` reads `.qb/assessment.md` as an optional supporting source;
-- `First-Planner.md` still accepts the same four required placeholders.
+- `SKILL.md` references `references/assessment-planner.md` for Step 1.5;
+- `second-planner.md` reads `.qb/assessment.md` as an optional supporting source;
+- `first-planner.md` still accepts the same four required placeholders.
 
-The planner prompts and reference docs (`First-Planner.md`, `Second-Planner.md`, `Third-Planner.md`, `Fourth-Planner.md`, `Assessment-Planner.md`, `repo-aware-intake.md`, `workflow-quality.md`) are shared, host-neutral sources. They are maintained in the monorepo's `shared/` tree and materialized into this plugin by `sync.sh`; edit the shared source, not the synced copy.
+The planner prompts and reference docs (`first-planner.md`, `second-planner.md`, `third-planner.md`, `fourth-planner.md`, `assessment-planner.md`, `repo-aware-intake.md`, `workflow-quality.md`) are shared, host-neutral sources. They are maintained in the monorepo's `shared/` tree and materialized into this plugin by `sync.sh`; edit the shared source, not the synced copy.
 
 ## Optional Local Skill Copy Parity
 
@@ -110,8 +110,8 @@ This writes `QB-sanitized.zip` with `git archive`.
 1. Update `plugins/qb/.codex-plugin/plugin.json`.
 2. Update `plugins/qb/skills/qb/SKILL.md` and references as needed.
 3. Update the shared `repo-aware-intake.md` source if Step 1 intake behavior changes, then re-sync.
-4. Update the shared `Assessment-Planner.md` source if Step 1.5 assessment behavior changes, then re-sync.
-5. Update the shared `Fourth-Planner.md` source if implementation handoff behavior changes, then re-sync.
+4. Update the shared `assessment-planner.md` source if Step 1.5 assessment behavior changes, then re-sync.
+5. Update the shared `fourth-planner.md` source if implementation handoff behavior changes, then re-sync.
 6. Update the shared `validate_planner_docs.py` source if planner structure or readiness gates change, then re-sync.
 7. Run `make check`.
 8. Optionally run the Codex skill/plugin validator scripts if their Python dependencies are available.

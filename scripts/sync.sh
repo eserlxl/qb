@@ -63,32 +63,32 @@ MAP=(
   # shared/planners/first-planner.md
   "planners/first-planner.md|platforms/claude-code/skills/qb-planner/planners/first-planner.md"
   "planners/first-planner.md|platforms/cursor/skills/qb-planner/planners/first-planner.md"
-  "planners/first-planner.md|platforms/codex/plugins/qb/skills/qb/references/First-Planner.md"
+  "planners/first-planner.md|platforms/codex/plugins/qb/skills/qb/references/first-planner.md"
 
   # shared/planners/second-planner.md
   "planners/second-planner.md|platforms/claude-code/skills/qb-subplanner/second-planner.md"
   "planners/second-planner.md|platforms/cursor/skills/qb-subplanner/second-planner.md"
-  "planners/second-planner.md|platforms/codex/plugins/qb/skills/qb/references/Second-Planner.md"
+  "planners/second-planner.md|platforms/codex/plugins/qb/skills/qb/references/second-planner.md"
 
   # shared/planners/third-planner.md
   "planners/third-planner.md|platforms/claude-code/skills/qb-auditor/third-planner.md"
   "planners/third-planner.md|platforms/cursor/skills/qb-auditor/third-planner.md"
-  "planners/third-planner.md|platforms/codex/plugins/qb/skills/qb/references/Third-Planner.md"
+  "planners/third-planner.md|platforms/codex/plugins/qb/skills/qb/references/third-planner.md"
 
   # shared/planners/fourth-planner.md
   "planners/fourth-planner.md|platforms/claude-code/skills/qb-implementer/fourth-planner.md"
   "planners/fourth-planner.md|platforms/cursor/skills/qb-implementer/fourth-planner.md"
-  "planners/fourth-planner.md|platforms/codex/plugins/qb/skills/qb/references/Fourth-Planner.md"
+  "planners/fourth-planner.md|platforms/codex/plugins/qb/skills/qb/references/fourth-planner.md"
 
   # shared/planners/assessment-planner.md
   "planners/assessment-planner.md|platforms/claude-code/skills/qb-assess/assessment-planner.md"
   "planners/assessment-planner.md|platforms/cursor/skills/qb-assess/assessment-planner.md"
-  "planners/assessment-planner.md|platforms/codex/plugins/qb/skills/qb/references/Assessment-Planner.md"
+  "planners/assessment-planner.md|platforms/codex/plugins/qb/skills/qb/references/assessment-planner.md"
 
   # shared/planners/export-planner.md
   "planners/export-planner.md|platforms/claude-code/skills/qb-planner/planners/export-planner.md"
   "planners/export-planner.md|platforms/cursor/skills/qb-planner/planners/export-planner.md"
-  "planners/export-planner.md|platforms/codex/plugins/qb/skills/qb/references/Export-Planner.md"
+  "planners/export-planner.md|platforms/codex/plugins/qb/skills/qb/references/export-planner.md"
 
   # shared/references/repo-aware-intake.md
   "references/repo-aware-intake.md|platforms/claude-code/references/repo-aware-intake.md"
