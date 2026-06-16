@@ -176,6 +176,20 @@ class FanoutDegeneratePhaseBehaviorTests(unittest.TestCase):
                 self.assertIn("phase_folder_count=0", result.stdout)
                 self.assertNotIn("missing_phase_folder=.qb/phase-1-plans", result.stdout)
 
+    def test_one_phase_fixture_passes_step2_with_no_phantom_phase(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            build_planner_tree(root, phase_count=1, subplans_per_phase=1)
+            result = run_validator(root, "step2")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("main_phase_count=1", result.stdout)
+        self.assertIn("phase_folder_count=1", result.stdout)
+        self.assertIn("subplan_count=1", result.stdout)
+        self.assertNotIn("missing_phase_folder=", result.stdout)
+        self.assertNotIn("subplan_numbering_gap=", result.stdout)
+        self.assertNotIn("phase-2-plans", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
