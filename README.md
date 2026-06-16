@@ -3,7 +3,7 @@
 Repo planning, plan export, and guarded repository hardening for AI coding hosts.
 
 [![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
-[![version](https://img.shields.io/badge/version-0.9.0-2563EB)](VERSION)
+[![version](https://img.shields.io/badge/version-0.13.0-2563EB)](VERSION)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 [![platforms](https://img.shields.io/badge/platforms-claude--code%20%C2%B7%20cursor%20%C2%B7%20codex%20%C2%B7%20antigravity-2563EB)](#platform-packages)
 
@@ -67,6 +67,26 @@ The planning filenames are part of the public contract. Keep these names stable:
 `sub-planning-audit.md`, `plan.md`, `phase-<n>-plans/`, and
 `phase-<n>.<m>-*.md`.
 
+### Parallel Per-Phase Planning
+
+On hosts with real subagents (Claude Code, via the Task tool), Steps 2, 3, and
+3.5 run as a per-phase **map → barrier → reduce**: one worker drafts (Step 2),
+audits (Step 3), or exports (Step 3.5) each main phase concurrently, then a
+single reduce writes the shared artifact — `sub-planning-index.md`,
+`sub-planning-audit.md`, or `plan.md` — and runs its validator once over the
+complete tree. Step 1's read-only repository scan is likewise gathered in
+parallel lanes and merged into one shared evidence bundle. This collapses a
+planning run's wall-clock cost from the sum of all phases to the slowest single
+phase plus the reduce, with byte-identical outputs.
+
+The fan-out preserves the workflow's guarantees: distinct phases write distinct
+files (no write conflicts), the reduce is the sole writer of each shared
+artifact, and audit independence is kept because every worker is a fresh actor
+(the Step 2 author of a phase is never its Step 3 auditor). Workers are scoped by
+a `PHASE SCOPE: <n>` directive in their task brief; with no scope the specs run
+their original single-pass behavior, which is preserved unchanged as the default
+and as the fallback for hosts without subagents (Cursor, Codex, Antigravity).
+
 ## Hardening Path
 
 The audit/harden engine is separate from the `.qb/` planning workflow. It can be
@@ -128,7 +148,7 @@ Long-running work is launched through each host's native pattern:
 
 | Host | Long-Running Planning | Audit/Harden Runner |
 |---|---|---|
-| Claude Code | Task-tool subagents: `qb-assess`, `qb-subplanner`, `qb-auditor`, `qb-implementer`. | `/qb-harden` delegates to `qb-runner`. |
+| Claude Code | Task-tool subagents: `qb-assess`, `qb-subplanner`, `qb-auditor`, `qb-implementer`; Steps 2/3/3.5 fan out one subagent per phase, then reduce. | `/qb-harden` delegates to `qb-runner`. |
 | Cursor | Native `define-goal` goals for the matching skills. | `/qb-harden` launches the `qb-runner` goal. |
 | Codex | Text-only Goal-mode prompt blocks through `$qb`. | `$qb` flow backed by `qb_headless.py`. |
 | Antigravity | Text-only Antigravity-task prompt blocks via the `qb` skill. | — (planning-only) |
@@ -244,9 +264,12 @@ scripts/bump-version.sh --sync
 QB is an independent project inspired by Alican Kiraz's
 [CursorQB](https://github.com/alicankiraz1/CursorQB),
 [CodexQB](https://github.com/alicankiraz1/CodexQB), and
-[AntigravityQB](https://github.com/alicankiraz1/AntigravityQB). It now diverges in
-scope and architecture: native Claude Code support, a unified `qb` identity across
-four hosts, `.qb/` artifacts, planwright export, a shared host-neutral core, and a
-policy-gated audit/harden engine.
+[AntigravityQB](https://github.com/alicankiraz1/AntigravityQB). It now diverges
+substantially in scope and architecture: native Claude Code support, a unified
+`qb` identity across four hosts, `.qb/` artifacts, planwright export, parallel
+per-phase planning fan-out, a shared host-neutral core, and a policy-gated
+audit/harden engine. At this point it shares little beyond the original
+inspiration — the planning model, multi-host core, validators, and hardening
+engine are all QB's own.
 
 Released under the [MIT](LICENSE) license.
