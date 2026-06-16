@@ -8,13 +8,16 @@ mapping measured quality to the max autonomy level (fail-closed when no data).
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 from tests.qb_monorepo import SHARED_DIR
 
 MODULE_PATH = SHARED_DIR / "scripts/telemetry.py"
+STORE_PATH = SHARED_DIR / "scripts/run_store.py"
 
 
 def _load(name: str, path: Path):
@@ -31,11 +34,63 @@ def _finding(category="secret", severity="P1", confidence="high"):
     return {"category": category, "severity": severity, "confidence": confidence}
 
 
+def _git(repo, *args):
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+
+
+def _init_accrual_repo(repo: Path) -> None:
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    _git(repo, "config", "user.email", "t@example.com")
+    _git(repo, "config", "user.name", "QB Test")
+    _git(repo, "config", "commit.gpgsign", "false")
+    (repo / "style.txt").write_text("messy\n", encoding="utf-8")
+    tests_dir = repo / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "test_style.py").write_text(
+        "import pathlib, unittest\n"
+        "class T(unittest.TestCase):\n"
+        "    def test_clean(self):\n"
+        "        self.assertEqual(pathlib.Path('style.txt').read_text().strip(), 'clean')\n",
+        encoding="utf-8",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "fixture")
+
+
+class _TwoRunAccrualFixture:
+    def __init__(self, case: unittest.TestCase):
+        self.case = case
+        self.tmp = tempfile.TemporaryDirectory()
+        case.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        _init_accrual_repo(self.repo)
+        self.run1 = case.rs.RunStore(self.root / "run-1" / case.rs.OUTPUT_DIR_NAME).open()
+        self.run2 = case.rs.RunStore(self.root / "run-2" / case.rs.OUTPUT_DIR_NAME).open()
+        self._clock_values = iter((100.0, 100.25, 100.5, 100.75))
+
+    def clock(self) -> float:
+        return next(self._clock_values)
+
+    def a2_eligible_telemetry(self, run_id: str) -> dict:
+        return self.case.t.build_telemetry(
+            run_id=run_id,
+            autonomy_level="A2",
+            findings=[_finding("quality", "P3", "medium")],
+            evidence=[{"outcome": "kept", "after_exit": 0}] * 9
+                     + [{"outcome": "reverted", "after_exit": 1}],
+            cost={"wall_ms": 250, "iterations": 1, "tokens": 0},
+        )
+
+
 class TelemetryTests(unittest.TestCase):
     def setUp(self) -> None:
-        if not MODULE_PATH.exists():
-            self.skipTest("telemetry missing")
+        for path in (MODULE_PATH, STORE_PATH):
+            if not path.exists():
+                self.skipTest(f"missing module: {path}")
         self.t = _load("qb_telemetry_under_test", MODULE_PATH)
+        self.rs = _load("qb_run_store_for_telemetry_test", STORE_PATH)
 
     def test_record_shape_and_version(self) -> None:
         rec = self.t.build_telemetry(
@@ -81,6 +136,20 @@ class TelemetryTests(unittest.TestCase):
         rec = self.t.build_telemetry(run_id=f"run-{token}", autonomy_level="A0", findings=[], evidence=[])
         self.assertNotIn(token, rec["run_id"])
         self.assertIn("<redacted>", rec["run_id"])
+
+    @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
+    def test_two_run_accrual_fixture_is_temp_and_deterministic(self) -> None:
+        fixture = _TwoRunAccrualFixture(self)
+        self.assertTrue(fixture.repo.is_relative_to(fixture.root))
+        self.assertTrue(fixture.run1.root.is_relative_to(fixture.root))
+        self.assertTrue(fixture.run2.root.is_relative_to(fixture.root))
+        self.assertFalse((fixture.root / ".qb").exists())
+        self.assertEqual(fixture.clock(), 100.0)
+        self.assertEqual(fixture.clock(), 100.25)
+
+        record = fixture.a2_eligible_telemetry("run-1")
+        fixture.run1.write_telemetry(record)
+        self.assertEqual(self.rs.load_prior_telemetry(fixture.run1.root), record)
 
 
 if __name__ == "__main__":
