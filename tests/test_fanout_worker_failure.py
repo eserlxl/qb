@@ -52,6 +52,28 @@ class FanoutWorkerFailureTests(unittest.TestCase):
         self.assertIn("subplan_count=0", result.stdout)
         self.assertIn("phase_has_no_subplans=.qb/phase-1-plans", result.stdout)
 
+    def test_reduce_barrier_surfaces_missing_or_empty_phase(self) -> None:
+        """The reduce barrier must fail when a worker produces no usable phase output."""
+        cases = {
+            "missing": "missing_phase_folder=.qb/phase-1-plans",
+            "empty": "phase_has_no_subplans=.qb/phase-1-plans",
+        }
+        for case, expected in cases.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                build_planner_tree(root, phase_count=1, subplans_per_phase=1)
+                phase_dir = root / ".qb/phase-1-plans"
+                if case == "missing":
+                    shutil.rmtree(phase_dir)
+                else:
+                    for path in phase_dir.glob("*.md"):
+                        path.unlink()
+                result = run_validator(root, "step2")
+
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn(expected, result.stdout)
+            self.assertNotIn("planner_docs_validation=passed", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
