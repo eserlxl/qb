@@ -8,6 +8,8 @@ The plugin is designed for serious project work where plans need to survive long
 
 QB is the Antigravity-native edition of a repo-aware planning workflow built around Markdown-based stable planning, validation controls, durable project memory, and controlled implementation handoff. It is meant to reduce context drift in long tasks without turning the planning skill itself into an implementation agent.
 
+QB ships as four native packages — Claude Code, Cursor, Codex, and Antigravity. This Antigravity package is **planning-only**: it carries the planner workflow but not the audit/harden engine, and it is authored on its own path rather than being a `scripts/sync.sh` destination like the three engine-bearing hosts.
+
 ## What It Does
 
 QB creates a planning workflow around the repository you already have open:

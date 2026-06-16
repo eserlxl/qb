@@ -36,8 +36,10 @@ and resumed by another host without changing the project contract.
 | Shared core | Planner specs, validators, analyzers, reports, policy, isolation, and gates. | `shared/` |
 
 The root repository is the product source of truth. Platform packages are not
-forks; `scripts/sync.sh` copies the shared core into each host package and
-`make check` verifies those copies remain byte-equal.
+forks; `scripts/sync.sh` copies the shared core into the three engine-bearing
+host packages (Claude Code, Cursor, Codex) and `make check` verifies those
+copies remain byte-equal. The Antigravity package is planning-only and is **not**
+a `sync.sh` destination; it is authored on its own path.
 
 ## Planning Path
 
