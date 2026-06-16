@@ -175,6 +175,42 @@ class VerificationGateTests(unittest.TestCase):
             finally:
                 os.environ.pop("QB_TEST_FAKE_SECRET", None)
 
+    def test_confined_verification_cannot_read_secret_named_env_and_redacts_output(self) -> None:
+        import os
+        if "process_group" not in self.gate._cs.available_confinement_controls():
+            self.skipTest("process confinement unavailable on this host")
+        secret_name = "QB_TEST_FAKE_SECRET_TOKEN"
+        secret_value = "ghp_" + "B" * 30
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_repo(repo)
+            os.environ[secret_name] = secret_value
+            isolation = self._isolation(repo, "confined-secret")
+            try:
+                cmd = [
+                    "python3", "-c",
+                    (
+                        "import os,sys; "
+                        f"value=os.environ.get('{secret_name}'); "
+                        "print(value or 'secret-env-absent'); "
+                        "print('ghp_' + 'B' * 30); "
+                        "sys.exit(1 if value else 0)"
+                    ),
+                ]
+                record = self.gate.gate_fix(
+                    isolation,
+                    _plan(cmd),
+                    apply_fn=lambda iso: None,
+                    confinement=True,
+                )
+                self.assertEqual(record.outcome, "kept", record.to_dict())
+                self.assertIn("secret-env-absent", record.after_output)
+                self.assertNotIn(secret_value, record.after_output)
+                self.assertIn("<redacted>", record.after_output)
+            finally:
+                isolation.teardown()
+                os.environ.pop(secret_name, None)
+
 
 if __name__ == "__main__":
     unittest.main()
