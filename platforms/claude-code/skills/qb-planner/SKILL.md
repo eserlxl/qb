@@ -2,7 +2,7 @@
 name: qb-planner
 description: Guided five-step (1, 1.5, 2, 3, 4), delegated project planning orchestrator with a repo-aware intake. Use when the user runs /qb-plan or asks QB to plan a project end to end - master plan, existing-project assessment, phase decomposition, coverage audit, then optional implementation. Runs a repo-aware Step 1 intake, produces .qb/main-planning.md, runs a Step 1.5 assessment (qb-assess) for existing projects, then gates into phase decomposition (qb-subplanner), a coverage/quality audit (qb-auditor), and a gated implementation step (qb-implementer) - each long autonomous step delegated automatically to a matching subagent via the Task tool. Validates each step with the bundled validator.
 metadata:
-  version: "0.14.0"
+  version: "0.14.1"
 ---
 
 # QB Planner (orchestrator)
