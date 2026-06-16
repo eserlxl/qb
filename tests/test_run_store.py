@@ -182,6 +182,8 @@ class RunStoreTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(store.read_telemetry(), {})
+            (store.root / self.rs.TELEMETRY_FILENAME).write_text("{not-json\n", encoding="utf-8")
+            self.assertEqual(store.read_telemetry(), {})
 
     def test_write_telemetry_redacts_secret_shaped_values(self) -> None:
         with tempfile.TemporaryDirectory() as d:
