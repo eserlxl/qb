@@ -272,6 +272,15 @@ scripts/bump-version.sh --sync
 - autonomy, policy, isolation, rollback, verification, release, and production
   gates stay covered by tests.
 
+### Continuous integration
+
+Green **local** validation is the gate of record. Each host package runs
+`bash scripts/validate.sh` (driven by `make check`), and the monorepo
+`make check` aggregates all four. Cloud CI — the GitHub Actions `validate.yml`
+workflow behind the badge above — is **disabled on the account**, so a passing
+local `make check` / `scripts/validate.sh`, not the cloud badge, is the
+authoritative signal.
+
 ## Attribution
 
 QB is an independent project inspired by Alican Kiraz's
