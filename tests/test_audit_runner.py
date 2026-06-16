@@ -60,6 +60,11 @@ COMBINED_GUARD_ENGINE_INVARIANTS = {
     "side_effects": "combined guard uses only in-memory/nonexistent-tool stubs; no network call or install",
 }
 
+COMBINED_GUARD_SYNC_NOTE = (
+    "After combined-guard shared/runtime changes land, run scripts/sync.sh, then "
+    "scripts/sync.sh --check; antigravity is planning-only and intentionally excluded."
+)
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
