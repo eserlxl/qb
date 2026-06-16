@@ -40,6 +40,7 @@ def _build_fixture(repo: Path) -> None:
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
     _git(repo, "config", "user.email", "t@example.com")
     _git(repo, "config", "user.name", "QB Test")
+    _git(repo, "config", "commit.gpgsign", "false")
     (repo / "style.txt").write_text("messy\n", encoding="utf-8")
     tdir = repo / "tests"
     tdir.mkdir()

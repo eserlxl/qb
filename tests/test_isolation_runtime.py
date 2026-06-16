@@ -38,6 +38,7 @@ def _init_repo(d: Path) -> None:
     subprocess.run(["git", "init", "-q", str(d)], check=True)
     _git(d, "config", "user.email", "t@example.com")
     _git(d, "config", "user.name", "QB Test")
+    _git(d, "config", "commit.gpgsign", "false")
     (d / "a.txt").write_text("hello\n", encoding="utf-8")
     _git(d, "add", "-A")
     _git(d, "commit", "-q", "-m", "init")

@@ -102,6 +102,7 @@ class KillSwitchDrillTests(unittest.TestCase):
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
         _git(repo, "config", "user.email", "t@e.com")
         _git(repo, "config", "user.name", "t")
+        _git(repo, "config", "commit.gpgsign", "false")
         (repo / "style.txt").write_text("messy\n", encoding="utf-8")
         (repo / "tests").mkdir()
         (repo / "tests" / "t.py").write_text(
