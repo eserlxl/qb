@@ -161,6 +161,19 @@ class RunStoreTests(unittest.TestCase):
             with self.assertRaises(self.rs.RunStoreError):
                 store.write_telemetry({"run_id": "missing-version"})
 
+    def test_read_telemetry_round_trip_absent_and_version_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            self.assertEqual(store.read_telemetry(), {})
+            record = {"schema_version": 1, "run_id": "r1", "quality": {"fix_safety_ok": True}}
+            store.write_telemetry(record)
+            self.assertEqual(store.read_telemetry(), record)
+            (store.root / self.rs.TELEMETRY_FILENAME).write_text(
+                json.dumps({"schema_version": 999, "run_id": "old"}) + "\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(store.read_telemetry(), {})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -149,6 +149,18 @@ class RunStore:
         path = self.root / SUMMARY_FILENAME
         return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
 
+    def read_telemetry(self) -> dict:
+        path = self.root / TELEMETRY_FILENAME
+        if not path.is_file():
+            return {}
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if record.get("schema_version") != _telemetry.TELEMETRY_SCHEMA_VERSION:
+            return {}
+        return record
+
 
 def validate_store_layout(output_dir) -> list:
     """Identifier check: the required subpaths exist with the fixed names."""
