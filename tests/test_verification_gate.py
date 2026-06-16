@@ -261,6 +261,23 @@ class VerificationGateTests(unittest.TestCase):
             finally:
                 isolation.teardown()
 
+    def test_requested_unavailable_confinement_does_not_run_unconfined(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            marker = repo / "ran.txt"
+            cmd = [
+                "python3", "-c",
+                "import pathlib; pathlib.Path('ran.txt').write_text('ran')",
+            ]
+            code, output = self.gate.run_verification(
+                cmd,
+                cwd=repo,
+                confinement={"require": ["unsupported-control"]},
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("verification confinement unavailable", output)
+            self.assertFalse(marker.exists(), "verification command must not run unconfined")
+
 
 if __name__ == "__main__":
     unittest.main()

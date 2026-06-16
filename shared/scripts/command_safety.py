@@ -51,6 +51,7 @@ _SAFE_ENV_PREFIXES = ("LC_",)
 # QB never auto-runs scripts from the audited repository without explicit,
 # sandboxed authorization. This is a hard, testable rule.
 AUTO_RUN_REPO_SCRIPTS = False
+SUPPORTED_CONFINEMENT_CONTROLS = frozenset({"process_group", "resource_limits"})
 
 
 def _load_sibling(module_name: str, filename: str):
@@ -137,7 +138,7 @@ def _establish_confinement(spec: ConfinementSpec) -> tuple[tuple[str, ...], obje
 
     available = set(available_confinement_controls())
     requested = set(spec.require)
-    unsupported = requested - {"process_group", "resource_limits"}
+    unsupported = requested - SUPPORTED_CONFINEMENT_CONTROLS
     if unsupported:
         names = ", ".join(sorted(unsupported))
         raise ConfinementUnavailable(f"unsupported confinement control(s): {names}; command not run")
