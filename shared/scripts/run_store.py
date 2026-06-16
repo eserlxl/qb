@@ -47,7 +47,9 @@ def _load_sibling(module_name: str, filename: str):
 
 _fs = _load_sibling("qb_finding_schema", "finding_schema.py")
 _core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
+_telemetry = _load_sibling("qb_telemetry", "telemetry.py")
 serialize_finding = _fs.serialize_finding
+TELEMETRY_FILENAME = _telemetry.TELEMETRY_FILENAME
 
 
 def redact(value):
@@ -123,6 +125,13 @@ class RunStore:
     def write_summary(self, summary: dict) -> None:
         (self.root / SUMMARY_FILENAME).write_text(
             json.dumps(redact(dict(summary)), sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+    def write_telemetry(self, record: dict) -> None:
+        data = redact(dict(record))
+        if "schema_version" not in data:
+            raise RunStoreError("telemetry record requires schema_version")
+        (self.root / TELEMETRY_FILENAME).write_text(
+            json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
     # -- read side (consumed by Phase 5.2 reporting) -----------------------
     def read_findings(self) -> list:

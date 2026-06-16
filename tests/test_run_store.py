@@ -147,6 +147,20 @@ class RunStoreTests(unittest.TestCase):
             store.write_summary({"note": "key ghp_" + "B" * 30})
             self.assertNotIn("ghp_" + "B" * 30, store.read_summary()["note"])
 
+    def test_write_telemetry_is_deterministic_and_requires_schema_version(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            store.write_telemetry({"schema_version": 1, "run_id": "r1", "quality": {"fix_safety_ok": True}})
+            raw = (store.root / self.rs.TELEMETRY_FILENAME).read_text(encoding="utf-8")
+            self.assertTrue(raw.endswith("\n"))
+            self.assertEqual(raw, json.dumps({
+                "quality": {"fix_safety_ok": True},
+                "run_id": "r1",
+                "schema_version": 1,
+            }, sort_keys=True, indent=2) + "\n")
+            with self.assertRaises(self.rs.RunStoreError):
+                store.write_telemetry({"run_id": "missing-version"})
+
 
 if __name__ == "__main__":
     unittest.main()
