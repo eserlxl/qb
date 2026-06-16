@@ -89,6 +89,30 @@ class QualityAdapterTests(unittest.TestCase):
         self.assertEqual(f.evidence, "mod.py:3")
         self.assertEqual(analyzer.last_capability_report["ran"], ["stub-tool"])
 
+    def test_pyflakes_present_path_emits_correctness_finding_without_pyflakes_install(self) -> None:
+        adapter = self.qa.ToolAdapter(
+            name="pyflakes",
+            executable="python3",
+            category="correctness",
+            build_argv=lambda root: [
+                "python3", "-c", "print('mod.py:3: undefined name x')",
+            ],
+            parse=self.qa._pyflakes_parse,
+            severity_map={"error": "P2"},
+            default_severity="P2",
+        )
+        analyzer = self.qa.QualityAnalyzer([adapter])
+        with tempfile.TemporaryDirectory() as d:
+            findings = analyzer.analyze(d, None)
+        self.assertEqual(len(findings), 1)
+        f = findings[0]
+        self.assertEqual(self.validate(f), [])
+        self.assertEqual(f.category, "correctness")
+        self.assertEqual(f.severity, "P2")
+        self.assertEqual(f.evidence, "mod.py:3")
+        self.assertIn("Reported by pyflakes", f.rationale)
+        self.assertEqual(analyzer.last_capability_report["ran"], ["pyflakes"])
+
     def test_unknown_native_severity_falls_back_to_default(self) -> None:
         analyzer = self.qa.QualityAnalyzer([_stub_adapter(self.qa, diag_severity="mystery")])
         with tempfile.TemporaryDirectory() as d:
@@ -100,7 +124,10 @@ class QualityAdapterTests(unittest.TestCase):
             _stub_adapter(self.qa, name="missing-tool", executable="qb-nonexistent-tool-xyz")
         ])
         with tempfile.TemporaryDirectory() as d:
-            findings = analyzer.analyze(d, None)
+            try:
+                findings = analyzer.analyze(d, None)
+            except Exception as exc:  # pragma: no cover - failure path reports the unexpected exception
+                self.fail(f"absent optional tool should skip without raising: {exc!r}")
         self.assertEqual(findings, [])
         self.assertEqual(analyzer.last_capability_report["ran"], [])
         skipped = analyzer.last_capability_report["skipped"]
