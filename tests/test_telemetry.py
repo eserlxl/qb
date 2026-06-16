@@ -208,6 +208,34 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual(result["promoted"], ["style.txt"])
         self.assertEqual((fixture.repo / "style.txt").read_text(encoding="utf-8"), "clean\n")
 
+    @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
+    def test_run2_poor_or_breached_telemetry_stays_a1(self) -> None:
+        poor_precision = self.t.build_telemetry(
+            run_id="poor",
+            autonomy_level="A2",
+            findings=[_finding("quality", "P3", "medium")],
+            evidence=[{"outcome": "kept", "after_exit": 0}]
+                     + [{"outcome": "reverted", "after_exit": 1}] * 9,
+        )
+        breached_safety = self.t.build_telemetry(
+            run_id="breach",
+            autonomy_level="A2",
+            findings=[_finding("quality", "P3", "medium")],
+            evidence=[{"outcome": "kept", "after_exit": 2}],
+        )
+
+        for record in (poor_precision, breached_safety):
+            fixture = _TwoRunAccrualFixture(self)
+            fixture.run1.write_telemetry(record)
+            prior = self.rs.load_prior_telemetry(fixture.run1.root)
+
+            result, _report = fixture.run_autofix(prior)
+            self.assertEqual(result["declared_level"], "A2", record["run_id"])
+            self.assertEqual(result["earned_ceiling"], "A1", record["run_id"])
+            self.assertEqual(result["level"], "A1", record["run_id"])
+            self.assertEqual(result["promoted"], [], record["run_id"])
+            self.assertEqual((fixture.repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
+
 
 if __name__ == "__main__":
     unittest.main()
