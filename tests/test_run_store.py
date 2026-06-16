@@ -183,6 +183,20 @@ class RunStoreTests(unittest.TestCase):
             )
             self.assertEqual(store.read_telemetry(), {})
 
+    def test_write_telemetry_redacts_secret_shaped_values(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            token = "ghp_" + "D" * 30
+            store.write_telemetry({
+                "schema_version": 1,
+                "run_id": "r1",
+                "quality": {"rationale": f"category carried {token}"},
+            })
+            raw = (store.root / self.rs.TELEMETRY_FILENAME).read_text(encoding="utf-8")
+            self.assertNotIn(token, raw)
+            self.assertIn("<redacted>", raw)
+            self.assertEqual(store.read_telemetry()["quality"]["rationale"], "category carried <redacted>")
+
 
 if __name__ == "__main__":
     unittest.main()
