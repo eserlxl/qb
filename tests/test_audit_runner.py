@@ -28,13 +28,13 @@ DEFAULT_OFF_NETWORKED_AUDIT = {
         "analyzers_skipped records id=net-stub",
         "analyzers_skipped records reason=networked-disabled",
     ),
-    "gap": "does not explicitly assert total_findings/category_counts are unaffected by the skipped stub",
+    "gap": "closed: the toggle test now asserts total_findings/category_counts are unaffected by the skipped stub",
 }
 
 EXPLICIT_ALLOW_NETWORKED_AUDIT = {
     "stub": "net-stub is registered with offline=False and AnalyzerConfig(allow_networked=True)",
     "asserted": ("enabled summary includes net-stub in analyzers_run",),
-    "gap": "does not explicitly assert allow_networked true or absence of a networked-disabled skip for net-stub",
+    "gap": "closed: the toggle test now asserts allow_networked true and no networked-disabled skip for net-stub",
 }
 
 
@@ -48,11 +48,19 @@ def _load(name: str, path: Path):
     return module
 
 
-def _networked_stub(runner):
+def _networked_stub(runner, *, emit=False):
     class _Net:
         descriptor = runner.AnalyzerDescriptor(id="net-stub", categories=("dependency",), offline=False)
 
         def analyze(self, repo_root, config):
+            if emit:
+                evidence = "deps.txt:1"
+                return [runner._ai.Finding(
+                    id=runner._ai.compute_finding_id("dependency", evidence, "net-stub"),
+                    category="dependency", severity="P2", confidence="medium",
+                    evidence=evidence, rationale="networked stub finding",
+                    suggested_fix="review dependency signal", fix_strategy="manual",
+                )]
             return []
 
     return _Net()
@@ -127,24 +135,44 @@ class AuditRunnerTests(unittest.TestCase):
 
             reg = self.runner.AnalyzerRegistry()
             reg.register(self.runner.ReferenceAnalyzer())
-            reg.register(_networked_stub(self.runner))
+            reg.register(_networked_stub(self.runner, emit=True))
 
             offline = self.runner.run_audit(
                 repo, config=self.runner.AnalyzerConfig(), registry=reg,
                 output_dir=Path(d) / "off" / self.runner.OUTPUT_DIR_NAME,
             )["summary"]
+            self.assertFalse(offline["allow_networked"])
             self.assertNotIn("net-stub", offline["analyzers_run"])
+            self.assertEqual(
+                offline["analyzers_skipped"],
+                sorted(offline["analyzers_skipped"], key=lambda item: item["id"]),
+            )
             self.assertTrue(any(s["id"] == "net-stub" and s["reason"] == "networked-disabled"
                                 for s in offline["analyzers_skipped"]))
+            self.assertEqual(offline["total_findings"], 1)
+            self.assertNotIn("dependency", offline["category_counts"])
 
             reg2 = self.runner.AnalyzerRegistry()
             reg2.register(self.runner.ReferenceAnalyzer())
-            reg2.register(_networked_stub(self.runner))
+            reg2.register(_networked_stub(self.runner, emit=True))
             enabled = self.runner.run_audit(
                 repo, config=self.runner.AnalyzerConfig(allow_networked=True), registry=reg2,
                 output_dir=Path(d) / "on" / self.runner.OUTPUT_DIR_NAME,
             )["summary"]
+            self.assertTrue(enabled["allow_networked"])
             self.assertIn("net-stub", enabled["analyzers_run"])
+            self.assertFalse(any(s["id"] == "net-stub" and s["reason"] == "networked-disabled"
+                                 for s in enabled["analyzers_skipped"]))
+            self.assertEqual(enabled["category_counts"].get("dependency"), 1)
+
+            reg3 = self.runner.AnalyzerRegistry()
+            reg3.register(self.runner.ReferenceAnalyzer())
+            reg3.register(_networked_stub(self.runner, emit=True))
+            enabled_again = self.runner.run_audit(
+                repo, config=self.runner.AnalyzerConfig(allow_networked=True), registry=reg3,
+                output_dir=Path(d) / "on-again" / self.runner.OUTPUT_DIR_NAME,
+            )["summary"]
+            self.assertEqual(enabled, enabled_again)
 
     def test_output_identifier_check(self) -> None:
         with tempfile.TemporaryDirectory() as d:
