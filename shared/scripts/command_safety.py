@@ -90,6 +90,10 @@ class ConfinementSpec:
     Supported controls are deliberately stdlib-only:
     - process_group: start the child in a new session/process group.
     - resource_limits: apply conservative POSIX resource hardening when present.
+
+    This is process confinement, not a filesystem namespace or container
+    sandbox. Callers that require unsupported controls must request them and let
+    the fail-closed establishment path refuse the run.
     """
 
     enabled: bool = False
