@@ -16,6 +16,42 @@ import unittest
 from tests.qb_monorepo import ANTIGRAVITY
 
 
+ANTIGRAVITY_PLANNING_FILES = {
+    "skills/qb/SKILL.md",
+    "skills/qb/scripts/validate_planner_docs.py",
+    "skills/qb/references/First-Planner.md",
+    "skills/qb/references/Assessment-Planner.md",
+    "skills/qb/references/Second-Planner.md",
+    "skills/qb/references/Third-Planner.md",
+    "skills/qb/references/Fourth-Planner.md",
+    "skills/qb/references/repo-aware-intake.md",
+    "skills/qb/references/workflow-quality.md",
+    "skills/qb/references/vibecoding-principles.md",
+    "skills/qb/references/task-delegation-playbook.md",
+    "skills/qb/references/planning-ledger.md",
+    "skills/qb/references/project-ontology.md",
+    "skills/qb/references/assessment-and-budget.md",
+    "skills/qb/references/engineering-principles.md",
+    "README.md",
+    "CHANGELOG.md",
+    "docs/INSTALLATION.md",
+    "docs/USAGE.md",
+    "docs/MAINTAINING.md",
+    "Makefile",
+    "scripts/install.sh",
+    "LICENSE",
+}
+
+ANTIGRAVITY_ENGINE_FILE_NAMES = {
+    "audit_runner.py",
+    "fixer.py",
+    "orchestrator.py",
+    "production_gate.py",
+    "release_gate.py",
+    "verification_gate.py",
+}
+
+
 def _load_validator():
     path = ANTIGRAVITY["root"] / "skills/qb/scripts/validate_planner_docs.py"
     if not path.exists():
@@ -53,6 +89,30 @@ class AntigravityValidatorNamingContractTests(unittest.TestCase):
         self.assertEqual(self.mod.AUDIT_HEADINGS[0], "# Sub-Planning Audit")
         self.assertEqual(self.mod.LEDGER_HEADINGS[0], "# Planning Ledger")
         self.assertEqual(self.mod.ONTOLOGY_HEADINGS[0], "# Project Ontology")
+
+
+class AntigravityPlanningOnlyFileSetTests(unittest.TestCase):
+    """Pin antigravity as a planning-only package, not a copied engine build."""
+
+    def test_planning_components_are_present_and_engine_modules_are_absent(self) -> None:
+        root = ANTIGRAVITY["root"]
+        if not root.exists():
+            self.skipTest("antigravity platform not built yet")
+
+        present = {
+            path.relative_to(root).as_posix()
+            for path in root.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
+        self.assertEqual(sorted(ANTIGRAVITY_PLANNING_FILES - present), [])
+
+        forbidden = sorted(
+            rel
+            for rel in present
+            if rel.split("/")[-1] in ANTIGRAVITY_ENGINE_FILE_NAMES
+            or rel.split("/")[-1].startswith("analyzer_")
+        )
+        self.assertEqual(forbidden, [])
 
 
 if __name__ == "__main__":
