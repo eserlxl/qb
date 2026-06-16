@@ -22,6 +22,13 @@ BUDGET_PATH = SHARED_DIR / "scripts/budget.py"
 POLICY_PATH = SHARED_DIR / "scripts/policy.py"
 FIXER_PATH = SHARED_DIR / "scripts/fixer.py"
 
+ACCRUAL_FIXTURE_ISOLATION_CHECKLIST = {
+    "temp-root-only": "repo and run stores are created under tempfile.TemporaryDirectory",
+    "deterministic-clock": "budget.run_session receives the fixture clock= callable",
+    "no-live-qb": "fixture paths never point at the host .qb/ directory",
+    "proxy-caveat": "deterministic fixture is a live-readiness proxy; true accrual depends on successive operator runs",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
@@ -72,9 +79,12 @@ class _TwoRunAccrualFixture:
         self.run1 = case.rs.RunStore(self.root / "run-1" / case.rs.OUTPUT_DIR_NAME).open()
         self.run2 = case.rs.RunStore(self.root / "run-2" / case.rs.OUTPUT_DIR_NAME).open()
         self._clock_values = iter((100.0, 100.25, 100.5, 100.75))
+        self.clock_reads = []
 
     def clock(self) -> float:
-        return next(self._clock_values)
+        value = next(self._clock_values)
+        self.clock_reads.append(value)
+        return value
 
     def a2_eligible_telemetry(self, run_id: str) -> dict:
         return self.case.t.build_telemetry(
@@ -235,6 +245,53 @@ class TelemetryTests(unittest.TestCase):
             self.assertEqual(result["level"], "A1", record["run_id"])
             self.assertEqual(result["promoted"], [], record["run_id"])
             self.assertEqual((fixture.repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
+
+    def _two_run_accrual_outcome(self) -> dict:
+        fixture = _TwoRunAccrualFixture(self)
+        run1, report1 = fixture.run_autofix(fixture.run1.read_telemetry())
+        fixture.run1.write_telemetry(fixture.a2_eligible_telemetry("run-1"))
+        run2, report2 = fixture.run_autofix(self.rs.load_prior_telemetry(fixture.run1.root))
+
+        def stable(result):
+            return {
+                "declared_level": result["declared_level"],
+                "earned_ceiling": result["earned_ceiling"],
+                "level": result["level"],
+                "outcome": result["outcome"],
+                "promoted": result["promoted"],
+                "changeset": result["changeset"],
+            }
+
+        return {
+            "run1": stable(run1),
+            "run1_report": report1.to_dict(),
+            "run2": stable(run2),
+            "run2_report": report2.to_dict(),
+            "final_style": (fixture.repo / "style.txt").read_text(encoding="utf-8"),
+            "clock_reads": list(fixture.clock_reads),
+            "paths_under_temp": (
+                fixture.repo.is_relative_to(fixture.root)
+                and fixture.run1.root.is_relative_to(fixture.root)
+                and fixture.run2.root.is_relative_to(fixture.root)
+            ),
+            "fixture_has_qb_dir": (fixture.root / ".qb").exists(),
+        }
+
+    @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
+    def test_accrual_fixture_is_deterministic_and_host_state_independent(self) -> None:
+        live_qb = Path.cwd() / ".qb"
+        live_qb_mtime = live_qb.stat().st_mtime_ns if live_qb.exists() else None
+        first = self._two_run_accrual_outcome()
+        second = self._two_run_accrual_outcome()
+
+        self.assertEqual(first, second)
+        self.assertEqual(first["clock_reads"], [100.0, 100.25, 100.5, 100.75])
+        self.assertTrue(first["paths_under_temp"])
+        self.assertFalse(first["fixture_has_qb_dir"])
+        after_live_qb_mtime = live_qb.stat().st_mtime_ns if live_qb.exists() else None
+        self.assertEqual(live_qb_mtime, after_live_qb_mtime)
+        self.assertIn("proxy", ACCRUAL_FIXTURE_ISOLATION_CHECKLIST["proxy-caveat"])
+        self.assertIn("successive operator runs", ACCRUAL_FIXTURE_ISOLATION_CHECKLIST["proxy-caveat"])
 
 
 if __name__ == "__main__":
