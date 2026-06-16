@@ -82,6 +82,25 @@ class VerificationGateTests(unittest.TestCase):
             finally:
                 isolation.teardown()
 
+    def test_default_confinement_off_green_verification_is_kept(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_repo(repo)
+            isolation = self._isolation(repo, "default-off")
+            try:
+                record = self.gate.gate_fix(
+                    isolation,
+                    _plan(_VERIFY),
+                    apply_fn=lambda iso: iso.write_file("flag.txt", "GOOD\n"),
+                    confinement=None,
+                )
+                self.assertEqual(record.outcome, "kept")
+                self.assertEqual(record.after_exit, 0)
+                self.assertEqual(record.reason, "verification green")
+                self.assertEqual((isolation.worktree_path / "flag.txt").read_text(), "GOOD\n")
+            finally:
+                isolation.teardown()
+
     def test_failing_fix_is_auto_reverted(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
