@@ -211,6 +211,37 @@ class VerificationGateTests(unittest.TestCase):
                 isolation.teardown()
                 os.environ.pop(secret_name, None)
 
+    def test_requested_filesystem_boundary_refuses_before_escape_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            _init_repo(repo)
+            outside_read = Path(d) / "outside-secret.txt"
+            outside_write = Path(d) / "outside-write.txt"
+            outside_read.write_text("host-boundary-secret\n", encoding="utf-8")
+            isolation = self._isolation(repo, "boundary-refuse")
+            try:
+                cmd = [
+                    "python3", "-c",
+                    (
+                        "import pathlib; "
+                        f"print(pathlib.Path({str(outside_read)!r}).read_text()); "
+                        f"pathlib.Path({str(outside_write)!r}).write_text('escaped')"
+                    ),
+                ]
+                record = self.gate.gate_fix(
+                    isolation,
+                    _plan(cmd),
+                    apply_fn=lambda iso: None,
+                    confinement={"require": ["filesystem"]},
+                )
+                self.assertEqual(record.outcome, "reverted")
+                self.assertIn("verification confinement unavailable", record.after_output)
+                self.assertNotIn("host-boundary-secret", record.after_output)
+                self.assertFalse(outside_write.exists(), "verification child must not run unconfined")
+            finally:
+                isolation.teardown()
+
 
 if __name__ == "__main__":
     unittest.main()
