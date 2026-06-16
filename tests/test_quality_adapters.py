@@ -42,6 +42,12 @@ ABSENT_PATH_COVERAGE_AUDIT = {
     "gap": "no-raise is currently implicit in the test flow rather than named as an assertion",
 }
 
+DEPENDENCY_FREE_CORE_GUARD_NOTE = {
+    "gate": "python3 -m unittest tests.test_least_privilege",
+    "pyflakes_dependency": "correctness-path tests simulate pyflakes with python3 and import no pyflakes package",
+    "external_tools_required": (),
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
