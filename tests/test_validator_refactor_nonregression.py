@@ -169,6 +169,20 @@ class ValidatorRefactorNonRegressionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("secret_findings=0", result.stdout)
 
+    def test_mode_all_rejects_incomplete_planner_docs(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            _build_valid_planner_tree(root, self.validator)
+            (root / ".qb/sub-planning-index.md").unlink()
+            result = subprocess.run(
+                ["python3", str(VALIDATOR_PATH), "--root", str(root), "--mode", "all"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("missing_file=.qb/sub-planning-index.md", result.stdout)
+
     # --- secret scan exposed as a Phase-1.2 analyzer ----------------------
     def test_secret_hygiene_analyzer_conforms_and_redacts(self) -> None:
         analyzer = self.core.SecretHygieneAnalyzer()
