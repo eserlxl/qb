@@ -112,6 +112,16 @@ class ReportTests(unittest.TestCase):
             self.assertIn("P0=", text)
             self.assertIn("P1=1", text)
             self.assertIn("reverted=1", text)
+            self.assertIn("blocked=0", text)
+            self.assertIn("signals: precision=0.0 fix_safety_ok=True iterations=0", text)
+
+    def test_sarif_excludes_operational_signals(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._populated_store(Path(d) / self.rs.OUTPUT_DIR_NAME)
+            sarif = self.report.render_sarif(store)
+            self.assertEqual(sarif["version"], "2.1.0")
+            self.assertNotIn("signals", json.dumps(sarif, sort_keys=True))
+            self.assertNotIn("precision_estimate", json.dumps(sarif, sort_keys=True))
 
     def test_emit_writes_three_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as d:

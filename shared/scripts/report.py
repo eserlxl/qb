@@ -36,6 +36,10 @@ TIMING_BOUNDARY_DECISION = (
     "raw wall-clock latency is excluded from the canonical report body; "
     "callers may place it under provenance.timing, covered by NON_DETERMINISTIC_FIELDS"
 )
+SIGNALS_SURFACING_DECISION = (
+    "signals are surfaced in report.json and summary.txt; report.sarif remains "
+    "standards-conformant SARIF without QB-specific operational signals"
+)
 
 
 def _category_rule(category: str) -> str:
@@ -147,17 +151,18 @@ def render_summary_text(store) -> str:
     findings = store.read_findings()
     evidence = store.read_evidence()
     summary = store.read_summary()
-    sev_counts = {s: 0 for s in _SEVERITIES}
-    for finding in findings:
-        sev = finding.get("severity")
-        if sev in sev_counts:
-            sev_counts[sev] += 1
-    kept = sum(1 for e in evidence if e.get("outcome") == "kept")
-    reverted = sum(1 for e in evidence if e.get("outcome") == "reverted")
+    signals = _store_signals(store, findings, evidence)
+    sev_counts = signals["severity_counts"]
+    fixes = signals["fixes"]
+    quality = signals["quality"]
     lines = [
         "QB audit report",
         f"findings: {len(findings)} (" + ", ".join(f"{s}={sev_counts[s]}" for s in _SEVERITIES) + ")",
-        f"hardening: kept={kept} reverted={reverted}",
+        f"hardening: kept={fixes['kept']} reverted={fixes['reverted']} blocked={fixes['blocked']}",
+        "signals: "
+        f"precision={quality['precision_estimate']} "
+        f"fix_safety_ok={quality['fix_safety_ok']} "
+        f"iterations={signals['iterations']}",
         f"stop: {summary.get('trigger', summary.get('stop', 'completed'))}",
     ]
     return "\n".join(lines) + "\n"
