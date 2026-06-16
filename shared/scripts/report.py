@@ -53,6 +53,11 @@ def _precision_estimate(kept: int, reverted: int):
 
 
 def _store_signals(store, findings: list, hardening: list) -> dict:
+    """Operational signals derived only from persisted store artifacts.
+
+    This function deliberately performs no wall-clock reads; render-time timing
+    stays under provenance.timing so report-body re-renders stay byte-identical.
+    """
     telemetry = store.read_telemetry() if hasattr(store, "read_telemetry") else {}
     telemetry = telemetry if isinstance(telemetry, dict) else {}
     quality = telemetry.get("quality") if isinstance(telemetry.get("quality"), dict) else {}

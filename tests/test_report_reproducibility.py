@@ -79,6 +79,24 @@ class ReportReproducibilityTests(unittest.TestCase):
             self.assertEqual(strip(r1), strip(r2))                  # byte-identical sans timing
             self.assertNotEqual(r1["provenance"]["timing"], r2["provenance"]["timing"])
 
+    def test_signals_block_is_store_pure_and_stable(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
+            store.write_telemetry({
+                "schema_version": 1,
+                "quality": {"precision_estimate": None, "fix_safety_ok": True},
+                "cost": {"iterations": 0},
+            })
+            policy = self._policy()
+            r1 = self.report.render_json(store, provenance=self.report.build_provenance(policy, timing={"t": "one"}))
+            r2 = self.report.render_json(store, provenance=self.report.build_provenance(policy, timing={"t": "two"}))
+
+            s1 = json.dumps(r1["signals"], sort_keys=True)
+            s2 = json.dumps(r2["signals"], sort_keys=True)
+            self.assertEqual(s1, s2)
+            self.assertIn('"precision_estimate": null', s1)
+            self.assertEqual(r1["signals"]["iterations"], 0)
+
     def test_provenance_block_contents_and_degradation(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
