@@ -165,3 +165,12 @@ never in the plugin directory:
     ├── phase-1.1-...md
     └── phase-1.2-...md
 ```
+
+## Versioning
+
+Release versions are bumped in lockstep by a single mechanism:
+`scripts/bump-version.sh` updates the `VERSION` file, the `metadata: version:`
+line in every platform `SKILL.md`, and all four host `CHANGELOG.md` files
+(Claude Code, Cursor, Codex, and Antigravity) in one pass. Do not hand-edit
+individual CHANGELOG version headers — run the bump script so every host stays
+on the same version by construction.
