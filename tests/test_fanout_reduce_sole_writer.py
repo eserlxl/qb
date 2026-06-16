@@ -12,6 +12,7 @@ from tests.test_fanout_degenerate_phase_counts import (
     metric,
     run_validator,
 )
+from tests.test_fanout_title_collision import plan_item, run_plan_validator, write_plan
 
 
 def write_audit(root: Path, finding_ids: tuple[str, ...] = ()) -> None:
@@ -126,6 +127,25 @@ class FanoutReduceSoleWriterTests(unittest.TestCase):
         self.assertEqual(finding_ids, ["AUDIT-FIX-01", "AUDIT-FIX-02"])
         self.assertEqual(len(finding_ids), len(set(finding_ids)))
         self.assertEqual(with_audit.returncode, 0, with_audit.stdout + with_audit.stderr)
+
+    def test_plan_reduce_unique_items_validate_idempotently(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            write_plan(
+                root,
+                [
+                    plan_item("Unique Reduce Plan Item A"),
+                    plan_item("Unique Reduce Plan Item B"),
+                ],
+            )
+            first = run_plan_validator(root)
+            second = run_plan_validator(root)
+
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+        self.assertIn("pending_item_count=2", first.stdout)
+        self.assertNotIn("duplicate pending title", first.stdout)
+        self.assertEqual(first.stdout, second.stdout)
 
 
 if __name__ == "__main__":
