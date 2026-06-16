@@ -195,6 +195,19 @@ class TelemetryTests(unittest.TestCase):
         fixture.run1.write_telemetry(record)
         self.assertEqual(fixture.run1.read_telemetry(), record)
 
+    @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
+    def test_run2_loads_earned_telemetry_and_promotes_verified_fix(self) -> None:
+        fixture = _TwoRunAccrualFixture(self)
+        fixture.run1.write_telemetry(fixture.a2_eligible_telemetry("run-1"))
+        prior = self.rs.load_prior_telemetry(fixture.run1.root)
+
+        result, _report = fixture.run_autofix(prior)
+        self.assertEqual(result["declared_level"], "A2")
+        self.assertEqual(result["earned_ceiling"], "A2")
+        self.assertEqual(result["level"], "A2")
+        self.assertEqual(result["promoted"], ["style.txt"])
+        self.assertEqual((fixture.repo / "style.txt").read_text(encoding="utf-8"), "clean\n")
+
 
 if __name__ == "__main__":
     unittest.main()
