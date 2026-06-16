@@ -134,6 +134,10 @@ The implementation task should continue to the next acceptance criterion or next
 
 If `.qb/assessment.md`, `.qb/project-ontology.md`, or `.qb/planning-ledger.md` exists, the validator checks required heading order during Step 2/3/4 validation. If these optional continuity docs do not exist, Step 2/3 validation continues without treating them as required. Use `--mode assessment --strict` after Step 1.5 when `assessment.md` should be required.
 
+## Release and Sync
+
+This Antigravity package participates in version bumps but not in source sync. `scripts/bump-version.sh` updates `platforms/antigravity/CHANGELOG.md` and the `SKILL.md` version in lockstep with the three engine-bearing hosts, so the antigravity CHANGELOG carries the same `## [<version>]` header as Claude Code, Cursor, and Codex. Antigravity is intentionally **not** a `scripts/sync.sh` destination, however: its planner and docs are authored on their own path rather than materialized from `shared/`. In short, antigravity is **bump-yes / sync-no**.
+
 ## Safety Expectations
 
 QB is not an implementation tool. It is designed to produce planning artifacts only during Steps 1-3.
