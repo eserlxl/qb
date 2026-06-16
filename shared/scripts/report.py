@@ -47,6 +47,45 @@ def _evidence_location(evidence: str):
     return path or evidence, start
 
 
+def _precision_estimate(kept: int, reverted: int):
+    denom = kept + reverted
+    return round(kept / denom, 4) if denom else None
+
+
+def _store_signals(store, findings: list, hardening: list) -> dict:
+    telemetry = store.read_telemetry() if hasattr(store, "read_telemetry") else {}
+    telemetry = telemetry if isinstance(telemetry, dict) else {}
+    quality = telemetry.get("quality") if isinstance(telemetry.get("quality"), dict) else {}
+    cost = telemetry.get("cost") if isinstance(telemetry.get("cost"), dict) else {}
+    summary = store.read_summary()
+
+    severity_counts = {s: 0 for s in _SEVERITIES}
+    for finding in findings:
+        severity = finding.get("severity")
+        if severity in severity_counts:
+            severity_counts[severity] += 1
+
+    fixes = {
+        "kept": sum(1 for e in hardening if e.get("outcome") == "kept"),
+        "reverted": sum(1 for e in hardening if e.get("outcome") == "reverted"),
+        "blocked": sum(1 for e in hardening if e.get("outcome") == "blocked"),
+    }
+    precision = quality.get("precision_estimate", _precision_estimate(fixes["kept"], fixes["reverted"]))
+    fix_safety = quality.get(
+        "fix_safety_ok",
+        all(e.get("after_exit") in (0, None) for e in hardening if e.get("outcome") == "kept"),
+    )
+    return {
+        "severity_counts": severity_counts,
+        "fixes": fixes,
+        "quality": {
+            "precision_estimate": precision,
+            "fix_safety_ok": fix_safety,
+        },
+        "iterations": cost.get("iterations", summary.get("iterations", 0)),
+    }
+
+
 def render_json(store, *, provenance=None) -> dict:
     """Typed JSON report rendered purely from the store (sorted, deterministic)."""
     findings = sorted(store.read_findings(), key=lambda f: f.get("id", ""))
@@ -54,6 +93,7 @@ def render_json(store, *, provenance=None) -> dict:
     report = {
         "schema_version": REPORT_SCHEMA_VERSION,
         "summary": store.read_summary(),
+        "signals": _store_signals(store, findings, hardening),
         "findings": findings,
         "hardening": hardening,
     }
@@ -119,7 +159,7 @@ def validate_report(report: dict) -> list:
     errors = []
     if report.get("schema_version") != REPORT_SCHEMA_VERSION:
         errors.append(f"bad_schema_version={report.get('schema_version')}")
-    for key in ("summary", "findings", "hardening"):
+    for key in ("summary", "signals", "findings", "hardening"):
         if key not in report:
             errors.append(f"missing_key={key}")
     if not isinstance(report.get("findings"), list):

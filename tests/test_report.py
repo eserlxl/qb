@@ -64,6 +64,11 @@ class ReportTests(unittest.TestCase):
             self.assertEqual(len(report["findings"]), 2)
             self.assertEqual(len(report["hardening"]), 1)
             self.assertEqual(report["hardening"][0]["outcome"], "reverted")
+            self.assertEqual(report["signals"]["severity_counts"], {"P0": 0, "P1": 1, "P2": 0, "P3": 1})
+            self.assertEqual(report["signals"]["fixes"], {"kept": 0, "reverted": 1, "blocked": 0})
+            self.assertEqual(report["signals"]["quality"]["precision_estimate"], 0.0)
+            self.assertTrue(report["signals"]["quality"]["fix_safety_ok"])
+            self.assertEqual(report["signals"]["iterations"], 0)
 
     def test_sarif_mapping(self) -> None:
         with tempfile.TemporaryDirectory() as d:
