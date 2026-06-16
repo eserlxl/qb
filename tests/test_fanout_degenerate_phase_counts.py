@@ -140,6 +140,14 @@ def run_validator(root: Path, mode: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def metric(stdout: str, name: str) -> str:
+    prefix = f"{name}="
+    for line in stdout.splitlines():
+        if line.startswith(prefix):
+            return line.removeprefix(prefix)
+    raise AssertionError(f"missing metric {name!r} in output:\n{stdout}")
+
+
 class FanoutDegenerateFixtureBuilderTests(unittest.TestCase):
     def test_builder_emits_zero_and_one_phase_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as d:
@@ -189,6 +197,17 @@ class FanoutDegeneratePhaseBehaviorTests(unittest.TestCase):
         self.assertNotIn("missing_phase_folder=", result.stdout)
         self.assertNotIn("subplan_numbering_gap=", result.stdout)
         self.assertNotIn("phase-2-plans", result.stdout)
+
+    def test_lone_phase_is_indexed_exactly_once(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            build_planner_tree(root, phase_count=1, subplans_per_phase=1)
+            result = run_validator(root, "step2")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(metric(result.stdout, "main_phase_count"), "1")
+        self.assertEqual(metric(result.stdout, "phase_folder_count"), "1")
+        self.assertEqual(metric(result.stdout, "subplan_count"), "1")
 
 
 if __name__ == "__main__":
