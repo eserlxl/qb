@@ -31,6 +31,17 @@ PRESENT_PATH_COVERAGE_AUDIT = {
     "gap": "does not yet assert the built-in pyflakes adapter emits category correctness",
 }
 
+ABSENT_PATH_COVERAGE_AUDIT = {
+    "simulated_absence": "deliberately nonexistent executable drives ToolAdapter.available through shutil.which == None",
+    "asserted": (
+        "analyze returns no findings",
+        "capability report has no ran adapters",
+        "capability report records adapter name",
+        "capability report records reason tool-unavailable",
+    ),
+    "gap": "no-raise is currently implicit in the test flow rather than named as an assertion",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
