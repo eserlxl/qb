@@ -72,3 +72,36 @@ capability reporting and fail-closed behavior. Namespace or container approaches
 may be stronger security mechanisms, but they conflict with the stdlib-only
 invariant enforced by `shared/scripts/least_privilege.py` and should not become
 the default engine path without a deliberate product decision.
+
+## Decision (Pending Human Confirmation)
+
+Recommended opt-in mechanism: implement a stdlib process-confinement wrapper as
+an explicit extension of `command_safety.run_command`, defaulting off and
+reporting which controls were actually established. The initial wrapper should
+preserve argv form, `cwd`, timeout, `minimal_env()`, output capture, and redaction
+semantics. On hosts where a requested control is unavailable, the wrapper should
+not silently execute unconfined.
+
+Rationale: this is the only candidate that keeps the dependency-free core
+intact, composes with the current safe-exec primitive, and gives Phase 3.3 a
+testable fail-closed branch. It is weaker than namespace or container isolation,
+so the result must be described as opt-in process confinement, not a full sandbox.
+
+### REQUIRES HUMAN CONFIRMATION
+
+Before implementation, an approver must answer:
+
+1. Should Phase 3.2 proceed with stdlib process confinement as the first opt-in
+   mechanism, leaving namespace/container confinement out of the dependency-free
+   core?
+2. When a requested confinement control cannot be established, should QB refuse
+   to run verification, or record a distinct degraded outcome that is never
+   equivalent to unconfined success?
+3. Are any OS-specific controls mandatory for the first implementation, or may
+   the wrapper expose a capability set that varies by platform while remaining
+   default-off?
+
+Until those questions are answered, implementation must not silently lock in a
+namespace or container dependency. For the fail-closed path, the recommended
+default is refusal: requested confinement that cannot be established should
+return a distinct non-green result and skip unconfined execution.
