@@ -159,6 +159,7 @@ Every artifact lands under `.qb/` in **your** workspace — never in the plugin 
 | `/qb-assess` | Analyze an existing repository only (Step 1.5). |
 | `/qb-audit` | Re-run the quality audit only (Step 3). |
 | `/qb-implement` | Implement one reviewed slice (Step 4, gated). |
+| `/qb-harden` | Run the audit → harden → report engine over the repo at a chosen autonomy level (default `A0`, report-only). |
 
 ---
 
@@ -182,6 +183,22 @@ make test    # from platforms/claude-code: run the package unit tests only
 ```
 
 From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all four platform validators and the top-level invariant tests. The monorepo also ships GitHub Actions at `.github/workflows/validate.yml`, which runs that root check on pushes and pull requests.
+
+---
+
+## Hardening
+
+Beyond planning, the package ships the QB audit → harden engine (`/qb-harden`,
+`scripts/audit_runner.py`), which inspects a repository read-only by default
+(autonomy `A0`) and promotes fixes only when you explicitly raise the level. Its
+six producer analyzers — `SecretHygieneAnalyzer`, `CommandInjectionAnalyzer`,
+`QualityAnalyzer`, `DependencyAnalyzer`, `LicenseAnalyzer`, and
+`ConfigHygieneAnalyzer` — cover the eight finding categories `secret`,
+`injection`, `path-traversal`, `dependency`, `quality`, `correctness`,
+`license`, and `config`. The `correctness` category is produced conditionally by
+the `pyflakes` adapter when `pyflakes` is already installed. See the root
+[README](../../README.md#hardening-path) for the full engine, autonomy levels,
+and output store.
 
 ---
 

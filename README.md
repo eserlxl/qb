@@ -108,11 +108,16 @@ repository context.
 | A2 | Promote only verified fixes that satisfy policy and rollback requirements. |
 | A3 | A2 plus a reviewable delivery path; commit, push, and PR actions remain opt-in. |
 
-The built-in analyzers cover secret-shaped values, command injection, dynamic
-eval, path traversal, dependency manifests, lockfiles, repository license state,
-committed dotenv files, and local quality tools such as `ruff` or `pyflakes` when
-they already exist. Advisory enrichment is networked only when explicitly
-enabled.
+The built-in producer analyzers are `SecretHygieneAnalyzer`,
+`CommandInjectionAnalyzer`, `QualityAnalyzer`, `DependencyAnalyzer`,
+`LicenseAnalyzer`, and `ConfigHygieneAnalyzer`. Together they cover the frozen
+finding categories `secret`, `injection`, `path-traversal`, `dependency`,
+`quality`, `correctness`, `license`, and `config`: secret-shaped values, command
+injection, dynamic eval, path traversal, dependency manifests, lockfiles,
+repository license state, committed dotenv/config hygiene, and local quality
+tools such as `ruff`. The `correctness` category is produced conditionally by
+the `pyflakes` adapter when `pyflakes` already exists. Advisory enrichment is
+networked only when explicitly enabled.
 
 Each run writes a fixed store:
 
