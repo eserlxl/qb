@@ -1,0 +1,19 @@
+# Changelog
+
+All notable changes to QB are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.11.0] - 2026-06-16
+
+### Added
+- Antigravity platform build of QB: a native Antigravity Agent Skill (`skills/qb/`)
+  that runs the repo-aware planning workflow — main plan, Step 1.5 assessment with
+  optional project-ontology and planning-ledger memory, vibecoding-first phase
+  sub-planning, a coverage/quality audit, and a gated implementation handoff. Ported
+  from the standalone AntigravityQB project onto QB's naming conventions: `qb`
+  identity, `.qb/` artifacts (`main-planning.md`, `assessment.md`,
+  `sub-planning-index.md`, `sub-planning-audit.md`, `phase-N-plans/phase-N.M-*.md`),
+  and the bundled read-only `validate_planner_docs.py`. Installs into the supported
+  Antigravity/Gemini skill locations via `scripts/install.sh`.

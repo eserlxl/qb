@@ -184,7 +184,7 @@ Repository maintainers can run the package check:
 make check   # from platforms/cursor: validate this package
 ```
 
-From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all three platform validators and the top-level invariant tests.
+From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all four platform validators and the top-level invariant tests.
 
 ---
 

@@ -1,0 +1,360 @@
+# QB
+
+**Vibecoding-first repo planning for Google Antigravity.**
+
+QB is a Google Antigravity Agent Skill that turns an existing repository into a durable planning package. It inspects the project, asks a small set of high-signal intake questions, writes structured planning documents, audits those documents, and finally produces a gated implementation handoff prompt for a separate Antigravity task.
+
+The plugin is designed for serious project work where plans need to survive long context windows, implementation needs clear acceptance criteria, and the agent should not start changing product code before the planning package is complete.
+
+QB is the Antigravity-native edition of a repo-aware planning workflow built around Markdown-based stable planning, validation controls, durable project memory, and controlled implementation handoff. It is meant to reduce context drift in long tasks without turning the planning skill itself into an implementation agent.
+
+## What It Does
+
+QB creates a planning workflow around the repository you already have open:
+
+- **Repo-aware intake:** reads the current project before asking questions, then proposes practical defaults for project name, intent, target state, and constraints.
+- **Project Assessment + Ontology:** existing projects get a focused `assessment.md` report and may get `project-ontology.md` to capture vocabulary, entities, boundaries, workflows, integrations, and invariants.
+- **Durable planning memory:** writes Markdown files under `.qb/` so the plan, ontology, and implementation ledger can be reviewed, versioned, shared, resumed, and audited.
+- **Phase decomposition:** expands a main plan into ordered phase folders and detailed sub-plan files.
+- **Quality audit:** checks coverage, sequencing, structure, readiness, ontology consistency, planning-history continuity, security/governance concerns, vibecoding slice quality, and implementation preparedness.
+- **Gated Step 4 handoff:** prints a separate implementation prompt only when the audit says implementation can begin.
+- **Queue-continuation semantics:** Step 4 builds an ordered READY/READY_WITH_WARNINGS queue, keeps going through verified slices until a real stop gate is hit, and asks the implementation run to append concise summaries to `planning-ledger.md`.
+- **Task delegation guidance:** recommends bounded helper agents/tasks only when they reduce context pollution, improve evidence quality, or separate implementation from review.
+- **Planning-only guardrails:** keeps P0/P1 audit gates, secret/token hygiene, file boundaries, and implementation safety rules visible at the skill level.
+- **Dependency-free validation:** ships a Python standard-library validator and a `make check` release gate.
+
+QB is intentionally vibecoding-first: it keeps the target vision clear, reads the repository's real shape, avoids fake certainty, and plans the next useful verified moves instead of freezing unnecessary implementation detail too early. Vibecoding never relaxes safety, secret handling, approval, validation, or file-boundary rules.
+
+## Why Use It
+
+QB is useful when a project is too large for a single ad hoc prompt and too important for vague planning notes. It gives Antigravity a repeatable workflow:
+
+1. Understand the repository first.
+2. Ask only the questions needed to lock direction.
+3. Write a main plan.
+4. Audit the current project when it already exists.
+5. Break the plan into implementation-ready sub-plans.
+6. Audit the full planning package.
+7. Hand implementation to a separate Antigravity task with explicit gates.
+
+This keeps planning, auditing, and implementation separate. The result is less drift, clearer stop conditions, and planning files that can be validated outside the chat.
+
+## Requirements
+
+- Google Antigravity IDE or Antigravity CLI.
+- Python 3 for the bundled planner validator.
+- A fresh Antigravity conversation or task after installation so the skill list refreshes.
+- No third-party Python packages are required for validation.
+
+## Installation
+
+From the QB monorepo, change into this platform package:
+
+```bash
+cd platforms/antigravity
+```
+
+Install into the Antigravity app global plugin cache:
+
+```bash
+scripts/install.sh --scope app-global --force
+```
+
+Install into one Antigravity IDE project:
+
+```bash
+scripts/install.sh --scope ide-project --target /path/to/project
+```
+
+Install globally for Antigravity IDE:
+
+```bash
+scripts/install.sh --scope ide-global
+```
+
+Install into one Antigravity CLI project:
+
+```bash
+scripts/install.sh --scope cli-project --target /path/to/project
+```
+
+Install globally for Antigravity CLI:
+
+```bash
+scripts/install.sh --scope cli-global
+```
+
+Preview any install without copying files:
+
+```bash
+scripts/install.sh --scope ide-project --target /path/to/project --dry-run
+```
+
+## Installation Targets
+
+QB is distributed as a skill folder:
+
+```text
+skills/qb/
+  SKILL.md
+  scripts/
+  references/
+```
+
+The installer copies that folder into one of the supported Antigravity skill locations:
+
+| Scope | Destination |
+| --- | --- |
+| `app-global` | `~/.gemini/config/plugins/qb/skills/qb` |
+| `ide-project` | `/path/to/project/.agents/skills/qb` |
+| `ide-global` | `~/.agents/skills/qb` |
+| `cli-project` | `/path/to/project/.agent/skills/qb` |
+| `cli-global` | `~/.gemini/antigravity-cli/skills/qb` |
+
+Manual installation is also possible by copying `skills/qb/` to one of those destinations.
+
+## Quick Start
+
+Open Antigravity in the repository you want to plan and ask:
+
+```text
+Use the qb skill to inspect this repo and plan this project.
+```
+
+QB will perform a bounded read-only scan, ask four intake questions, then create the first planning artifact:
+
+```text
+.qb/main-planning.md
+```
+
+The bundled prompts and validator expect these exact `.qb/` filenames; create them verbatim and do not rename them.
+
+## Workflow
+
+| Step | Purpose | Output |
+| --- | --- | --- |
+| Step 1 | Repository scan, intake questions, and master plan creation. | `.qb/main-planning.md` |
+| Step 1.5 | Existing-project assessment and optional ontology capture when the repo is already built or partially built. | `.qb/assessment.md`, optional `.qb/project-ontology.md` |
+| Step 2 | Full phase and sub-plan generation. | `.qb/sub-planning-index.md`, `.qb/phase-*-plans/*.md` |
+| Step 3 | Read-only QA audit of the planning package. | `.qb/sub-planning-audit.md` |
+| Step 4 | Copy-ready implementation handoff prompt for a separate task and optional implementation ledger updates. | Text prompt only, optional `.qb/planning-ledger.md` updates |
+
+### Step 1: Main Plan
+
+QB scans the repository and asks:
+
+- `PROJECT_NAME`
+- `PROJECT_INTENT`
+- `TARGET_END_STATE`
+- `KNOWN_CONSTRAINTS`
+
+QB asks intake questions in the user's language when practical. Generated .qb artifacts are English by default unless the user explicitly requests another body language. Required document headings remain English for validator stability.
+
+If `.qb/planning-ledger.md` or `.qb/project-ontology.md` already exists, Step 1 reads it as supporting history before intake. Current repository state and user-confirmed intent still win over stale continuity docs.
+
+### Step 1.5: Assessment
+
+For existing or partially built projects, QB creates `.qb/assessment.md` and may create `.qb/project-ontology.md` when enough evidence exists. The assessment reviews:
+
+- project structure and major modules;
+- implemented, partial, and missing features;
+- placeholder or mock behavior;
+- technical debt and architecture risks;
+- validation and CI gaps;
+- security, privacy, and operational concerns;
+- readiness issues that should influence Step 2.
+
+`project-ontology.md` captures domain vocabulary, entities, concepts, module boundaries, workflows, lifecycles, integrations, invariants, constraints, and open ontology questions.
+
+Empty or nearly empty repositories can skip this step.
+
+### Step 2: Sub-Plans
+
+Step 2 expands every main phase into detailed sub-plan files under `.qb/phase-<n>-plans/`. It uses `assessment.md`, `project-ontology.md`, and `planning-ledger.md` as supporting evidence when present and writes an index at:
+
+```text
+.qb/sub-planning-index.md
+```
+
+Step 2 should continue until all phases from the main plan are represented.
+
+### Step 3: QA Audit
+
+Step 3 creates:
+
+```text
+.qb/sub-planning-audit.md
+```
+
+The audit checks plan coverage, file naming, phase ordering, required sections, index consistency, scope drift, readiness realism, ontology consistency, planning-history continuity, security/governance coverage, vibecoding slice quality, and Step 4 readiness. It does not repair plan files.
+
+### Step 4: Gated Implementation Handoff
+
+Step 4 is intentionally not product implementation. It is a handoff prompt for a new Antigravity task.
+
+The Step 4 prompt is printed only when:
+
+- `.qb/sub-planning-audit.md` exists;
+- the audit status is `PASS`, or `PASS_WITH_WARNINGS` without P0/P1 findings;
+- the Step 4 validator passes.
+
+The implementation handoff must build an ordered queue from READY and READY_WITH_WARNINGS items. After each verified slice, the implementation task should continue to the next acceptance criterion or next eligible sub-plan instead of stopping after the first successful slice.
+
+When file writes are allowed in the Step 4 implementation task, the handoff asks the run to append a concise verified-slice or stop-event summary to `.qb/planning-ledger.md`. The ledger is replanning memory, not a transcript dump.
+
+It should stop only when a real stop gate is hit, such as:
+
+- P0/P1 finding or safety/security blocker;
+- failing tests that cannot be resolved in the current slice;
+- missing required files or planner outputs;
+- contradiction between the plan, audit, repository, or user instruction;
+- credential, payment, or live-approval requirement;
+- unsafe external mutation;
+- unrelated dirty worktree or merge conflict;
+- unavailable validation with no reasonable fallback;
+- token/context budget too low to continue safely;
+- explicit user stop request.
+
+## Generated Artifact Tree
+
+A complete planning run usually creates:
+
+```text
+.qb/
+  main-planning.md
+  assessment.md
+  project-ontology.md
+  planning-ledger.md
+  sub-planning-index.md
+  sub-planning-audit.md
+  phase-1-plans/
+    phase-1.1-*.md
+    phase-1.2-*.md
+  phase-2-plans/
+    phase-2.1-*.md
+    phase-2.2-*.md
+```
+
+`assessment.md`, `project-ontology.md`, and `planning-ledger.md` are optional depending on repository maturity and prior runs. The phase and sub-plan count depends on the project scope.
+
+## Validation
+
+From a QB checkout, validate generated planner docs with:
+
+```bash
+python3 skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step1
+python3 skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode assessment --strict
+python3 skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step2 --strict
+python3 skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step3 --strict
+python3 skills/qb/scripts/validate_planner_docs.py --root /path/to/project --mode step4
+```
+
+The validator checks required sections, optional ontology/ledger headings, phase folders, filename conventions, index references, duplicate numbering, unindexed files, length-bounded secret patterns, and Step 4 readiness. P0/P1 audit findings block the implementation handoff.
+
+Maintainers should run the full package check before release:
+
+```bash
+make check
+```
+
+`make check` validates:
+
+- required package files;
+- Antigravity skill frontmatter (name and description);
+- the skill name matches its directory;
+- cross-host residue in hand-authored files;
+- package secret hygiene;
+- installer dry-runs.
+
+## Security And Privacy
+
+QB is designed to keep planning artifacts safe to review and commit:
+
+- It does not require API keys or service credentials.
+- It should not print, store, or invent secrets.
+- The validator scans for common leaked secret patterns, including long fake tokens and real-looking provider keys.
+- Human-readable placeholder values are allowed; real provider keys are release blockers.
+- Planning prompts instruct the agent to report credential blockers instead of bypassing them.
+- Generated plans should avoid unnecessary personal data, direct contact details, payment identifiers, or environment-specific secrets.
+
+If a real key is exposed in chat, logs, docs, examples, or commits, treat it as compromised and rotate it outside this repository before release.
+
+## Language Contract
+
+- Repository documentation and bundled planner artifacts are English by default.
+- Required validator-facing headings remain English.
+- The user-facing intake conversation can use the user's language when practical.
+- Do not mix platform-specific terms from other agent environments into QB documentation or prompts.
+
+## Repository Layout
+
+```text
+docs/
+  INSTALLATION.md
+  MAINTAINING.md
+  USAGE.md
+scripts/
+  install.sh
+  validate.sh
+skills/
+  qb/
+    SKILL.md
+    scripts/validate_planner_docs.py
+    references/
+      First-Planner.md
+      Assessment-Planner.md
+      Second-Planner.md
+      Third-Planner.md
+      Fourth-Planner.md
+      repo-aware-intake.md
+      workflow-quality.md
+      vibecoding-principles.md
+      task-delegation-playbook.md
+      planning-ledger.md
+      project-ontology.md
+      assessment-and-budget.md
+      engineering-principles.md
+CHANGELOG.md
+Makefile
+LICENSE
+README.md
+```
+
+## CI
+
+CI runs from the QB monorepo root at `.github/workflows/validate.yml`, which runs
+`make check` across every platform package (including this one) on pushes to `main`
+and on pull requests.
+
+## Troubleshooting
+
+If Antigravity does not list `qb`:
+
+- start a new Antigravity conversation or task;
+- confirm the installed folder contains `SKILL.md`;
+- confirm the skill was copied to one of the documented Antigravity skill directories;
+- reinstall with `--force` if a partial copy already exists;
+- use `/skills` in Antigravity CLI to refresh and inspect available skills.
+
+If Step 4 is not printed:
+
+- confirm `.qb/sub-planning-audit.md` exists;
+- run the Step 4 validator;
+- resolve P0/P1 findings first;
+- confirm the audit status is `PASS` or eligible `PASS_WITH_WARNINGS`.
+
+If validation fails:
+
+- read the exact file and line reported by the validator;
+- repair the planning package or repository metadata;
+- rerun the same command before continuing.
+
+## Documentation
+
+- [Installation](docs/INSTALLATION.md)
+- [Usage](docs/USAGE.md)
+- [Maintaining QB](docs/MAINTAINING.md)
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -1,4 +1,4 @@
-"""Manifest-id and frontmatter-name invariants across all three platforms."""
+"""Manifest-id (JSON-manifest platforms) and frontmatter-name (all platforms) invariants."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import unittest
 
 from tests.qb_monorepo import (
     ALL_PLATFORMS,
+    ANTIGRAVITY,
     CLAUDE_CODE,
     CODEX,
     CURSOR,
@@ -112,6 +113,14 @@ class FrontmatterNameTests(unittest.TestCase):
         problems += self._check_md_stems(root / "commands")
         # Codex agents use agents/openai.yaml (no frontmatter `name:` stem
         # convention), so it is intentionally not stem-checked here.
+        self.assertEqual(problems, [], "\n".join(problems))
+
+    def test_antigravity_frontmatter_names(self) -> None:
+        # Antigravity is manifest-less: its single skill name lives in SKILL.md
+        # frontmatter and must equal its directory name (qb).
+        if not ANTIGRAVITY["skill"].exists():
+            self.skipTest("antigravity not built yet")
+        problems = self._check_skill_dirs(ANTIGRAVITY["root"] / "skills")
         self.assertEqual(problems, [], "\n".join(problems))
 
 

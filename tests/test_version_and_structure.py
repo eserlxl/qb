@@ -19,6 +19,7 @@ import unittest
 
 from tests.qb_monorepo import (
     ALL_PLATFORMS,
+    ANTIGRAVITY,
     CLAUDE_CODE,
     CODEX,
     CURSOR,
@@ -100,6 +101,33 @@ class StructuralInvariantTests(unittest.TestCase):
         ])
         self.assertTrue(any(CODEX["root"].rglob("openai.yaml")),
                         "codex agents/openai.yaml expected (accepted shape)")
+
+    def test_antigravity_bare_skill_folder_shape(self) -> None:
+        if not ANTIGRAVITY["skill"].exists():
+            self.skipTest("antigravity not built")
+        # Accepted shape: a single qb Agent Skill with the bundled validator and
+        # planner specs, plus host install/validate scripts. NO JSON manifest --
+        # version + identity live in SKILL.md frontmatter.
+        self._require(ANTIGRAVITY["root"], [
+            "skills/qb/SKILL.md",
+            "skills/qb/scripts/validate_planner_docs.py",
+            "skills/qb/references/First-Planner.md",
+            "skills/qb/references/Assessment-Planner.md",
+            "scripts/install.sh",
+            "scripts/validate.sh",
+            "CHANGELOG.md",
+        ])
+        self.assertFalse(
+            any(ANTIGRAVITY["root"].rglob("plugin.json")),
+            "antigravity is a bare skill folder; it must NOT carry a JSON plugin manifest",
+        )
+        # No JSON manifest carries a license field, and install.sh injects
+        # `license: MIT` into the generated manifest, so pin the LICENSE content as
+        # the antigravity analogue of the JSON platforms' manifest-license==MIT check.
+        self.assertTrue(
+            (ANTIGRAVITY["root"] / "LICENSE").read_text(encoding="utf-8").startswith("MIT License"),
+            "antigravity LICENSE must be MIT",
+        )
 
 
 if __name__ == "__main__":

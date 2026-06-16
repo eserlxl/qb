@@ -107,7 +107,7 @@ make check   # from platforms/codex: validate this package
 
 `make check` validates plugin JSON, required package files, `agents/openai.yaml` semantic fields, stale invocation names, and cross-host residue without requiring PyYAML or local Codex validator dependencies.
 
-From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all three platform validators and the top-level invariant tests.
+From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all four platform validators and the top-level invariant tests.
 
 ## Release Validation
 

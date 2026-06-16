@@ -54,7 +54,34 @@ CODEX = {
     ),
 }
 
+# Antigravity (Google's Gemini-based IDE) ships as a bare Agent Skill folder with
+# NO JSON plugin manifest -- its version and identity live in skills/qb/SKILL.md
+# frontmatter. It is kept OUT of ALL_PLATFORMS (the JSON-manifest set the
+# version/manifest-id tests iterate) and exercised by dedicated antigravity tests
+# plus its own scripts/validate.sh. Its planner specs are host-authored
+# (vibecoding-first, divergent from shared/), so it is intentionally NOT a
+# scripts/sync.sh destination.
+ANTIGRAVITY = {
+    "id": "qb",
+    "root": PLATFORMS_DIR / "antigravity",
+    "manifest": None,
+    "skill": PLATFORMS_DIR / "antigravity/skills/qb/SKILL.md",
+    "forbidden": (
+        "$qb",
+        "define-goal",
+        "create_goal",
+        "get_goal",
+        ".claude-plugin",
+        ".cursor-plugin",
+        ".codex-plugin",
+    ),
+}
+
+# The JSON-manifest platforms (version-lockstep + manifest-id tests iterate these).
 ALL_PLATFORMS = (CLAUDE_CODE, CURSOR, CODEX)
+
+# Every shipped platform package, including the manifest-less antigravity skill.
+ALL_PACKAGES = (CLAUDE_CODE, CURSOR, CODEX, ANTIGRAVITY)
 
 
 def load_manifest(platform: dict) -> dict:

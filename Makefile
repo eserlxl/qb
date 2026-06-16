@@ -7,6 +7,7 @@ check:
 	bash scripts/sync.sh --check
 	bash platforms/claude-code/scripts/validate.sh
 	bash platforms/cursor/scripts/validate.sh
+	bash platforms/antigravity/scripts/validate.sh
 	cd platforms/codex && bash scripts/validate.sh
 	python3 -m unittest discover -s tests
 

@@ -56,6 +56,9 @@ esac
 # One entry per (source, destination) pair. Source paths are relative to
 # SHARED_DIR; destination paths are relative to REPO_ROOT. The grouping by source
 # mirrors the SPEC: each shared file fans out to claude-code, cursor, and codex.
+# (The antigravity platform is intentionally NOT a sync destination: its planner
+# specs + bundled validator are host-authored, vibecoding-first, and divergent
+# from shared/. It carries its own copies and is gated by its own validate.sh.)
 MAP=(
   # shared/planners/first-planner.md
   "planners/first-planner.md|platforms/claude-code/skills/qb-planner/planners/first-planner.md"

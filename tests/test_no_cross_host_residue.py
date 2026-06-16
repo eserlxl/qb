@@ -5,7 +5,7 @@ orchestration, slash commands, and agents (Claude Code ``agents/*.md`` and the
 Codex ``agents/openai.yaml``). The synced, host-neutral planner specs,
 reference docs, and validator (which say only "QB") are intentionally exempt and
 are NOT scanned here. README / CHANGELOG / docs are likewise out of scope -- they
-may mention all three platforms and the upstream attribution.
+may mention all platforms and the upstream attribution.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from tests.qb_monorepo import CLAUDE_CODE, CODEX, CURSOR
+from tests.qb_monorepo import ANTIGRAVITY, CLAUDE_CODE, CODEX, CURSOR
 
 
 def _hand_authored_host_files(skills_root: Path, components_roots: list[Path]) -> list[Path]:
@@ -47,7 +47,7 @@ def _hand_authored_host_files(skills_root: Path, components_roots: list[Path]) -
 
 class CrossHostResidueTests(unittest.TestCase):
     def _assert_clean(self, platform: dict, host_root: Path) -> None:
-        if not platform["manifest"].exists():
+        if not (host_root / "skills").exists():
             self.skipTest(f"platform not built yet: {platform['id']}")
 
         files = _hand_authored_host_files(
@@ -76,6 +76,10 @@ class CrossHostResidueTests(unittest.TestCase):
     def test_codex_host_files_have_no_cross_host_residue(self) -> None:
         # Codex packages its host files under plugins/qb/.
         self._assert_clean(CODEX, CODEX["root"] / "plugins/qb")
+
+    def test_antigravity_host_files_have_no_cross_host_residue(self) -> None:
+        # Antigravity packages a single bare skill under skills/qb/.
+        self._assert_clean(ANTIGRAVITY, ANTIGRAVITY["root"])
 
 
 if __name__ == "__main__":

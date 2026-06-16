@@ -5,9 +5,9 @@ Repo planning, plan export, and guarded repository hardening for AI coding hosts
 [![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
 [![version](https://img.shields.io/badge/version-0.9.0-2563EB)](VERSION)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
-[![platforms](https://img.shields.io/badge/platforms-claude--code%20%C2%B7%20cursor%20%C2%B7%20codex-2563EB)](#platform-packages)
+[![platforms](https://img.shields.io/badge/platforms-claude--code%20%C2%B7%20cursor%20%C2%B7%20codex%20%C2%B7%20antigravity-2563EB)](#platform-packages)
 
-QB is a shared workflow layer for Claude Code, Cursor, and Codex: one host-neutral core, three native packages and a separate audit/harden engine that can inspect a repository without taking write privileges by default.
+QB is a shared workflow layer for Claude Code, Cursor, Codex, and Antigravity: one host-neutral core, four native packages and a separate audit/harden engine that can inspect a repository without taking write privileges by default. (The Antigravity package is planning-only.)
 
 The project has two jobs:
 
@@ -122,6 +122,7 @@ host packages differ only where the host requires a different launch mechanism.
 | Claude Code | `/qb-plan` or `/qb-plan auto` | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
 | Cursor | `/qb-plan` or `/qb-plan auto` | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
 | Codex | `Use $qb ...` or `Use $qb auto ...` | Ask `$qb` for Step 1.5, Step 2, Step 3, Step 3.5, or Step 4 | Ask `$qb` to audit and harden |
+| Antigravity | `Use the qb skill ...` | Ask the skill for Step 1.5, Step 2, Step 3, or Step 4 | — (planning-only) |
 
 Long-running work is launched through each host's native pattern:
 
@@ -130,6 +131,7 @@ Long-running work is launched through each host's native pattern:
 | Claude Code | Task-tool subagents: `qb-assess`, `qb-subplanner`, `qb-auditor`, `qb-implementer`. | `/qb-harden` delegates to `qb-runner`. |
 | Cursor | Native `define-goal` goals for the matching skills. | `/qb-harden` launches the `qb-runner` goal. |
 | Codex | Text-only Goal-mode prompt blocks through `$qb`. | `$qb` flow backed by `qb_headless.py`. |
+| Antigravity | Text-only Antigravity-task prompt blocks via the `qb` skill. | — (planning-only) |
 
 ### Install
 
@@ -163,6 +165,17 @@ codex plugin add qb@eserlxl
 For a local checkout, run `codex plugin marketplace add .` from
 `platforms/codex`.
 
+Antigravity:
+
+```bash
+git clone https://github.com/eserlxl/qb.git
+cd qb/platforms/antigravity
+scripts/install.sh --scope app-global --force
+```
+
+See `platforms/antigravity/docs/INSTALLATION.md` for all scopes (IDE/CLI,
+project/global).
+
 ## Repository Map
 
 ```text
@@ -174,6 +187,7 @@ platforms/
   claude-code/              # Claude Code plugin package
   cursor/                   # Cursor plugin package
   codex/                    # Codex plugin package
+  antigravity/              # Antigravity (Gemini) skill package -- planning-only
 scripts/
   sync.sh                   # shared-core fan-out
   bump-version.sh           # version metadata maintenance
@@ -228,10 +242,11 @@ scripts/bump-version.sh --sync
 ## Attribution
 
 QB is an independent project inspired by Alican Kiraz's
-[CursorQB](https://github.com/alicankiraz1/CursorQB) and
-[CodexQB](https://github.com/alicankiraz1/CodexQB). It now diverges in scope and
-architecture: native Claude Code support, a unified `qb` identity across three
-hosts, `.qb/` artifacts, planwright export, a shared host-neutral core, and a
+[CursorQB](https://github.com/alicankiraz1/CursorQB),
+[CodexQB](https://github.com/alicankiraz1/CodexQB), and
+[AntigravityQB](https://github.com/alicankiraz1/AntigravityQB). It now diverges in
+scope and architecture: native Claude Code support, a unified `qb` identity across
+four hosts, `.qb/` artifacts, planwright export, a shared host-neutral core, and a
 policy-gated audit/harden engine.
 
 Released under the [MIT](LICENSE) license.

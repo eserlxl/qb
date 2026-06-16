@@ -34,7 +34,7 @@ QB is a **Claude Code plugin** that runs a guided, multi-step planning workflow 
 
 It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/qb-plan`.
 
-> QB is one of three platform packages in the QB monorepo (Claude Code / Cursor / Codex), an independent project inspired by — not a direct port of — **CursorQB** and **CodexQB** by **Alican Kiraz**.
+> QB is one of four platform packages in the QB monorepo (Claude Code / Cursor / Codex / Antigravity), an independent project inspired by — not a direct port of — **CursorQB** and **CodexQB** by **Alican Kiraz**.
 
 ---
 
@@ -181,7 +181,7 @@ make check   # from platforms/claude-code: validate this package and run its tes
 make test    # from platforms/claude-code: run the package unit tests only
 ```
 
-From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all three platform validators and the top-level invariant tests. The monorepo also ships GitHub Actions at `.github/workflows/validate.yml`, which runs that root check on pushes and pull requests.
+From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all four platform validators and the top-level invariant tests. The monorepo also ships GitHub Actions at `.github/workflows/validate.yml`, which runs that root check on pushes and pull requests.
 
 ---
 

@@ -5,17 +5,20 @@
 # Bump the QB version in lockstep across the whole monorepo.
 #
 # QB keeps the root VERSION file as the single source of version truth
-# (tests/test_version_and_structure.py enforces that every platform manifest
-# equals it). This script bumps VERSION and propagates the new value to:
-#   - the three platform plugin manifests (claude-code / cursor / codex),
-#   - the `metadata: version:` line in every platform SKILL.md, and
-#   - a new entry at the top of each platform CHANGELOG.md.
+# (tests/test_version_and_structure.py enforces that every platform manifest and
+# every SKILL.md frontmatter equals it). This script bumps VERSION and propagates
+# the new value to:
+#   - the JSON plugin manifests of the manifest-bearing platforms (claude-code /
+#     cursor / codex); antigravity is a bare skill folder with no JSON manifest,
+#   - the `metadata: version:` line in every platform SKILL.md (antigravity
+#     included; its install.sh derives the installed version from there), and
+#   - a new entry at the top of every platform CHANGELOG.md.
 #
 # It does NOT create a git tag or GitHub release. Tags belong at release
 # milestones; run this freely during development and tag manually later.
 #
 # Logic and the transactional/atomic hardening are adapted from planwright's
-# scripts/bump-version.sh, re-homed onto QB's VERSION-anchored, three-platform
+# scripts/bump-version.sh, re-homed onto QB's VERSION-anchored, multi-platform
 # monorepo layout.
 #
 # Usage:
@@ -51,6 +54,7 @@ CHANGELOGS=(
   "$ROOT/platforms/claude-code/CHANGELOG.md"
   "$ROOT/platforms/cursor/CHANGELOG.md"
   "$ROOT/platforms/codex/CHANGELOG.md"
+  "$ROOT/platforms/antigravity/CHANGELOG.md"
 )
 
 # Portable repo-relative path. GNU realpath's relative mode is unavailable on

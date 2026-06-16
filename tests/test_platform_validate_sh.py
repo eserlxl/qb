@@ -9,6 +9,7 @@ required file and on a mis-named manifest, not just that it passes when clean.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -16,7 +17,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from tests.qb_monorepo import CLAUDE_CODE, CODEX, CURSOR
+from tests.qb_monorepo import ANTIGRAVITY, CLAUDE_CODE, CODEX, CURSOR
 
 
 def _run(tmp_root: Path) -> subprocess.CompletedProcess[str]:
@@ -97,6 +98,91 @@ class CodexValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
         self.assertIn("tracked_secret_hygiene_failed", result.stdout + result.stderr)
 
 
+class AntigravityValidateShFailureTests(unittest.TestCase):
+    """Antigravity is manifest-less, so it gets a dedicated rejection-branch suite:
+    a clean copy passes, a missing required file fails, and a wrong SKILL.md
+    frontmatter identity (its name check, in place of a JSON manifest-name check)
+    fails.
+    """
+
+    def setUp(self) -> None:
+        src_root = ANTIGRAVITY["root"]
+        if not (src_root / "scripts/validate.sh").exists():
+            self.skipTest("antigravity platform not built yet")
+        self._tmp = TemporaryDirectory()
+        self.root = Path(self._tmp.name) / src_root.name
+        shutil.copytree(src_root, self.root)
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_clean_copy_passes(self) -> None:
+        result = _run(self.root)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_missing_required_file_fails(self) -> None:
+        (self.root / "README.md").unlink()
+        result = _run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("missing_required_file", result.stdout + result.stderr)
+
+    def test_wrong_skill_name_fails(self) -> None:
+        skill = self.root / "skills/qb/SKILL.md"
+        skill.write_text(
+            skill.read_text(encoding="utf-8").replace("name: qb", "name: not-qb", 1),
+            encoding="utf-8",
+        )
+        result = _run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        # validate.sh's required-frontmatter check enforces the verbatim `name: qb`
+        # line, so a wrong identity is rejected with this specific token (assert it
+        # precisely rather than a vacuous substring that any frontmatter edit trips).
+        self.assertIn("skill_frontmatter_missing_keys", result.stdout + result.stderr)
+
+
+class AntigravityInstallVersionTests(unittest.TestCase):
+    """install.sh derives the generated plugin.json version from SKILL.md frontmatter
+    (single source of version truth). Pin that the app-global install -- the only
+    path that emits a manifest -- produces name==qb, license==MIT, and
+    version==VERSION, so a sed/frontmatter regression cannot silently ship a
+    0.0.0 / wrong-version manifest while make check stays green.
+    """
+
+    def setUp(self) -> None:
+        self.install = ANTIGRAVITY["root"] / "scripts/install.sh"
+        if not self.install.exists():
+            self.skipTest("antigravity platform not built yet")
+
+    def test_app_global_plugin_json_version_matches_version_file(self) -> None:
+        from tests.qb_monorepo import REPO_ROOT
+
+        declared = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        with TemporaryDirectory() as home:
+            result = subprocess.run(
+                ["bash", str(self.install), "--scope", "app-global", "--force"],
+                text=True,
+                capture_output=True,
+                check=False,
+                env={**os.environ, "HOME": home},
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            plugin_root = Path(home) / ".gemini/config/plugins/qb"
+            manifest = plugin_root / "plugin.json"
+            self.assertTrue(manifest.exists(), f"plugin.json not generated: {result.stdout}")
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(data.get("name"), "qb")
+            self.assertEqual(data.get("license"), "MIT")
+            self.assertEqual(
+                data.get("version"),
+                declared,
+                f"generated plugin.json version {data.get('version')!r} != VERSION {declared!r}",
+            )
+            installed = json.loads(
+                (plugin_root / "installed_version.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(installed.get("version"), declared)
+
+
 def _required_files(validate_text: str) -> set:
     """Extract the required_files entries from a validate.sh (bash array or heredoc)."""
     array = re.search(r"required_files=\((.*?)\)", validate_text, re.DOTALL)
@@ -145,6 +231,9 @@ class RequiredFilesCompletenessTests(unittest.TestCase):
 
     def test_codex_required_files_are_complete(self) -> None:
         self._check(CODEX)
+
+    def test_antigravity_required_files_are_complete(self) -> None:
+        self._check(ANTIGRAVITY)
 
 
 if __name__ == "__main__":
