@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-06-16
+
+### Changed
+- Auto-mode planning (`/qb-plan auto`) now mandates independent subagent (Task-tool) delegation of every step — above all the Step 3 audit: a caller that trusts `QB_PLAN_AUTO_OK` is trusting that the audit was independent, so an in-session self-audit by the plan's own author is no longer treated as equivalent. The in-session path is a degraded fallback used only when the Task tool is genuinely unavailable, and must then disclose `QB_PLAN_AUTO_WARN: in-session fallback — audit not independently delegated` before the result line so consumers can downgrade trust. Also formalizes the Step-0 guard that adds `.qb/` to the target repo's .gitignore at planning start.
+
 ## [0.10.0] - 2026-06-15
 
 ### Changed
