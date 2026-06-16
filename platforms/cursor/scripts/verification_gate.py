@@ -17,6 +17,13 @@ Fail-closed rules:
   * Captured command output is redacted of secrets BEFORE it is stored, so a
     verification command that prints a secret never persists the value.
 
+Verification boundary:
+  * Write isolation is delivered by ``isolation.py``: verification runs inside
+    the disposable worktree, not the operator's checked-out tree.
+  * The environment floor is always ``command_safety.minimal_env()``.
+  * Execution process confinement is opt-in via ``confinement=...`` and defaults
+    off; unsupported requested controls fail closed instead of running unconfined.
+
 The two guarantees Phase 3.4 asserts: every kept fix verified green; every
 reverted fix leaves the isolation tree back at the captured handle.
 """
