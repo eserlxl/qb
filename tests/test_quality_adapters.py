@@ -19,6 +19,18 @@ from tests.qb_monorepo import SHARED_DIR
 
 MODULE_PATH = SHARED_DIR / "scripts/analyzer_quality.py"
 
+PRESENT_PATH_COVERAGE_AUDIT = {
+    "stubbed_tool": "python3 stand-in exercises detect -> argv-run -> normalize -> Finding without real pyflakes",
+    "asserted": (
+        "schema-conformant finding",
+        "category is currently the generic quality stub",
+        "severity maps native warn to P2",
+        "provenance names the stub tool",
+        "capability report records the tool as ran",
+    ),
+    "gap": "does not yet assert the built-in pyflakes adapter emits category correctness",
+}
+
 
 def _load(name: str, path: Path):
     if name in sys.modules:
