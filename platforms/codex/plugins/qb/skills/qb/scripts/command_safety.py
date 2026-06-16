@@ -9,7 +9,10 @@ with two halves:
    run WITHOUT an intervening system shell and WITHOUT interpolating untrusted
    strings into a command line. ``assert_argv`` and ``run_command`` enforce this;
    Phase 2.3 (tool adapters) and Phase 3 (the fixer's verification commands) MUST
-   use ``run_command`` rather than any shell-string form. A companion rule:
+   use ``run_command`` rather than any shell-string form. ``run_command`` also
+   owns the default-off stdlib process-confinement seam: requested confinement
+   is established before spawn, and unavailable required controls raise
+   ``ConfinementUnavailable`` before any child process runs. A companion rule:
    ``AUTO_RUN_REPO_SCRIPTS`` is False -- QB never auto-executes scripts provided
    by the repository under audit absent explicit, sandboxed authorization.
 
@@ -33,6 +36,7 @@ import os
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 # Environment keys safe to forward to an untrusted / repo-provided command: enough
@@ -70,6 +74,101 @@ iter_repo_files = _core.iter_repo_files
 
 
 # --- Structured argv convention -----------------------------------------------
+class ConfinementError(RuntimeError):
+    """Base class for requested command-confinement failures."""
+
+
+class ConfinementUnavailable(ConfinementError):
+    """Raised when a requested confinement control cannot be established."""
+
+
+@dataclass(frozen=True)
+class ConfinementSpec:
+    """Opt-in process-confinement controls for run_command.
+
+    Supported controls are deliberately stdlib-only:
+    - process_group: start the child in a new session/process group.
+    - resource_limits: apply conservative POSIX resource hardening when present.
+    """
+
+    enabled: bool = False
+    require: tuple[str, ...] = ("process_group",)
+    resource_limits: bool = True
+
+
+def available_confinement_controls() -> tuple[str, ...]:
+    """Return stdlib confinement controls available on this host."""
+    controls: list[str] = []
+    if os.name == "posix":
+        controls.append("process_group")
+        try:
+            import resource  # noqa: F401
+        except ImportError:
+            pass
+        else:
+            controls.append("resource_limits")
+    return tuple(controls)
+
+
+def _normalize_confinement(confinement) -> ConfinementSpec:
+    if confinement in (None, False):
+        return ConfinementSpec(enabled=False, require=(), resource_limits=False)
+    if confinement is True:
+        return ConfinementSpec()
+    if isinstance(confinement, ConfinementSpec):
+        return confinement
+    if isinstance(confinement, dict):
+        raw_require = confinement.get("require", ("process_group",))
+        if isinstance(raw_require, str):
+            require = (raw_require,)
+        else:
+            require = tuple(str(item) for item in raw_require)
+        return ConfinementSpec(
+            enabled=bool(confinement.get("enabled", True)),
+            require=require,
+            resource_limits=bool(confinement.get("resource_limits", True)),
+        )
+    raise TypeError("confinement must be None, bool, ConfinementSpec, or dict")
+
+
+def _establish_confinement(spec: ConfinementSpec) -> tuple[tuple[str, ...], object | None, bool]:
+    if not spec.enabled:
+        return (), None, False
+
+    available = set(available_confinement_controls())
+    requested = set(spec.require)
+    unsupported = requested - {"process_group", "resource_limits"}
+    if unsupported:
+        names = ", ".join(sorted(unsupported))
+        raise ConfinementUnavailable(f"unsupported confinement control(s): {names}; command not run")
+
+    missing = requested - available
+    if missing:
+        names = ", ".join(sorted(missing))
+        raise ConfinementUnavailable(f"confinement unavailable: {names}; command not run")
+
+    established: list[str] = []
+    start_new_session = False
+    preexec_fn = None
+
+    if "process_group" in available:
+        start_new_session = True
+        established.append("process_group")
+
+    if spec.resource_limits and "resource_limits" in available:
+        import resource
+
+        def _limit_child() -> None:
+            resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+
+        preexec_fn = _limit_child
+        established.append("resource_limits")
+
+    if not established:
+        raise ConfinementUnavailable("confinement unavailable: no stdlib controls; command not run")
+    return tuple(established), preexec_fn, start_new_session
+
+
 def assert_argv(argv):
     """Validate a command is an explicit argument vector, never a shell string."""
     if isinstance(argv, str):
@@ -81,10 +180,18 @@ def assert_argv(argv):
     return list(argv)
 
 
-def run_command(argv, cwd=None, timeout=None, env=None):
-    """Run an external command from an argv vector with no system shell."""
+def run_command(argv, cwd=None, timeout=None, env=None, confinement=None):
+    """Run an external command from an argv vector with no system shell.
+
+    Confinement is opt-in and default-off. When requested, the wrapper
+    establishes the available stdlib process boundary before spawning the child;
+    if a required control cannot be established, it raises
+    ConfinementUnavailable instead of silently running unconfined.
+    """
     args = assert_argv(argv)
-    return subprocess.run(  # noqa: S603 -- argv form, no shell; this is the safe primitive
+    spec = _normalize_confinement(confinement)
+    controls, preexec_fn, start_new_session = _establish_confinement(spec)
+    completed = subprocess.run(  # noqa: S603 -- argv form, no shell; this is the safe primitive
         args,
         cwd=cwd,
         timeout=timeout,
@@ -92,7 +199,14 @@ def run_command(argv, cwd=None, timeout=None, env=None):
         shell=False,
         capture_output=True,
         text=True,
+        preexec_fn=preexec_fn,
+        start_new_session=start_new_session,
     )
+    completed.qb_confinement = {
+        "enabled": spec.enabled,
+        "controls": controls,
+    }
+    return completed
 
 
 def minimal_env(base=None) -> dict:
