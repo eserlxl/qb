@@ -14,14 +14,17 @@ from tests.test_fanout_degenerate_phase_counts import (
 )
 
 
-def write_audit(root: Path) -> None:
+def write_audit(root: Path, finding_ids: tuple[str, ...] = ()) -> None:
     lines: list[str] = []
     for index, heading in enumerate(VALIDATOR.AUDIT_HEADINGS, start=1):
+        body = f"Audit fixture section {index} is complete enough for heading validation."
+        if heading == VALIDATOR.FIX_LIST_HEADING and finding_ids:
+            body = "\n".join(f"- {finding_id} | P2 | fixture finding" for finding_id in finding_ids)
         lines.extend(
             [
                 heading,
                 "",
-                f"Audit fixture section {index} is complete enough for heading validation.",
+                body,
                 "",
             ]
         )
@@ -107,6 +110,22 @@ class FanoutReduceSoleWriterTests(unittest.TestCase):
 
             self.assertEqual(first.returncode, second.returncode)
             self.assertEqual(first.stdout, second.stdout)
+
+    def test_audit_reduce_requires_single_artifact_with_unique_findings(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            build_planner_tree(root, phase_count=2, subplans_per_phase=1)
+            missing_audit = run_validator(root, "all")
+            write_audit(root, ("AUDIT-FIX-01", "AUDIT-FIX-02"))
+            audit_text = (root / ".qb/sub-planning-audit.md").read_text(encoding="utf-8")
+            with_audit = run_validator(root, "all")
+
+        self.assertNotEqual(missing_audit.returncode, 0, missing_audit.stdout + missing_audit.stderr)
+        self.assertIn("missing_file=.qb/sub-planning-audit.md", missing_audit.stdout)
+        finding_ids = [finding_id for finding_id, _severity in VALIDATOR.AUDIT_FIX_RE.findall(audit_text)]
+        self.assertEqual(finding_ids, ["AUDIT-FIX-01", "AUDIT-FIX-02"])
+        self.assertEqual(len(finding_ids), len(set(finding_ids)))
+        self.assertEqual(with_audit.returncode, 0, with_audit.stdout + with_audit.stderr)
 
 
 if __name__ == "__main__":
