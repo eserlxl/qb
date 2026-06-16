@@ -100,6 +100,7 @@ class CrossReviewOrchestratorTests(unittest.TestCase):
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
         subprocess.run(["git", "-C", str(repo), "config", "user.email", "t@e.com"])
         subprocess.run(["git", "-C", str(repo), "config", "user.name", "t"])
+        subprocess.run(["git", "-C", str(repo), "config", "commit.gpgsign", "false"])
         (repo / "style.txt").write_text("messy\n", encoding="utf-8")
         (repo / "tests").mkdir()
         (repo / "tests" / "test_style.py").write_text(
