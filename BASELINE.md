@@ -75,3 +75,27 @@ localized to one guard.
 
 A red `make check` is diagnosed by re-running the failing sub-step in isolation;
 each command above is self-contained.
+
+## Guard-to-test mapping
+
+Each baseline guard maps to a named, individually runnable per-module command, so a
+failure inside the test sub-step can be re-run in isolation:
+
+| Guard | Per-module command |
+|---|---|
+| Sync byte-equality mechanism | `python3 -m unittest tests.test_sync_mechanism` |
+| Version + structure lockstep | `python3 -m unittest tests.test_version_and_structure` |
+| Manifests + skill frontmatter | `python3 -m unittest tests.test_manifests_and_frontmatter` |
+| No cross-host launch-syntax residue | `python3 -m unittest tests.test_no_cross_host_residue` |
+| Every shared file mapped into the fan-out | `python3 -m unittest tests.test_sync_map_completeness` |
+| Docs/engine drift guard | `python3 -m unittest tests.test_doc_consistency` |
+| Committed-secret hygiene | `python3 -m unittest tests.test_no_committed_secrets` |
+
+Run all seven together as the baseline guard set:
+
+```bash
+python3 -m unittest tests.test_sync_mechanism tests.test_version_and_structure \
+  tests.test_manifests_and_frontmatter tests.test_no_cross_host_residue \
+  tests.test_sync_map_completeness tests.test_doc_consistency \
+  tests.test_no_committed_secrets
+```
