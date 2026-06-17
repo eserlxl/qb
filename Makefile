@@ -1,4 +1,4 @@
-.PHONY: sync check test baseline self-audit install-hooks export-sanitized
+.PHONY: sync check test baseline self-audit install-hooks release-manifest export-sanitized
 
 sync:
 	bash scripts/sync.sh
@@ -41,6 +41,12 @@ self-audit:
 		exit $$code; \
 	fi; \
 	echo "self-audit: completed (exit $$code; 0=clean, 1=findings) -> QB-Audit/findings.jsonl"
+
+# release-manifest -- emit the deterministic sanitized-export integrity manifest
+# (per-file SHA-256 + root VERSION over the git-tracked tree). Run with --check to
+# verify the manifest matches the tree: `python3 scripts/release-manifest.py --check`.
+release-manifest:
+	python3 scripts/release-manifest.py
 
 export-sanitized:
 	git archive --format=zip --output QB-sanitized.zip HEAD
