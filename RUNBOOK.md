@@ -91,6 +91,17 @@ explicit, separate opt-in.
   is capped at A1 for that context. Improve precision (tune analyzers, accept
   false positives in the register) before requesting A2.
 
+## From findings to a fix plan
+
+Audit findings become reviewable, verifiable work through planwright. Project a
+run's `QB-Audit/findings.jsonl` into planwright items with
+`python3 shared/scripts/findings_to_plan.py --root .`; it validates the projection
+with the plan linter and prints `planwright_plan_validation` / `secret_findings` /
+`violation_count`. The QB → planwright hand-off is **one-directional** — QB writes
+its plan under `.qb/` and never writes the tool-owned `.planwright/` tree — so to
+execute a plan you copy it across (`cp .qb/plan.md .planwright/plan.md`) and run
+`planwright execute`.
+
 ## Observability
 
 Across runs, QB persists an aggregate telemetry series at

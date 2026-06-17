@@ -194,6 +194,14 @@ A finding whose evidence is anchored under `.qb/` or `.planwright/` (planning st
 not an executable surface) is **not** projected. `Verification` re-runs the audit so
 the operator can confirm the finding no longer appears.
 
+The projection is runnable and gated: `python3 shared/scripts/findings_to_plan.py
+--root .` loads `QB-Audit/findings.jsonl`, projects it, and validates the result with
+the planwright plan linter, emitting the same `planwright_plan_validation` /
+`secret_findings` / `violation_count` lines the validator does. The QB → planwright
+hand-off is **one-directional**: QB writes its plan under `.qb/` and never writes the
+tool-owned `.planwright/` tree — to run a QB plan with planwright, copy it across
+(`cp .qb/plan.md .planwright/plan.md`) and run `planwright execute`.
+
 ## Platform Packages
 
 All hosts use the same `qb` identity and write the same planning artifacts. The
