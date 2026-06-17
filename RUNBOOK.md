@@ -91,6 +91,11 @@ guarantee.
 To check a built artifact, run the verify recipe in **Verify a sanitized export**
 above; it exits `0` only when the tree still matches its manifest.
 
+The full end-to-end release sequence — clean tree → `make check` →
+`scripts/bump-version.sh` → review → `make check` → `make export-sanitized` +
+integrity check → operator tag/publish — lives in [RELEASING.md](RELEASING.md), with
+tagging and publishing marked operator-only.
+
 ## Autonomy levels
 
 | Level | Behavior |
