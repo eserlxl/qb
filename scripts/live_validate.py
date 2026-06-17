@@ -31,6 +31,72 @@ def _load(name: str, filename: str):
 
 _headless = _load("qb_headless", "qb_headless.py")
 _store = _headless._store  # reuse the run_store instance qb_headless already loaded
+_policy = _load("qb_policy", "policy.py")
+_fixer = _load("qb_fixer", "fixer.py")
+_budget = _load("qb_budget", "budget.py")
+_telemetry = _load("qb_telemetry", "telemetry.py")
+
+# Campaign fixable target. The corpus repos verify with a stdlib-only no-op
+# (their Makefile `test` target), so a synthetic quality finding + a .txt apply
+# exercises the full isolate -> apply -> verify -> keep path without running
+# untrusted code. The corpus supplies the target repo; the campaign supplies the
+# fixable scenario (the same pattern tests/test_autonomy_levels.py uses).
+_FIX_TARGET = "fix_target.txt"
+
+
+@dataclass(frozen=True)
+class CampaignRun:
+    repo: str
+    declared_level: str
+    results: list
+    report: object
+    telemetry: dict
+    output_dir: Path
+
+    def outcomes(self) -> list:
+        return [r["outcome"] for r in self.results]
+
+    def promoted(self) -> list:
+        return [p for r in self.results for p in r.get("promoted", [])]
+
+
+def _quality_finding():
+    ev = _FIX_TARGET + ":1"
+    return _fixer.Finding(
+        id=_fixer.compute_finding_id("quality", ev, "lint:style"),
+        category="quality", severity="P3", confidence="medium",
+        evidence=ev, rationale="style", suggested_fix="clean it", fix_strategy="propose",
+    )
+
+
+def run_campaign(repo, declared_level, output_dir, *, prior_telemetry=None, enable_a3=False):
+    """Run one declared-level session over a corpus repo, persist + return telemetry.
+
+    ``repo`` exposes ``.name`` and ``.path`` (a tests.qb_corpus.CorpusRepo).
+    """
+    policy = _policy.parse_policy({
+        "autonomy_level": declared_level,
+        "auto_fixable_categories": ["quality"],
+        "default_min_confidence": "medium",
+        "write_allowlist": ["*.txt"],
+    })
+    finding = _quality_finding()
+    plan = _fixer.plan_fix(finding, repo.path)
+    results, report = _budget.run_session(
+        policy, repo.path,
+        [(plan, lambda iso: iso.write_file(_FIX_TARGET, "clean\n"))],
+        run_id=f"{repo.name}-{declared_level}", telemetry=prior_telemetry, enable_a3=enable_a3,
+    )
+    evidence = [r["evidence"] for r in results if r.get("evidence")]
+    telemetry = _telemetry.build_telemetry(
+        run_id=f"{repo.name}-{declared_level}", autonomy_level=declared_level,
+        findings=[{"category": "quality", "severity": "P3", "confidence": "medium"}],
+        evidence=evidence,
+    )
+    output_dir = Path(output_dir)
+    _store.RunStore(output_dir).open(overwrite=True).write_telemetry(telemetry)
+    return CampaignRun(repo=repo.name, declared_level=declared_level, results=results,
+                       report=report, telemetry=telemetry, output_dir=output_dir)
 
 
 @dataclass(frozen=True)
