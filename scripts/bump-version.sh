@@ -13,7 +13,11 @@
 #   - the `metadata: version:` line in every platform SKILL.md (antigravity
 #     included; its install.sh derives the installed version from there),
 #   - the shields.io version badge in the root README.md (kept in lockstep by
-#     tests/test_doc_consistency.py), and
+#     tests/test_doc_consistency.py),
+#   - the gate-of-record version in BASELINE.md (the two `Version (`VERSION`)`
+#     rows + the "Regression reference (vX.Y.Z)" header, guarded by
+#     tests/test_baseline_consistency.py; the test-count floors are left
+#     untouched), and
 #   - a new entry at the top of every platform CHANGELOG.md.
 #
 # It does NOT create a git tag or GitHub release. Tags belong at release
@@ -44,6 +48,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION_FILE="$ROOT/VERSION"
 README_FILE="$ROOT/README.md"
+BASELINE_FILE="$ROOT/BASELINE.md"
 
 # Platform manifests, keyed for reporting. Codex nests its manifest under
 # plugins/qb/.codex-plugin/ (an accepted structural asymmetry, pinned by
@@ -140,6 +145,9 @@ targets = []
 targets += glob.glob(os.path.join(root, "platforms", "*", "CHANGELOG.md"))
 targets += glob.glob(os.path.join(root, "platforms", "**", "SKILL.md"), recursive=True)
 targets.append(os.path.join(root, "README.md"))
+_baseline = os.path.join(root, "BASELINE.md")
+if os.path.exists(_baseline):
+    targets.append(_baseline)
 for path in sorted(set(targets)):
     try:
         with open(path, encoding="utf-8") as fh:
@@ -203,6 +211,7 @@ mapfile -t SKILLS < <(skill_files)
 # impossible. (Skipped on --dry-run, which writes nothing.)
 if [ -z "$DRY_RUN" ]; then
   _bump_targets=("$VERSION_FILE" "$README_FILE" "${MANIFESTS[@]}")
+  [ -f "$BASELINE_FILE" ] && _bump_targets+=("$BASELINE_FILE")
   [ "${#SKILLS[@]}" -gt 0 ] && _bump_targets+=("${SKILLS[@]}")
   [ -z "$SYNC_ONLY" ] && _bump_targets+=("${CHANGELOGS[@]}")
   BUMP_BACKUP="$(mktemp -d)"
@@ -296,6 +305,55 @@ PY
 case "$README_STATUS" in
   nobadge) echo "warning: no shields.io version badge in $(relpath "$README_FILE"); skipped" >&2 ;;
   "") echo "warning: README badge sync produced no result; skipped" >&2 ;;
+esac
+
+# --- Rewrite the BASELINE.md gate-of-record version ------------------------
+# BASELINE.md records the gate-of-record version in two `Version (`VERSION`)`
+# table rows and in the "Regression reference (vX.Y.Z)" header;
+# tests/test_baseline_consistency.py guards that those track VERSION. Keep them
+# in lockstep here, the same way the README badge is rewritten above. The
+# module/function counts are a floor the guard tolerates, so they are left
+# untouched. BASELINE.md is optional: a checkout without it is skipped silently.
+BASELINE_STATUS="absent"
+if [ -f "$BASELINE_FILE" ]; then
+BASELINE_STATUS="$(python3 - "$BASELINE_FILE" "$NEW" "${DRY_RUN:-0}" <<'PY'
+import os, re, sys, tempfile
+path, new, dry = sys.argv[1], sys.argv[2], sys.argv[3]
+
+def atomic_write(path, data):
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".bump-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
+
+with open(path, encoding="utf-8") as f:
+    text = f.read()
+row = re.compile(r"(Version \(`VERSION`\)\s*\|\s*`)\d+\.\d+\.\d+(`)")
+hdr = re.compile(r"(## Regression reference \(v)\d+\.\d+\.\d+(\))")
+new_text, n_rows = row.subn(lambda m: m.group(1) + new + m.group(2), text)
+new_text, _ = hdr.subn(lambda m: m.group(1) + new + m.group(2), new_text)
+if n_rows == 0:
+    print("norows"); raise SystemExit   # unexpected format; refuse to guess
+if new_text == text:
+    print("same"); raise SystemExit
+if dry != "0":
+    print("would"); raise SystemExit
+atomic_write(path, new_text)
+print("changed")
+PY
+)"
+fi
+case "$BASELINE_STATUS" in
+  norows) echo "warning: no 'Version (\`VERSION\`)' row in $(relpath "$BASELINE_FILE"); skipped" >&2 ;;
+  "") echo "warning: BASELINE version sync produced no result; skipped" >&2 ;;
 esac
 
 # --- Sync SKILL.md `metadata: version:` frontmatter ------------------------
@@ -439,6 +497,7 @@ if [ -n "$DRY_RUN" ]; then
   # false test would otherwise become the script's exit status.
   if [ -n "$SKILLS_SYNCED" ]; then echo "  would sync$SKILLS_SYNCED"; fi
   if [ "$README_STATUS" = "would" ]; then echo "  would update $(relpath "$README_FILE") version badge -> $NEW"; fi
+  if [ "$BASELINE_STATUS" = "would" ]; then echo "  would update $(relpath "$BASELINE_FILE") gate-of-record version -> $NEW"; fi
 else
   if [ -n "$SYNC_ONLY" ]; then
     echo "Synced: all manifests + SKILL.md re-propagated to $CURRENT"
@@ -448,6 +507,7 @@ else
   fi
   for m in "${MANIFESTS[@]}"; do echo "  updated $(relpath "$m")"; done
   [ "$README_STATUS" = "changed" ] && echo "  updated $(relpath "$README_FILE") (version badge)"
+  [ "$BASELINE_STATUS" = "changed" ] && echo "  updated $(relpath "$BASELINE_FILE") (gate-of-record version)"
   [ -n "$SKILLS_SYNCED" ] && echo "  updated$SKILLS_SYNCED"
   [ -z "$SYNC_ONLY" ] && echo "  changelog entry added to all platforms ($DATE)"
   echo

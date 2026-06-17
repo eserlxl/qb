@@ -25,8 +25,10 @@ See also the [RUNBOOK](RUNBOOK.md) gate-of-record and release-integrity sections
    ```
 
    This updates `VERSION`, the three plugin manifests, every SKILL.md frontmatter, the
-   README version badge, and prepends a changelog entry to all four platform
-   changelogs — in lockstep.
+   README version badge, the gate-of-record version in `BASELINE.md`, and prepends a
+   changelog entry to all four platform changelogs — in lockstep. (`BASELINE.md`'s
+   test-suite counts are a floor and are not auto-bumped; refresh them with a
+   `make baseline` run when they move materially.)
 
 4. **Review the diff** of the version + changelog changes:
 
