@@ -59,6 +59,21 @@ class LeastPrivilegeTests(unittest.TestCase):
         self.assertFalse(self.lp.may_run_repo_script())
         self.assertTrue(self.lp.may_run_repo_script(sandboxed_authorization=True))
 
+    def test_repo_script_authorized_requires_establishable_confinement(self) -> None:
+        # A repo-supplied command is authorized only when the required confinement
+        # control is establishable on this host; dropping it denies (fail-closed),
+        # and AUTO_RUN_REPO_SCRIPTS stays False so nothing auto-runs unsandboxed.
+        self.assertFalse(self.lp.AUTO_RUN_REPO_SCRIPTS)
+        cs = self.lp._cs
+        original = cs.available_confinement_controls
+        try:
+            cs.available_confinement_controls = lambda: ()
+            self.assertFalse(self.lp.repo_script_authorized())       # no control -> denied
+            cs.available_confinement_controls = lambda: ("process_group",)
+            self.assertTrue(self.lp.repo_script_authorized())        # control present -> authorized
+        finally:
+            cs.available_confinement_controls = original
+
     def test_engine_core_is_dependency_free(self) -> None:
         violations = self.lp.assert_dependency_free_core(SHARED_SCRIPTS)
         self.assertEqual(violations, [], f"non-stdlib imports in engine core: {violations}")
