@@ -200,3 +200,24 @@ Baseline guard set (each individually runnable — see **Guard-to-test mapping**
 
 Any deviation from the version, exit status, counts, or guard set above is a
 regression.
+
+## Running the regression net
+
+There is no enforcing git hook, so the net is a discipline: run it at the points
+below and read a failure by guard.
+
+**When to run it**
+
+- After **any** change under `shared/`: `make sync` then `make check` (the
+  done-definition above) — or the single `make baseline`, which does both.
+- Before declaring any forward-phase work done, and before a release.
+- Any time `bash scripts/sync.sh --check` is uncertain (e.g. after a merge).
+
+**How to interpret a failure**
+
+1. Identify the failing `make check` sub-step (see **Invariant inventory**).
+2. If it is `scripts/sync.sh --check`, a `shared/` edit skipped `make sync` — run
+   `make sync` and re-check.
+3. If it is the test sub-step, re-run the single failing guard from the
+   **Guard-to-test mapping** table to localize the regression, then fix and re-run
+   `make baseline`.
