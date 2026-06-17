@@ -108,6 +108,16 @@ done
 
 [ -z "$SYNC_ONLY" ] || [ -z "$NOTE" ] || { echo "--sync does not write a changelog; -m is not allowed with it." >&2; usage; }
 
+# Empty-note guard (reporting only): a real bump without -m falls back to the default
+# "Version bump." changelog entry -- exactly the placeholder tests/test_changelog_governance.py
+# forbids. Warn so the operator supplies a real note. This touches nothing: the
+# transactional VERSION/manifest/CHANGELOG core is untouched, and --dry-run is honored
+# (the warning is emitted in both real and dry-run modes; the actual writes stay gated).
+if [ -z "$SYNC_ONLY" ] && [ -z "$NOTE" ]; then
+  echo "warning: no -m note supplied; the changelog entry would default to \"Version bump.\"" >&2
+  echo "warning: pass -m \"<real note>\" -- an empty/placeholder note fails tests/test_changelog_governance.py." >&2
+fi
+
 [ -f "$VERSION_FILE" ] || { echo "Missing required file: $VERSION_FILE (single source of version truth)" >&2; exit 1; }
 for f in "${MANIFESTS[@]}"; do
   [ -f "$f" ] || { echo "Missing required manifest: $f" >&2; exit 1; }
