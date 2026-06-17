@@ -65,6 +65,16 @@ the telemetry-earned ceiling, and this sandbox clamp.
   untracked files; `release_gate.baseline_clean(repo, handle)` confirms a clean
   tree at the baseline. The rollback drill proves this end to end.
 
+## Live-validation protocol
+
+Turning the tested safety machinery into measured confidence follows the
+committed [docs/live-validation-protocol.md](docs/live-validation-protocol.md):
+the A1 → A2 → A3 progression and pass conditions, the per-run telemetry fields
+(`telemetry.build_telemetry`), the rollback drill
+(`release_gate.run_rollback_drill`), and the precision/fix-safety judging anchored
+to `PRECISION_FLOOR = 0.80`. The protocol runs over a trusted/neutralized corpus;
+untrusted, self-executing targets are gated on the execution sandbox.
+
 ## Trip responses
 
 - **Budget boundary** (max findings/fixes/iterations/wall-time/tokens): the run
