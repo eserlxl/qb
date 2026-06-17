@@ -40,11 +40,13 @@ def _load_sibling(module_name: str, filename: str):
 
 _ai = _load_sibling("qb_analyzer_interface", "analyzer_interface.py")
 _cs = _load_sibling("qb_command_safety", "command_safety.py")
+_core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 Analyzer = _ai.Analyzer
 AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
 run_command = _cs.run_command
+confidence_for_rule = _core.confidence_for_rule
 
 
 @dataclass
@@ -169,7 +171,7 @@ class QualityAnalyzer:
                         id=compute_finding_id(adapter.category, evidence, f"{adapter.name}:{rule}"),
                         category=adapter.category,
                         severity=severity,
-                        confidence="medium",
+                        confidence=confidence_for_rule(self.descriptor.id, "tool-diagnostic"),
                         evidence=evidence,
                         rationale=f"Reported by {adapter.name} ({rule}): {diag.get('message', '').strip()}",
                         suggested_fix=f"Address the {adapter.name} diagnostic {rule} at this location.",

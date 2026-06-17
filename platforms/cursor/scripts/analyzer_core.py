@@ -50,6 +50,40 @@ compute_finding_id = _ai.compute_finding_id
 
 SEVERITIES: tuple[str, ...] = ("P0", "P1", "P2", "P3")
 
+# Analyzer confidence policy. High is reserved for deterministic local evidence
+# or configured advisory data; heuristic/tool/config hygiene findings stay
+# medium unless a future rule has an explicit reason to use low.
+CONFIDENCE_POLICY: dict[str, dict[str, str]] = {
+    "secret-hygiene": {
+        "secret-pattern": "high",
+    },
+    "quality-correctness": {
+        "tool-diagnostic": "medium",
+    },
+    "dependency-audit": {
+        "manifest-hygiene": "medium",
+        "network-advisory": "high",
+    },
+    "license-hygiene": {
+        "missing-license": "high",
+        "empty-license": "medium",
+    },
+    "config-hygiene": {
+        "committed-config": "medium",
+    },
+    "workflow-actions": {
+        "broad-action-ref": "medium",
+    },
+}
+
+
+def confidence_for_rule(analyzer_id: str, rule_kind: str) -> str:
+    """Return the reviewed confidence band for one analyzer rule kind."""
+    try:
+        return CONFIDENCE_POLICY[analyzer_id][rule_kind]
+    except KeyError as exc:
+        raise KeyError(f"unknown confidence policy: {analyzer_id}:{rule_kind}") from exc
+
 # Directories QB must never audit as repository implementation source.
 _TOOL_OWNED_SCAN_DIRS = frozenset({
     ".git",
@@ -223,7 +257,7 @@ class SecretHygieneAnalyzer:
                         id=compute_finding_id("secret", evidence, name),
                         category="secret",
                         severity="P1",
-                        confidence="high",
+                        confidence=confidence_for_rule(self.descriptor.id, "secret-pattern"),
                         evidence=evidence,
                         rationale=(
                             f"A length-bounded secret pattern ({name}) matched at this "

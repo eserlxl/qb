@@ -43,6 +43,7 @@ Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
 validate_finding = _ai.validate_finding
 iter_repo_files = _core.iter_repo_files
+confidence_for_rule = _core.confidence_for_rule
 
 # A dotenv file: ".env" or ".env.<seg>[.<seg>...]" (e.g. .env.local, .env.production,
 # .env.production.local -- Next.js/CRA layer their secrets across multiple segments).
@@ -106,7 +107,7 @@ class ConfigHygieneAnalyzer:
                 id=compute_finding_id("config", evidence, self._RULE_ENV),
                 category="config",
                 severity="P2",
-                confidence="medium",
+                confidence=confidence_for_rule(self.descriptor.id, "committed-config"),
                 evidence=evidence,
                 rationale=(
                     f"A dotenv-style config file ({rel}) is present in the tree; "
@@ -141,7 +142,7 @@ class ConfigHygieneAnalyzer:
                     id=compute_finding_id("config", evidence, self._RULE_NPMRC),
                     category="config",
                     severity="P2",
-                    confidence="medium",
+                    confidence=confidence_for_rule(self.descriptor.id, "committed-config"),
                     evidence=evidence,
                     rationale=(
                         f"An npm config file ({rel}) contains a credential-bearing key; "

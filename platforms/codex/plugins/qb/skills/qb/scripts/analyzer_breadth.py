@@ -33,6 +33,7 @@ Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
 validate_finding = _ai.validate_finding
 iter_repo_files = _core.iter_repo_files
+confidence_for_rule = _core.confidence_for_rule
 
 _USES_RE = re.compile(r"^\s*-\s*uses\s*:\s*['\"]?(?P<spec>[^'\"\s#]+)")
 _FULL_SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -113,7 +114,7 @@ class WorkflowActionAnalyzer:
                     id=compute_finding_id("dependency", evidence, self._RULE),
                     category="dependency",
                     severity="P2",
-                    confidence="medium",
+                    confidence=confidence_for_rule(self.descriptor.id, "broad-action-ref"),
                     evidence=evidence,
                     rationale=(
                         f"GitHub Actions dependency '{action}' uses a broad ref "

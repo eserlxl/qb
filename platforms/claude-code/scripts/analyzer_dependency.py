@@ -45,10 +45,12 @@ def _load_sibling(module_name: str, filename: str):
 
 
 _ai = _load_sibling("qb_analyzer_interface", "analyzer_interface.py")
+_core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 Analyzer = _ai.Analyzer
 AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
+confidence_for_rule = _core.confidence_for_rule
 
 _LOCKFILES = ("package-lock.json", "yarn.lock", "pnpm-lock.yaml")
 _REQ_LINE = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*(.*)$")
@@ -186,7 +188,8 @@ class DependencyAnalyzer:
                 inventory.append(dep)
                 if not dep["pinned"]:
                     findings.append(self._finding(
-                        "dependency", "P2", "medium", dep["evidence"], f"unpinned:{dep['name']}",
+                        "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                        dep["evidence"], f"unpinned:{dep['name']}",
                         f"Offline manifest audit: dependency '{dep['name']}' is not pinned to an exact "
                         f"version ({dep['spec'] or 'no version specifier'}).",
                         "Pin the dependency to an exact version (name==X.Y.Z) and commit a lockfile.",
@@ -203,7 +206,8 @@ class DependencyAnalyzer:
                 inventory.append(dep)
                 if not dep["pinned"]:
                     findings.append(self._finding(
-                        "dependency", "P2", "medium", dep["evidence"],
+                        "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                        dep["evidence"],
                         f"unpinned-pyproject:{dep['name']}",
                         f"Offline pyproject audit: dependency '{dep['name']}' is not pinned to an "
                         f"exact version ({dep['spec'] or 'no version specifier'}).",
@@ -213,7 +217,8 @@ class DependencyAnalyzer:
         pkg_path = root / "package.json"
         if pkg_path.is_file() and not any((root / lock).is_file() for lock in _LOCKFILES):
             findings.append(self._finding(
-                "dependency", "P2", "medium", "package.json:1", "missing-lockfile",
+                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                "package.json:1", "missing-lockfile",
                 "Offline manifest audit: package.json is present but no lockfile "
                 "(package-lock.json / yarn.lock / pnpm-lock.yaml) was found.",
                 "Generate and commit a lockfile so dependency versions are reproducible.",
@@ -234,7 +239,8 @@ class DependencyAnalyzer:
                         native = str(advisory.get("severity", "moderate")).lower()
                         severity = _ADVISORY_SEVERITY.get(native, "P2")
                         findings.append(self._finding(
-                            "dependency", severity, "high", dep["evidence"],
+                            "dependency", severity, confidence_for_rule(self.descriptor.id, "network-advisory"),
+                            dep["evidence"],
                             f"cve:{dep['name']}:{advisory_id}",
                             f"Network-enriched: dependency '{dep['name']}' ({dep['spec'] or 'unpinned'}) "
                             f"is affected by advisory {advisory_id} (severity {native}).",

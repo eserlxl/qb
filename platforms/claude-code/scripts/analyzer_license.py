@@ -41,9 +41,11 @@ def _load_sibling(module_name: str, filename: str):
 
 
 _ai = _load_sibling("qb_analyzer_interface", "analyzer_interface.py")
+_core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
+confidence_for_rule = _core.confidence_for_rule
 
 # Recognized license-file stems (case-insensitive), with or without an extension:
 # LICENSE, LICENCE, LICENSE.md, COPYING, COPYRIGHT, UNLICENSE, ...
@@ -92,7 +94,7 @@ class LicenseAnalyzer:
                     id=compute_finding_id("license", evidence, self._RULE_MISSING),
                     category="license",
                     severity="P2",
-                    confidence="high",
+                    confidence=confidence_for_rule(self.descriptor.id, "missing-license"),
                     evidence=evidence,
                     rationale=(
                         "No license file (LICENSE / LICENCE / COPYING / UNLICENSE) was found "
@@ -120,7 +122,7 @@ class LicenseAnalyzer:
                         id=compute_finding_id("license", evidence, self._RULE_EMPTY),
                         category="license",
                         severity="P2",
-                        confidence="medium",
+                        confidence=confidence_for_rule(self.descriptor.id, "empty-license"),
                         evidence=evidence,
                         rationale=(
                             f"The license file {rel} is effectively empty "
