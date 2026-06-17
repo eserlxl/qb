@@ -148,6 +148,31 @@ class DocConsistencyTest(unittest.TestCase):
             f"run scripts/bump-version.sh --sync",
         )
 
+    def test_platform_readme_version_badges_match_version_file(self):
+        # The per-host plugin READMEs carry the same shields.io badge as the root
+        # README; scripts/bump-version.sh now keeps them in lockstep, so guard them
+        # too. A platform README without a badge (e.g. antigravity) is skipped.
+        declared = self._read(ROOT_VERSION).strip()
+        readmes = sorted((REPO_ROOT / "platforms").glob("*/README.md"))
+        self.assertTrue(readmes, "no platform READMEs found")
+        checked = []
+        for readme in readmes:
+            match = _README_BADGE.search(self._read(readme))
+            if match is None:
+                continue  # this package README has no version badge to check
+            badge = match.group(1).replace("--", "-").replace("__", "_")
+            rel = readme.relative_to(REPO_ROOT)
+            self.assertEqual(
+                badge,
+                declared,
+                f"{rel} version badge ({badge}) != VERSION ({declared}); "
+                f"run scripts/bump-version.sh --sync",
+            )
+            checked.append(str(rel))
+        self.assertTrue(
+            checked, "no platform README version badges found to check (guard vacuous)"
+        )
+
     def test_root_readme_states_four_platform_model(self):
         text = self._read(ROOT_README)
         for host in HOST_NAMES:

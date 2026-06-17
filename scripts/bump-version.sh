@@ -64,6 +64,15 @@ CHANGELOGS=(
   "$ROOT/platforms/codex/CHANGELOG.md"
   "$ROOT/platforms/antigravity/CHANGELOG.md"
 )
+# Per-host READMEs carry the same shields.io version badge as the root README;
+# they are kept in lockstep too (guarded by tests/test_doc_consistency.py). A
+# README without a badge (e.g. antigravity) is skipped silently.
+PLATFORM_READMES=(
+  "$ROOT/platforms/claude-code/README.md"
+  "$ROOT/platforms/cursor/README.md"
+  "$ROOT/platforms/codex/README.md"
+  "$ROOT/platforms/antigravity/README.md"
+)
 
 # Portable repo-relative path. GNU realpath's relative mode is unavailable on
 # stock macOS without Homebrew; python3 is already required by this script.
@@ -148,6 +157,7 @@ targets.append(os.path.join(root, "README.md"))
 _baseline = os.path.join(root, "BASELINE.md")
 if os.path.exists(_baseline):
     targets.append(_baseline)
+targets += glob.glob(os.path.join(root, "platforms", "*", "README.md"))
 for path in sorted(set(targets)):
     try:
         with open(path, encoding="utf-8") as fh:
@@ -212,6 +222,7 @@ mapfile -t SKILLS < <(skill_files)
 if [ -z "$DRY_RUN" ]; then
   _bump_targets=("$VERSION_FILE" "$README_FILE" "${MANIFESTS[@]}")
   [ -f "$BASELINE_FILE" ] && _bump_targets+=("$BASELINE_FILE")
+  for _prm in "${PLATFORM_READMES[@]}"; do [ -f "$_prm" ] && _bump_targets+=("$_prm"); done
   [ "${#SKILLS[@]}" -gt 0 ] && _bump_targets+=("${SKILLS[@]}")
   [ -z "$SYNC_ONLY" ] && _bump_targets+=("${CHANGELOGS[@]}")
   BUMP_BACKUP="$(mktemp -d)"
@@ -306,6 +317,55 @@ case "$README_STATUS" in
   nobadge) echo "warning: no shields.io version badge in $(relpath "$README_FILE"); skipped" >&2 ;;
   "") echo "warning: README badge sync produced no result; skipped" >&2 ;;
 esac
+
+# --- Sync per-host README version badges -----------------------------------
+# The per-host plugin READMEs carry the same shields.io version badge as the
+# root README; keep them in lockstep too (guarded by tests/test_doc_consistency.py).
+# Same rewrite as the root badge above, applied per platform README; a README
+# without a badge (e.g. antigravity) prints "nobadge" and is skipped silently.
+PLATFORM_READMES_SYNCED=""
+for prm in "${PLATFORM_READMES[@]}"; do
+  [ -f "$prm" ] || continue
+  prmrel="$(relpath "$prm")"
+  prmstatus="$(python3 - "$prm" "$NEW" "${DRY_RUN:-0}" <<'PY'
+import os, re, sys, tempfile
+path, new, dry = sys.argv[1], sys.argv[2], sys.argv[3]
+
+def atomic_write(path, data):
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".bump-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
+
+message = new.replace("-", "--").replace("_", "__")
+with open(path, encoding="utf-8") as f:
+    text = f.read()
+pat = re.compile(r"(https://img\.shields\.io/badge/version-).+?(-[0-9A-Fa-f]{6}\))")
+new_text, n = pat.subn(lambda m: m.group(1) + message + m.group(2), text)
+if n == 0:
+    print("nobadge"); raise SystemExit
+if new_text == text:
+    print("same"); raise SystemExit
+if dry != "0":
+    print("would"); raise SystemExit
+atomic_write(path, new_text)
+print("changed")
+PY
+)"
+  case "$prmstatus" in
+    nobadge|same) : ;;                # no badge, or already current -- nothing to do
+    "") echo "warning: README badge sync produced no result for $prmrel; skipped" >&2 ;;
+    *) PLATFORM_READMES_SYNCED="$PLATFORM_READMES_SYNCED $prmrel" ;;
+  esac
+done
 
 # --- Rewrite the BASELINE.md gate-of-record version ------------------------
 # BASELINE.md records the gate-of-record version in two `Version (`VERSION`)`
@@ -497,6 +557,7 @@ if [ -n "$DRY_RUN" ]; then
   # false test would otherwise become the script's exit status.
   if [ -n "$SKILLS_SYNCED" ]; then echo "  would sync$SKILLS_SYNCED"; fi
   if [ "$README_STATUS" = "would" ]; then echo "  would update $(relpath "$README_FILE") version badge -> $NEW"; fi
+  if [ -n "$PLATFORM_READMES_SYNCED" ]; then echo "  would update platform README badges ->$PLATFORM_READMES_SYNCED"; fi
   if [ "$BASELINE_STATUS" = "would" ]; then echo "  would update $(relpath "$BASELINE_FILE") gate-of-record version -> $NEW"; fi
 else
   if [ -n "$SYNC_ONLY" ]; then
@@ -507,6 +568,7 @@ else
   fi
   for m in "${MANIFESTS[@]}"; do echo "  updated $(relpath "$m")"; done
   [ "$README_STATUS" = "changed" ] && echo "  updated $(relpath "$README_FILE") (version badge)"
+  [ -n "$PLATFORM_READMES_SYNCED" ] && echo "  updated platform README badges ->$PLATFORM_READMES_SYNCED"
   [ "$BASELINE_STATUS" = "changed" ] && echo "  updated $(relpath "$BASELINE_FILE") (gate-of-record version)"
   [ -n "$SKILLS_SYNCED" ] && echo "  updated$SKILLS_SYNCED"
   [ -z "$SYNC_ONLY" ] && echo "  changelog entry added to all platforms ($DATE)"
