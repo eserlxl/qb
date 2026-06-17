@@ -48,6 +48,18 @@ _VERSION_HEADER = re.compile(r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\]", re.MULTILINE)
 # 6-hex color, then the closing markdown-link paren. Mirrors the rewrite in
 # scripts/bump-version.sh.
 _README_BADGE = re.compile(r"https://img\.shields\.io/badge/version-(.+?)-[0-9A-Fa-f]{6}\)")
+_COVERAGE_ANALYZERS = re.compile(
+    r"The built-in producer analyzers are (?P<body>.*?)\.\s+Together",
+    re.DOTALL,
+)
+_COVERAGE_CATEGORIES = re.compile(
+    r"Together they cover the frozen finding categories (?P<body>.*?):",
+    re.DOTALL,
+)
+
+
+def _backtick_values(text: str) -> list[str]:
+    return sorted(set(re.findall(r"`([^`]+)`", text)))
 
 
 class DocConsistencyTest(unittest.TestCase):
@@ -74,6 +86,20 @@ class DocConsistencyTest(unittest.TestCase):
         self.assertEqual(
             missing, [], f"root README omits finding categories: {missing}"
         )
+
+    def test_root_readme_analyzer_coverage_matches_registry(self):
+        text = self._read(ROOT_README)
+        match = _COVERAGE_ANALYZERS.search(text)
+        self.assertIsNotNone(match, "root README has no producer-analyzer coverage sentence")
+        declared = _backtick_values(match.group("body"))
+        self.assertEqual(declared, PRODUCER_ANALYZERS)
+
+    def test_root_readme_category_coverage_matches_schema(self):
+        text = self._read(ROOT_README)
+        match = _COVERAGE_CATEGORIES.search(text)
+        self.assertIsNotNone(match, "root README has no finding-category coverage sentence")
+        declared = _backtick_values(match.group("body"))
+        self.assertEqual(declared, FINDING_CATEGORIES)
 
     def test_root_readme_version_badge_matches_version_file(self):
         # The shields.io version badge is prose, not frontmatter, so the manifest
