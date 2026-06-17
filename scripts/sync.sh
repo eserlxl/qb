@@ -220,6 +220,11 @@ MAP=(
   "scripts/telemetry.py|platforms/cursor/scripts/telemetry.py"
   "scripts/telemetry.py|platforms/codex/plugins/qb/skills/qb/scripts/telemetry.py"
 
+  # shared/scripts/telemetry_aggregate.py
+  "scripts/telemetry_aggregate.py|platforms/claude-code/scripts/telemetry_aggregate.py"
+  "scripts/telemetry_aggregate.py|platforms/cursor/scripts/telemetry_aggregate.py"
+  "scripts/telemetry_aggregate.py|platforms/codex/plugins/qb/skills/qb/scripts/telemetry_aggregate.py"
+
   # shared/scripts/release_gate.py
   "scripts/release_gate.py|platforms/claude-code/scripts/release_gate.py"
   "scripts/release_gate.py|platforms/cursor/scripts/release_gate.py"
