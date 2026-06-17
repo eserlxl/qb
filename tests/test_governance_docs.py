@@ -37,6 +37,17 @@ class GovernanceDocsTest(unittest.TestCase):
         self.assertIn("trusted code", text.lower(),
                       "SECURITY.md must state the trusted-code precondition for A2/A3")
 
+    def test_required_governance_docs_exist(self):
+        # The governance contract fails if ANY required doc/file is missing.
+        for path in (SECURITY, CONTRIBUTING, CODEOWNERS, ISSUE_TEMPLATE, PR_TEMPLATE):
+            self.assertTrue(path.is_file(), f"missing required governance doc: {path}")
+
+    def test_contributing_has_required_headings(self):
+        text = self._read(CONTRIBUTING)
+        for heading in ("## Versioning and changelog", "## Contribution workflow",
+                        "## No secrets"):
+            self.assertIn(heading, text, f"CONTRIBUTING.md missing heading: {heading}")
+
     def test_contributing_present_with_required_sections(self):
         text = self._read(CONTRIBUTING)
         self.assertIn("make sync", text)
