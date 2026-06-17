@@ -178,3 +178,25 @@ Two intentional baseline states are recorded as known caveats, not silent gaps:
   `sync.sh` destination, so it does not carry the engine analyzers the other three
   hosts do. This is an intended asymmetry, not a defect.
   *Addressed in Phase 5 (multi-host parity).*
+
+## Regression reference (v0.14.1)
+
+The frozen reference any future run is compared against. A single `make baseline`
+re-runs the whole net (fan-out + byte-equality + per-host validation + full test
+discovery).
+
+| Field | Reference value |
+|---|---|
+| Version (`VERSION`) | `0.14.1` |
+| Expected `make check` exit status | `0` |
+| Expected test modules | 44 |
+| Expected test functions | 324 |
+| Expected failures / errors | 0 / 0 |
+
+Baseline guard set (each individually runnable — see **Guard-to-test mapping**):
+`test_sync_mechanism`, `test_version_and_structure`, `test_manifests_and_frontmatter`,
+`test_no_cross_host_residue`, `test_sync_map_completeness`, `test_doc_consistency`,
+`test_no_committed_secrets`.
+
+Any deviation from the version, exit status, counts, or guard set above is a
+regression.
