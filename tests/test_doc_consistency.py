@@ -35,6 +35,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
 import audit_runner  # noqa: E402  (path set above)
 import budget  # noqa: E402
 import finding_schema  # noqa: E402
+import production_gate  # noqa: E402
 import telemetry_aggregate  # noqa: E402
 import telemetry_trends  # noqa: E402
 
@@ -59,6 +60,8 @@ TREND_VERDICTS = sorted({
     telemetry_trends.VERDICT_UNMEASURED,
 })
 AGGREGATE_FILENAME = telemetry_aggregate.AGGREGATE_TELEMETRY_FILENAME
+# RUNBOOK production-gate conjuncts, derived from the gate engine (not hardcoded).
+PRODUCTION_GATE_CHECKS = sorted(production_gate.PRODUCTION_GATE_CHECKS)
 HOST_NAMES = ("Claude Code", "Cursor", "Codex", "Antigravity")
 _VERSION_HEADER = re.compile(r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\]", re.MULTILINE)
 # The shields.io badge: label 'version', the (possibly escaped) message, a
@@ -73,6 +76,11 @@ _COVERAGE_CATEGORIES = re.compile(
     r"Together they cover the frozen finding categories (?P<body>.*?):",
     re.DOTALL,
 )
+# The "## Production gate" section (to the next "## " heading or end of file), and
+# each per-conjunct step's bold backtick-wrapped conjunct name within it.
+_PRODUCTION_GATE_SECTION = re.compile(
+    r"^## Production gate\s*$(?P<body>.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
+_GATE_CONJUNCT = re.compile(r"^\d+\.\s+\*\*`([a-z_]+)`\*\*", re.MULTILINE)
 
 
 def _backtick_values(text: str) -> list[str]:
@@ -187,6 +195,18 @@ class DocConsistencyTest(unittest.TestCase):
                       "RUNBOOK must name the aggregate telemetry artifact filename")
         self.assertIn(telemetry_trends.UNMEASURED, text,
                       "RUNBOOK must document the unmeasured-value distinction")
+
+    def test_runbook_production_gate_names_exactly_the_engine_conjuncts(self):
+        # The runbook production-gate procedure must list EXACTLY the conjuncts
+        # production_gate.PRODUCTION_GATE_CHECKS defines -- failing on any extra or
+        # missing conjunct, so the operator procedure cannot drift from the engine.
+        text = self._read(RUNBOOK)
+        section = _PRODUCTION_GATE_SECTION.search(text)
+        self.assertIsNotNone(section, "RUNBOOK has no '## Production gate' section")
+        listed = sorted(set(_GATE_CONJUNCT.findall(section.group("body"))))
+        self.assertEqual(
+            listed, PRODUCTION_GATE_CHECKS,
+            f"RUNBOOK production-gate conjuncts {listed} != engine {PRODUCTION_GATE_CHECKS}")
 
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]
