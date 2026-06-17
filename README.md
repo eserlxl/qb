@@ -370,6 +370,23 @@ local gate of record. Antigravity is checked for the platform-model and CHANGELO
 invariants but is excluded from the analyzer-naming assertion, since it is
 planning-only and ships no audit engine.
 
+## Governance
+
+QB's governance contract is discoverable in one place:
+
+- **Gate of record** — the one authoritative quality gate (`make check`):
+  [RUNBOOK.md → Gate of record](RUNBOOK.md#gate-of-record).
+- **Versioning & changelog convention** — SemVer + Keep-a-Changelog and the
+  sanctioned `scripts/bump-version.sh` bump path: [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Security policy** — vulnerability reporting, supported versions, and the
+  trusted-code precondition: [SECURITY.md](SECURITY.md).
+- **Contribution workflow** — the `make sync` → `make check` requirement and the
+  no-secrets rule: [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Release integrity & runbook** — the deterministic SHA-256 manifest and the
+  end-to-end release sequence:
+  [RUNBOOK.md → Release integrity](RUNBOOK.md#release-integrity) and
+  [RELEASING.md](RELEASING.md).
+
 ## Security
 
 QB's vulnerability-reporting policy, supported-versions statement, and the
