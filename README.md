@@ -164,6 +164,36 @@ boundary, and `3` internal error. Operational details for pausing, killing,
 recovering, rollback drills, release gates, and production gates live in
 [RUNBOOK.md](RUNBOOK.md).
 
+### Findings → planwright items
+
+The audit engine and the planning workflow share one execution surface: a
+conformant `QB-Audit/findings.jsonl` finding projects into a planwright plan item
+(`shared/scripts/findings_to_plan.py`), so the highest-value hardening work flows
+through the same reviewed `execute` / `cycle` path as planned work, with no second
+item format. The eight-field `Finding` maps onto the seven-field planwright item:
+
+| `Finding` field | planwright item field |
+|---|---|
+| `id` | Title (appended, so titles stay unique) |
+| `category`, `severity` | Title and Rationale context |
+| `confidence` | Rationale context |
+| `evidence` (`path:line`) | `Surfaces` (the path) and the `Evidence` anchor |
+| `rationale` | `Rationale` |
+| `suggested-fix` | `Development` |
+| `fix-strategy` | `Mode` (see below) |
+
+`fix-strategy` → `Mode`:
+
+| `fix-strategy` | Evidence anchor resolves to an existing file | `Mode` |
+|---|---|---|
+| `autofix` / `propose` / `manual` | yes | `repair` (carries the `path:line` anchor) |
+| `autofix` / `propose` / `manual` | no | `improve` |
+| `none` | — | `improve` |
+
+A finding whose evidence is anchored under `.qb/` or `.planwright/` (planning state,
+not an executable surface) is **not** projected. `Verification` re-runs the audit so
+the operator can confirm the finding no longer appears.
+
 ## Platform Packages
 
 All hosts use the same `qb` identity and write the same planning artifacts. The
