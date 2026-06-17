@@ -141,6 +141,23 @@ class ProductionGateTests(unittest.TestCase):
             self.assertTrue(result["self_audit_clean"])
             self.assertEqual(result["unaccepted_ids"], [])
 
+    def test_unaccepted_finding_keeps_gate_closed(self) -> None:
+        # Phase 7.3 fail-closed: a finding that is neither fixed nor in the accepted
+        # register keeps self_audit_clean False and is named EXACTLY in
+        # unaccepted_findings -- and that False denies the composite production gate.
+        findings = [{"id": "QBF-ACCEPTED-1"}, {"id": "QBF-UNREVIEWED"}, {"id": "QBF-ACCEPTED-2"}]
+        accepted = ["QBF-ACCEPTED-1", "QBF-ACCEPTED-2"]
+        self.assertFalse(self.pg.self_audit_clean(findings, accepted_ids=accepted))
+        self.assertEqual(
+            [f["id"] for f in self.pg.unaccepted_findings(findings, accepted_ids=accepted)],
+            ["QBF-UNREVIEWED"])
+        # The unclean self-audit denies the composite gate, naming the conjunct.
+        args = self._all_true()
+        args["self_audit_clean"] = self.pg.self_audit_clean(findings, accepted_ids=accepted)
+        result = self.pg.production_gate(**args)
+        self.assertFalse(result["passed"])
+        self.assertIn("self_audit_clean", result["failures"])
+
 
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
 class SelfAuditDogfoodTests(unittest.TestCase):
