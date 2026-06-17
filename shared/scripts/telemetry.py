@@ -105,6 +105,11 @@ def build_telemetry(*, run_id, autonomy_level, findings, evidence, cost=None, cl
             "fixes_reverted": reverted,
             "fixes_blocked": blocked,
         },
+        # An unsupplied cost field stays UNMEASURED rather than being coerced to a
+        # measured 0 -- "never measured" must never read as "measured zero", even when
+        # the other cost fields ARE real. (iterations defaults to 0 because the run
+        # loop always counts iterations; wall_ms/tokens are present only when the run
+        # forwarded a real measurement.)
         "cost": {
             "wall_ms": cost.get("wall_ms", UNMEASURED),
             "iterations": cost.get("iterations", 0),

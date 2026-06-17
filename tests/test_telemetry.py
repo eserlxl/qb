@@ -78,11 +78,14 @@ class _TwoRunAccrualFixture:
         _init_accrual_repo(self.repo)
         self.run1 = case.rs.RunStore(self.root / "run-1" / case.rs.OUTPUT_DIR_NAME).open()
         self.run2 = case.rs.RunStore(self.root / "run-2" / case.rs.OUTPUT_DIR_NAME).open()
-        self._clock_values = iter((100.0, 100.25, 100.5, 100.75))
         self.clock_reads = []
 
     def clock(self) -> float:
-        value = next(self._clock_values)
+        # Deterministic, unbounded monotonic clock: the Nth read is 100.0 + 0.25*N.
+        # The sequence is stable regardless of how many reads a run makes, so it does
+        # not break when run_session reads the clock at meter init, each ceiling check,
+        # and the run-finale telemetry build (Phase 4.3).
+        value = 100.0 + 0.25 * len(self.clock_reads)
         self.clock_reads.append(value)
         return value
 
@@ -140,6 +143,23 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual(rec["action"]["fixes_kept"], 1)
         self.assertEqual(rec["action"]["fixes_reverted"], 1)
         self.assertEqual(rec["cost"]["tokens"], self.t.UNMEASURED)
+
+    def test_unset_tokens_stays_unmeasured_with_real_other_cost(self) -> None:
+        # Real wall_ms/iterations are supplied but tokens is omitted: tokens must
+        # remain UNMEASURED (never coerced to a measured 0) while the supplied cost
+        # fields flow through unchanged.
+        rec = self.t.build_telemetry(
+            run_id="r", autonomy_level="A2", findings=[], evidence=[],
+            cost={"wall_ms": 1500, "iterations": 5})
+        self.assertEqual(rec["cost"]["wall_ms"], 1500)
+        self.assertEqual(rec["cost"]["iterations"], 5)
+        self.assertEqual(rec["cost"]["tokens"], self.t.UNMEASURED)
+        self.assertNotEqual(rec["cost"]["tokens"], 0)
+        # A supplied tokens value (including a real 0) is preserved, not overwritten.
+        supplied = self.t.build_telemetry(
+            run_id="r", autonomy_level="A2", findings=[], evidence=[],
+            cost={"wall_ms": 1500, "iterations": 5, "tokens": 0})
+        self.assertEqual(supplied["cost"]["tokens"], 0)
 
     def test_precision_estimate(self) -> None:
         self.assertEqual(self.t.precision_estimate(3, 1), 0.75)
@@ -285,7 +305,10 @@ class TelemetryTests(unittest.TestCase):
         second = self._two_run_accrual_outcome()
 
         self.assertEqual(first, second)
-        self.assertEqual(first["clock_reads"], [100.0, 100.25, 100.5, 100.75])
+        # Two 1-item run_autofix calls; run_session reads the clock 3x each (meter
+        # init, ceiling check, finale telemetry build) -> 6 deterministic reads.
+        self.assertEqual(first["clock_reads"],
+                         [100.0, 100.25, 100.5, 100.75, 101.0, 101.25])
         self.assertTrue(first["paths_under_temp"])
         self.assertFalse(first["fixture_has_qb_dir"])
         after_live_qb_mtime = live_qb.stat().st_mtime_ns if live_qb.exists() else None
