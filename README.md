@@ -34,7 +34,7 @@ and resumed by another host without changing the project contract.
 | Area | What QB Owns | Files |
 |---|---|---|
 | Planning | Repo-aware intake, master plan, assessment, sub-plans, audit, and planwright export. | `.qb/` |
-| Hardening | Findings, reports, verification evidence, telemetry, and autonomy decisions. | `QB-Audit/` |
+| Hardening | Findings, reports, verification evidence, telemetry, and autonomy decisions. | `.qb/audit/` |
 | Packaging | Native host commands, skills, agents, manifests, and docs. | `platforms/` |
 | Shared core | Planner specs, validators, analyzers, reports, policy, isolation, and gates. | `shared/` |
 
@@ -105,7 +105,7 @@ The audit/harden engine is separate from the `.qb/` planning workflow. It can be
 used directly from the shared script tree or through the installed host package.
 
 ```bash
-python3 shared/scripts/qb_headless.py --root /path/to/repo --out QB-Audit
+python3 shared/scripts/qb_headless.py --root /path/to/repo --out .qb/audit
 ```
 
 Default operation is A0 report-only: no fix isolation, no writes to the target
@@ -149,7 +149,7 @@ Advisory enrichment is enabled only via the opt-in allow_networked/register_opti
 Each run writes a fixed store:
 
 ```text
-QB-Audit/
+.qb/audit/
 ├── findings.jsonl
 ├── evidence/
 ├── run-log.jsonl
@@ -167,7 +167,7 @@ recovering, rollback drills, release gates, and production gates live in
 ### Findings → planwright items
 
 The audit engine and the planning workflow share one execution surface: a
-conformant `QB-Audit/findings.jsonl` finding projects into a planwright plan item
+conformant `.qb/audit/findings.jsonl` finding projects into a planwright plan item
 (`shared/scripts/findings_to_plan.py`), so the highest-value hardening work flows
 through the same reviewed `execute` / `cycle` path as planned work, with no second
 item format. The eight-field `Finding` maps onto the seven-field planwright item:
@@ -195,7 +195,7 @@ not an executable surface) is **not** projected. `Verification` re-runs the audi
 the operator can confirm the finding no longer appears.
 
 The projection is runnable and gated: `python3 shared/scripts/findings_to_plan.py
---root .` loads `QB-Audit/findings.jsonl`, projects it, and validates the result with
+--root .` loads `.qb/audit/findings.jsonl`, projects it, and validates the result with
 the planwright plan linter, emitting the same `planwright_plan_validation` /
 `secret_findings` / `violation_count` lines the validator does. The QB → planwright
 hand-off is **one-directional**: QB writes its plan under `.qb/` and never writes the

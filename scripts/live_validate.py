@@ -146,7 +146,7 @@ def run_over_corpus(repos, out_base, *, policy=None) -> list:
     """Run qb_headless over every corpus repo; return a RunResult per repo.
 
     ``repos`` is an iterable of objects exposing ``.name`` and ``.path`` (e.g.
-    ``tests.qb_corpus.CorpusRepo``). Each run gets its own ``QB-Audit/`` store
+    ``tests.qb_corpus.CorpusRepo``). Each run gets its own ``.qb/audit/`` store
     under ``out_base/<name>/``.
     """
     out_base = Path(out_base)

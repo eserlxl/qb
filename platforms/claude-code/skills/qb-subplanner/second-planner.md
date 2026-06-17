@@ -106,7 +106,7 @@ You may use ripgrep/grep for discovery, e.g. searching for phase/roadmap/archite
 readiness/production, security/policy, API/database/queue, and test/CI/artifact terms.
 Use git-aware repository file lists that respect ignored paths; do not scan
 ignored local artifact directories such as `.qb/`, `.planwright/`, or
-`QB-Audit/` as implementation evidence. Read `.qb/` only for the QB planning
+`.qb/audit/` as implementation evidence. Read `.qb/` only for the QB planning
 inputs named above.
 
 If .qb/main-planning.md is missing:

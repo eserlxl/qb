@@ -270,7 +270,7 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--audit-out",
         default=None,
-        help="Optional directory for per-fixture QB-Audit outputs; defaults to a temporary directory.",
+        help="Optional directory for per-fixture .qb/audit outputs; defaults to a temporary directory.",
     )
     args = parser.parse_args(argv)
 

@@ -103,8 +103,8 @@ class ProductionGateTests(unittest.TestCase):
         recon = _load("qb_self_audit_reconcile_under_test",
                       SHARED_DIR / "scripts/self_audit_reconcile.py")
         with tempfile.TemporaryDirectory() as d:
-            audit = Path(d) / "QB-Audit"
-            audit.mkdir()
+            audit = Path(d) / ".qb/audit"
+            audit.mkdir(parents=True)
             (audit / "findings.jsonl").write_text(
                 '{"id": "QBF-A", "severity": "P3"}\n'
                 '{"id": "QBF-B", "severity": "P2"}\n', encoding="utf-8")
@@ -137,7 +137,7 @@ class ProductionGateTests(unittest.TestCase):
 
         # An empty inventory (no findings.jsonl) reconciles clean (nothing to accept).
         with tempfile.TemporaryDirectory() as d:
-            result = recon.reconcile(Path(d) / "QB-Audit", Path(d))
+            result = recon.reconcile(Path(d) / ".qb/audit", Path(d))
             self.assertTrue(result["self_audit_clean"])
             self.assertEqual(result["unaccepted_ids"], [])
 
@@ -169,7 +169,7 @@ class ProductionGateSignalsTests(unittest.TestCase):
         self.recov = _load("qb_recoverability_for_signals", SHARED_DIR / "scripts/recoverability_drill.py")
 
     def _all_real_signals(self, d):
-        audit = Path(d) / "QB-Audit"
+        audit = Path(d) / ".qb/audit"
         store = self.store.RunStore(audit).open()
         store.write_telemetry({"schema_version": 1,
                                "quality": {"precision_estimate": 0.95, "fix_safety_ok": True}})
@@ -208,8 +208,8 @@ class ProductionGateSignalsTests(unittest.TestCase):
         # Fail-closed: an absent telemetry record / recoverability record / findings
         # inventory each deny their conjunct (so the composite gate cannot pass).
         with tempfile.TemporaryDirectory() as d:
-            empty_audit = Path(d) / "QB-Audit"
-            empty_audit.mkdir()
+            empty_audit = Path(d) / ".qb/audit"
+            empty_audit.mkdir(parents=True)
             repo = Path(d) / "repo"
             repo.mkdir()
             self.assertFalse(self.sig.telemetry_emitted(empty_audit))
@@ -288,7 +288,7 @@ class SelfAuditDogfoodTests(unittest.TestCase):
         # The ultimate dogfood: QB headlessly audits the QB repo at A0 (report-only).
         before = _git(REPO_ROOT, "status", "--porcelain").stdout
         with tempfile.TemporaryDirectory() as d:
-            out = Path(d) / "QB-Audit"
+            out = Path(d) / ".qb/audit"
             code = self.hl.run_headless(REPO_ROOT, output_dir=out)
             self.assertIn(code, (self.hl.EXIT_CLEAN, self.hl.EXIT_FINDINGS))
             self.assertTrue((out / "report.json").is_file())

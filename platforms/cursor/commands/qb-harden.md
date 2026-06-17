@@ -24,13 +24,13 @@ engine; this command only supplies the run brief and starts the goal.
 ## What the run does
 
 The engine audits the repository read-only, writes graded findings, per-fix
-evidence, and an append-only log to the fixed-name `QB-Audit/` store, and emits a
+evidence, and an append-only log to the fixed-name `.qb/audit/` store, and emits a
 machine-readable report (`report.json`, `report.sarif`) plus a human summary. At A0
 nothing is written to the working tree; at A1+ each fix runs in git isolation, is
 kept only when its verification command passes, and is otherwise auto-reverted.
 
 For a non-interactive run, the engine is callable directly:
-`python3 scripts/qb_headless.py --root . --out QB-Audit`.
+`python3 scripts/qb_headless.py --root . --out .qb/audit`.
 
 ## Stop rules
 

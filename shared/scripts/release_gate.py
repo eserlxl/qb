@@ -181,7 +181,7 @@ def authorization_record(telemetry: dict, floor: float = PRECISION_FLOOR) -> dic
 
 
 def persist_authorization(record, output_dir) -> Path:
-    """Write the authorization record into the QB-Audit store deterministically
+    """Write the authorization record into the .qb/audit store deterministically
     (sorted keys) and redacted via run_store.redact, so no secret value is ever
     emitted. Returns the written path."""
     out = Path(output_dir)

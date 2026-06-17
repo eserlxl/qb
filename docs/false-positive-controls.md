@@ -20,7 +20,7 @@ the analyzer emits the finding normally.
 When a marker suppresses a finding, `CommandInjectionAnalyzer` records a
 suppression entry with the rule, evidence location, and reason in
 `last_suppression_report`. Normal audit runs copy those entries into
-`QB-Audit/summary.json` under `analyzers_suppressed`, so suppressions are visible
+`.qb/audit/summary.json` under `analyzers_suppressed`, so suppressions are visible
 even though no finding is written to `findings.jsonl`.
 
 ## Confidence Downgrades

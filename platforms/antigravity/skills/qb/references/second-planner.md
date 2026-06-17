@@ -135,7 +135,7 @@ Run only safe read-only commands such as:
 - inspect pyproject.toml, package.json, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, test files, config examples, service skeletons, package skeletons, and policy files if present
 
 Use git-aware file lists that respect ignored paths; do not scan ignored local
-artifact directories such as `.qb/`, `.planwright/`, or `QB-Audit/` as
+artifact directories such as `.qb/`, `.planwright/`, or `.qb/audit/` as
 repository implementation evidence. Read `.qb/` only for the QB planning and
 continuity inputs named above.
 

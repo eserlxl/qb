@@ -25,13 +25,13 @@ Delegate the long autonomous run to the `qb-runner` subagent via the Task tool
 
 The engine (synced under `scripts/`) audits the repository read-only with the
 analyzer suite, writes graded findings plus per-fix evidence and an append-only log
-to the fixed-name `QB-Audit/` store, and emits a machine-readable report
+to the fixed-name `.qb/audit/` store, and emits a machine-readable report
 (`report.json`, `report.sarif`) and a human summary. At A0 nothing is written to
 the working tree; at A1+ every fix is attempted in git isolation, kept only when
 its verification command passes, and otherwise auto-reverted.
 
 For a non-interactive run, the engine is also callable directly:
-`python3 <plugin-root>/scripts/qb_headless.py --root . --out QB-Audit`.
+`python3 <plugin-root>/scripts/qb_headless.py --root . --out .qb/audit`.
 
 ## Stop rules
 

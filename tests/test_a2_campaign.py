@@ -40,7 +40,7 @@ _BREACHED = {"quality": {"precision_estimate": 0.95, "fix_safety_ok": False}}
                  "git unavailable")
 class A2CampaignTests(unittest.TestCase):
     def _eligible_telemetry(self, lv, repo, base):
-        a1 = lv.run_campaign(repo, "A1", base / "a1" / repo.name / "QB-Audit")
+        a1 = lv.run_campaign(repo, "A1", base / "a1" / repo.name / ".qb/audit")
         return lv._store.load_prior_telemetry(a1.output_dir)
 
     def test_a2_promotes_with_loaded_eligible_telemetry(self) -> None:
@@ -50,7 +50,7 @@ class A2CampaignTests(unittest.TestCase):
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible_telemetry(lv, repo, base)
                 self.assertEqual(lv._telemetry.max_permitted_autonomy(prior), "A2")
-                a2 = lv.run_campaign(repo, "A2", base / "a2" / repo.name / "QB-Audit",
+                a2 = lv.run_campaign(repo, "A2", base / "a2" / repo.name / ".qb/audit",
                                      prior_telemetry=prior)
                 self.assertIn("kept", a2.outcomes())
                 self.assertIn("fix_target.txt", a2.promoted())
@@ -62,7 +62,7 @@ class A2CampaignTests(unittest.TestCase):
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 for label, prior in (("poor", _POOR), ("breached", _BREACHED)):
-                    run = lv.run_campaign(repo, "A2", base / label / repo.name / "QB-Audit",
+                    run = lv.run_campaign(repo, "A2", base / label / repo.name / ".qb/audit",
                                           prior_telemetry=prior)
                     for result in run.results:
                         self.assertEqual(result["earned_ceiling"], "A1", f"{repo.name} {label}")
@@ -98,7 +98,7 @@ class A2CampaignTests(unittest.TestCase):
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible_telemetry(lv, repo, base)
-                a2 = lv.run_campaign(repo, "A2", base / "a2" / repo.name / "QB-Audit",
+                a2 = lv.run_campaign(repo, "A2", base / "a2" / repo.name / ".qb/audit",
                                      prior_telemetry=prior)
                 measured = a2.telemetry["quality"]["precision_estimate"]
                 # Ground truth: the single fixable finding is a true positive that

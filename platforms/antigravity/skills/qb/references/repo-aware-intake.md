@@ -20,7 +20,7 @@ The goal is to ask the same four required fields, but make the questions active,
 Before asking `PROJECT_NAME`, inspect the repository with a bounded read-only pass.
 Prefer git-aware commands that respect `.gitignore` and other standard ignore rules;
 do not scan ignored local artifact directories such as `.qb/`, `.planwright/`, or
-`QB-Audit/` as repository evidence.
+`.qb/audit/` as repository evidence.
 
 Prefer commands like:
 
@@ -50,7 +50,7 @@ Read likely evidence files when they exist:
 Use `rg` only for targeted discovery when useful:
 
 ```bash
-rg -n "architecture|roadmap|runbook|production|security|policy|workflow|worker|scheduler|gateway|adapter|dashboard|test|smoke|deploy|Kubernetes|Docker|Postgres|queue|approval|audit|artifact|observability" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!QB-Audit/**'
+rg -n "architecture|roadmap|runbook|production|security|policy|workflow|worker|scheduler|gateway|adapter|dashboard|test|smoke|deploy|Kubernetes|Docker|Postgres|queue|approval|audit|artifact|observability" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!.qb/audit/**'
 ```
 
 Keep this pass brief. Its purpose is to make the intake questions smarter, not to replace the full repository analysis in `first-planner.md`.

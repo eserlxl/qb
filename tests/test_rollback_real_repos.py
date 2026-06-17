@@ -53,7 +53,7 @@ def _branches(repo: Path) -> str:
                  "git unavailable")
 class RollbackRealReposTests(unittest.TestCase):
     def _eligible(self, lv, repo, base):
-        a1 = lv.run_campaign(repo, "A1", base / "a1" / repo.name / "QB-Audit")
+        a1 = lv.run_campaign(repo, "A1", base / "a1" / repo.name / ".qb/audit")
         return lv._store.load_prior_telemetry(a1.output_dir)
 
     def _items(self, lv, n, prefix):
@@ -71,7 +71,7 @@ class RollbackRealReposTests(unittest.TestCase):
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible(lv, repo, base)
                 handle = rg.capture_baseline(repo.path, "rb-a2")
-                a2 = lv.run_campaign(repo, "A2", base / "a2" / repo.name / "QB-Audit",
+                a2 = lv.run_campaign(repo, "A2", base / "a2" / repo.name / ".qb/audit",
                                      prior_telemetry=prior)
                 self.assertIn("fix_target.txt", a2.promoted())  # something really was promoted
                 rg.rollback_run(repo.path, handle)
@@ -85,7 +85,7 @@ class RollbackRealReposTests(unittest.TestCase):
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible(lv, repo, base)
                 handle = rg.capture_baseline(repo.path, "rb-a3")
-                a3 = lv.run_campaign(repo, "A3", base / "a3" / repo.name / "QB-Audit",
+                a3 = lv.run_campaign(repo, "A3", base / "a3" / repo.name / ".qb/audit",
                                      prior_telemetry=prior, enable_a3=True)
                 self.assertTrue(a3.changesets())  # a changeset was assembled (no commit)
                 rg.rollback_run(repo.path, handle)

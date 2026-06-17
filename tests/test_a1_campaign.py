@@ -48,7 +48,7 @@ class A1CampaignTests(unittest.TestCase):
             repos = qb_corpus.build_corpus(base / "corpus")
             self.assertTrue(repos)
             for repo in repos:
-                run = lv.run_campaign(repo, "A1", base / "out" / repo.name / "QB-Audit")
+                run = lv.run_campaign(repo, "A1", base / "out" / repo.name / ".qb/audit")
                 tele = run.telemetry
                 self.assertEqual(tele["schema_version"], lv._telemetry.TELEMETRY_SCHEMA_VERSION)
                 self.assertEqual(tele["autonomy_level"], "A1")
@@ -64,7 +64,7 @@ class A1CampaignTests(unittest.TestCase):
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 self.assertEqual(_git_porcelain(repo.path), "", f"{repo.name} dirty before run")
-                lv.run_campaign(repo, "A1", base / "out" / repo.name / "QB-Audit")
+                lv.run_campaign(repo, "A1", base / "out" / repo.name / ".qb/audit")
                 # A1 confines writes to throwaway isolation: the target tree is unchanged.
                 self.assertEqual(_git_porcelain(repo.path), "",
                                  f"{repo.name} working tree changed after A1 run")
@@ -76,7 +76,7 @@ class A1CampaignTests(unittest.TestCase):
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 for level in ("A2", "A3"):
                     run = lv.run_campaign(
-                        repo, level, base / "out" / repo.name / level / "QB-Audit",
+                        repo, level, base / "out" / repo.name / level / ".qb/audit",
                         prior_telemetry=None)
                     for result in run.results:
                         self.assertEqual(result["earned_ceiling"], "A1", f"{repo.name} {level}")
@@ -88,7 +88,7 @@ class A1CampaignTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
-                run = lv.run_campaign(repo, "A1", base / "out" / repo.name / "QB-Audit")
+                run = lv.run_campaign(repo, "A1", base / "out" / repo.name / ".qb/audit")
                 loaded = rs.load_prior_telemetry(run.output_dir)
                 self.assertEqual(loaded["schema_version"], lv._telemetry.TELEMETRY_SCHEMA_VERSION)
                 # The A1 run kept a green-verified fix, so the record earns A2 for Phase 3.3.

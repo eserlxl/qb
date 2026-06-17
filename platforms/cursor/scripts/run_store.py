@@ -5,8 +5,8 @@ The authoritative execution truth for a single audit-and-harden run: given only
 the store directory, a reader can reconstruct what was found, what changed, why,
 and how to undo it -- with no reliance on chat scrollback or external trackers.
 
-Fixed-name layout under the run output directory (working name ``QB-Audit/``,
-mirroring the ``.qb/`` convention):
+Fixed-name layout under the run output directory (default ``.qb/audit/``,
+alongside the other ``.qb/`` planning artifacts):
   findings.jsonl          -- the graded findings inventory (one Finding per line)
   evidence/<id>.json      -- per-fix evidence: verify command, before/after result,
                              keep/revert outcome, and a git reversal handle
@@ -33,7 +33,7 @@ import sys
 from importlib import util as _import_util
 from pathlib import Path
 
-OUTPUT_DIR_NAME = "QB-Audit"
+OUTPUT_DIR_NAME = ".qb/audit"  # store path relative to the work/repo root
 FINDINGS_FILENAME = "findings.jsonl"
 EVIDENCE_DIRNAME = "evidence"
 RUN_LOG_FILENAME = "run-log.jsonl"
@@ -219,7 +219,7 @@ def validate_store_layout(output_dir) -> list:
     """Identifier check: the required subpaths exist with the fixed names."""
     errors = []
     root = Path(output_dir)
-    if root.name != OUTPUT_DIR_NAME:
+    if root.name != Path(OUTPUT_DIR_NAME).name:
         errors.append(f"invalid_store_dir_name={root.name}")
     for sub in REQUIRED_SUBPATHS:
         if not (root / sub).exists():
@@ -231,7 +231,7 @@ def load_prior_telemetry(prior_store_dir) -> dict:
     """Load the prior run-store telemetry record, failing closed to ``{}``.
 
     ``prior_store_dir`` is the previous run store root, conventionally the
-    ``QB-Audit/`` directory containing ``telemetry.json``. The caller owns
+    ``.qb/audit/`` directory containing ``telemetry.json``. The caller owns
     locating that directory; this helper only performs version-guarded loading.
     """
     if prior_store_dir in (None, ""):

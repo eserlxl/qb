@@ -49,7 +49,7 @@ class HeadlessTests(unittest.TestCase):
             repo.mkdir()
             (repo / "readme.md").write_text("# nothing actionable here\n", encoding="utf-8")
             (repo / "LICENSE").write_text(_LICENSE_TEXT, encoding="utf-8")
-            out = Path(d) / "QB-Audit"
+            out = Path(d) / ".qb/audit"
             code = self.hl.run_headless(repo, output_dir=out)
             self.assertEqual(code, self.hl.EXIT_CLEAN)
 
@@ -59,7 +59,7 @@ class HeadlessTests(unittest.TestCase):
             repo.mkdir()
             token = "ghp_" + "A" * 30
             (repo / "leak.txt").write_text(f"key = {token}\n", encoding="utf-8")
-            out = Path(d) / "QB-Audit"
+            out = Path(d) / ".qb/audit"
             code = self.hl.run_headless(repo, output_dir=out)
             self.assertEqual(code, self.hl.EXIT_FINDINGS)
 
@@ -82,7 +82,7 @@ class HeadlessTests(unittest.TestCase):
         # run against this repository -- never a boundary (2) or internal-error (3)
         # code. This pins the `self-audit` Make target's end-to-end behavior.
         with tempfile.TemporaryDirectory() as d:
-            out = Path(d) / "QB-Audit"
+            out = Path(d) / ".qb/audit"
             code = self.hl.run_headless(REPO_ROOT, output_dir=out)
             self.assertIn(code, (self.hl.EXIT_CLEAN, self.hl.EXIT_FINDINGS),
                           f"self-audit returned non-documented exit code {code}")
@@ -98,7 +98,7 @@ class HeadlessTests(unittest.TestCase):
         store = _load("qb_run_store_for_headless", SHARED_DIR / "scripts/run_store.py")
         recov = _load("qb_recoverability_for_headless", SHARED_DIR / "scripts/recoverability_drill.py")
         with tempfile.TemporaryDirectory() as d:
-            audit = Path(d) / "QB-Audit"
+            audit = Path(d) / ".qb/audit"
             rs = store.RunStore(audit).open()
             rs.write_telemetry({"schema_version": 1,
                                 "quality": {"precision_estimate": 0.95, "fix_safety_ok": True}})
@@ -112,8 +112,8 @@ class HeadlessTests(unittest.TestCase):
                              "--scripts-dir", str(SHARED_DIR / "scripts")])
             self.assertEqual(code, sig.GATE_PASSED)
             # An empty store denies (fail-closed) with a documented non-zero code.
-            empty = Path(d) / "empty-QB-Audit"
-            empty.mkdir()
+            empty = Path(d) / "empty" / ".qb" / "audit"
+            empty.mkdir(parents=True)
             code = sig.main(["--root", str(repo), "--out", str(empty),
                              "--scripts-dir", str(SHARED_DIR / "scripts")])
             self.assertEqual(code, sig.GATE_DENIED)
@@ -124,7 +124,7 @@ class HeadlessTests(unittest.TestCase):
             repo.mkdir()
             (repo / "ok.txt").write_text("clean\n", encoding="utf-8")
             (repo / "LICENSE").write_text(_LICENSE_TEXT, encoding="utf-8")
-            code = self.hl.main(["--root", str(repo), "--out", str(Path(d) / "QB-Audit")])
+            code = self.hl.main(["--root", str(repo), "--out", str(Path(d) / ".qb/audit")])
             self.assertEqual(code, self.hl.EXIT_CLEAN)
 
 

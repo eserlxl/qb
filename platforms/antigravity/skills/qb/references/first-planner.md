@@ -121,10 +121,10 @@ Run only read-only or safe local commands such as:
 - inspect pyproject.toml, package.json, Makefile, docker-compose files, CI workflow files, docs indexes, architecture docs, runbooks, test files, config examples, .qb/planning-ledger.md, and .qb/project-ontology.md if present
 
 You may use ripgrep/grep to discover important project markers:
-- rg "TODO|FIXME|Phase|phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|Linear|GitHub|Temporal|LangGraph|LiteLLM|Antigravity|OpenCode|Claude|Gemini|API|database|Postgres|queue|artifact|approval|review" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!QB-Audit/**'
+- rg "TODO|FIXME|Phase|phase|roadmap|architecture|runbook|readiness|activation|production|security|policy|worker|scheduler|gateway|adapter|test|smoke|CI|Linear|GitHub|Temporal|LangGraph|LiteLLM|Antigravity|OpenCode|Claude|Gemini|API|database|Postgres|queue|artifact|approval|review" . --glob '!.git/**' --glob '!node_modules/**' --glob '!.venv/**' --glob '!dist/**' --glob '!build/**' --glob '!artifacts/**' --glob '!.qb/**' --glob '!.planwright/**' --glob '!.qb/audit/**'
 
 Use git-aware file lists that respect ignored paths; do not scan ignored local
-artifact directories such as `.qb/`, `.planwright/`, or `QB-Audit/` as
+artifact directories such as `.qb/`, `.planwright/`, or `.qb/audit/` as
 repository implementation evidence. Read `.qb/` only for QB's own prior
 planning artifacts when reconciling an existing QB plan.
 

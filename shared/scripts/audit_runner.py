@@ -18,8 +18,8 @@ Properties:
   * Redacted -- secret-hygiene findings carry ``path:line`` evidence only.
 
 Output convention (fixed, validator-checked identifiers):
-  ``QB-Audit/findings.jsonl``  -- one canonical JSON finding per line, ordered.
-  ``QB-Audit/summary.json``    -- counts by severity/category + analyzers run/skipped.
+  ``.qb/audit/findings.jsonl``  -- one canonical JSON finding per line, ordered.
+  ``.qb/audit/summary.json``    -- counts by severity/category + analyzers run/skipped.
 """
 
 from __future__ import annotations
@@ -70,7 +70,7 @@ ConfigHygieneAnalyzer = _config.ConfigHygieneAnalyzer
 WorkflowActionAnalyzer = _breadth.WorkflowActionAnalyzer
 
 # --- Fixed output-directory convention (validator-checked identifiers) ---------
-OUTPUT_DIR_NAME = "QB-Audit"
+OUTPUT_DIR_NAME = ".qb/audit"  # store path relative to the work/repo root
 FINDINGS_FILENAME = "findings.jsonl"
 SUMMARY_FILENAME = "summary.json"
 OUTPUT_FILENAMES = (FINDINGS_FILENAME, SUMMARY_FILENAME)
@@ -108,7 +108,7 @@ def validate_output_layout(output_dir) -> list[str]:
     """Identifier check: reject a misnamed or incomplete audit output tree."""
     errors: list[str] = []
     directory = Path(output_dir)
-    if directory.name != OUTPUT_DIR_NAME:
+    if directory.name != Path(OUTPUT_DIR_NAME).name:
         errors.append(f"invalid_output_dir_name={directory.name}")
     for filename in OUTPUT_FILENAMES:
         if not (directory / filename).is_file():

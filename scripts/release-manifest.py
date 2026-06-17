@@ -2,7 +2,7 @@
 """QB release-integrity manifest (Phase 8.4) -- standard library only.
 
 Emits a deterministic manifest of the SANITIZED export tree -- the git-tracked files
-`git archive` ships (gitignored trees such as .qb/, QB-Audit/, .planwright/ are
+`git archive` ships (gitignored trees such as .qb/, .qb/audit/, .planwright/ are
 excluded by construction) -- with a SHA-256 per file plus the root VERSION. The
 manifest pins exactly what a release contains so a consumer can verify an artifact
 byte-for-byte.

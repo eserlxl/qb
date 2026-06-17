@@ -144,7 +144,7 @@ class RollbackDrillTests(unittest.TestCase):
 
         def _record(run_id, evidence):
             with tempfile.TemporaryDirectory() as d:
-                rs = store.RunStore(Path(d) / "QB-Audit").open()
+                rs = store.RunStore(Path(d) / ".qb/audit").open()
                 rs.write_telemetry(self.t.build_telemetry(
                     run_id=run_id, autonomy_level="A2", findings=[], evidence=evidence))
                 return rs.read_telemetry()

@@ -66,7 +66,7 @@ class ReportReproducibilityTests(unittest.TestCase):
 
     def test_recoverability_evidence_record_round_trips_and_redacts(self) -> None:
         # Phase 7.1: the recoverability evidence record persists deterministically into
-        # the QB-Audit store and emits no secret value (redacted via run_store.redact).
+        # the .qb/audit store and emits no secret value (redacted via run_store.redact).
         drill = _load("qb_recoverability_drill_for_repro",
                       SHARED_DIR / "scripts/recoverability_drill.py")
         secret = "ghp_" + "A" * 36
@@ -88,7 +88,7 @@ class ReportReproducibilityTests(unittest.TestCase):
 
     def test_release_gate_authorization_record_round_trips_and_redacts(self) -> None:
         # Phase 7.2: the release-gate authorization decision persists deterministically
-        # into the QB-Audit store as a redacted record (permitted level + gate reason
+        # into the .qb/audit store as a redacted record (permitted level + gate reason
         # tokens) and emits no secret value (redacted via run_store.redact).
         rg = _load("qb_release_gate_for_repro", SHARED_DIR / "scripts/release_gate.py")
         granted = rg.authorization_record(
@@ -115,7 +115,7 @@ class ReportReproducibilityTests(unittest.TestCase):
         self.assertIn("<redacted>", back["note"])
 
     def test_self_audit_evidence_record_round_trips_and_redacts(self) -> None:
-        # Phase 7.3: the self-audit reconciliation result persists into the QB-Audit
+        # Phase 7.3: the self-audit reconciliation result persists into the .qb/audit
         # store as a redacted, deterministic record (clean flag, accepted count,
         # unaccepted ids) and emits no secret value.
         with tempfile.TemporaryDirectory() as d:
@@ -139,7 +139,7 @@ class ReportReproducibilityTests(unittest.TestCase):
         self.assertIn("<redacted>", back["note"])
 
     def test_production_gate_evidence_record_round_trips_and_redacts(self) -> None:
-        # Phase 7.4: the production-gate decision persists into the QB-Audit store as a
+        # Phase 7.4: the production-gate decision persists into the .qb/audit store as a
         # redacted, deterministic record (checks/failures/passed) with no secret value,
         # and a passing gate still records A3 as explicit opt-in (a3 default False).
         with tempfile.TemporaryDirectory() as d:

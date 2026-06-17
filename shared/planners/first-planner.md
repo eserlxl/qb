@@ -106,7 +106,7 @@ architecture/runbook, readiness/production, security/policy, test/smoke/CI, and
 API/database/queue/artifact terms.
 Use git-aware file lists and ripgrep globs that respect ignored paths; do not
 scan ignored local artifact directories such as `.qb/`, `.planwright/`, or
-`QB-Audit/` as repository implementation evidence. Read `.qb/` only for QB's
+`.qb/audit/` as repository implementation evidence. Read `.qb/` only for QB's
 own prior planning artifacts when reconciling an existing QB plan.
 
 These inspection commands are independent and read-only, so the evidence may be gathered in

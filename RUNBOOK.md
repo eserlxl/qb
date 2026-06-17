@@ -79,7 +79,7 @@ guarantee.
   `scripts/sync.sh --check` invariant, also pinned by
   `tests/test_release_integrity.py`).
 - **Exclusion of tool-state trees** — the export is the tracked tree, so `.qb/`,
-  `QB-Audit/`, and `.planwright/` are never shipped.
+  `.qb/audit/`, and `.planwright/` are never shipped.
 
 **NOT guaranteed:**
 
@@ -119,7 +119,7 @@ the telemetry-earned ceiling, and this sandbox clamp.
 
 ## Start
 
-- **Headless / CI:** `python3 scripts/qb_headless.py --root <repo> --out QB-Audit`
+- **Headless / CI:** `python3 scripts/qb_headless.py --root <repo> --out .qb/audit`
   (defaults to A0). Branch on the exit code: `0` clean · `1` findings · `2`
   policy/budget boundary · `3` internal error.
 - **In a host:** run the `qb-harden` command (Claude Code / Cursor) or the
@@ -128,7 +128,7 @@ the telemetry-earned ceiling, and this sandbox clamp.
 
 ## Observe
 
-- The run writes everything to the fixed-name `QB-Audit/` store: `findings.jsonl`,
+- The run writes everything to the fixed-name `.qb/audit/` store: `findings.jsonl`,
   `evidence/<id>.json`, append-only `run-log.jsonl`, `summary.json`, plus
   `report.json` / `report.sarif` / `summary.txt` and a `telemetry.json` record.
 - Read `summary.txt` for severity counts and kept/reverted fix counts; read
@@ -151,7 +151,7 @@ the telemetry-earned ceiling, and this sandbox clamp.
 - **Recoverability evidence record:** `recoverability_drill.run_drill` reuses that
   same `release_gate` capture/rollback/`baseline_clean` path and returns a
   redaction-safe record; `recoverability_drill.run_and_persist` writes it to
-  `QB-Audit/recoverability.json`. The format (the single committed source the
+  `.qb/audit/recoverability.json`. The format (the single committed source the
   production-gate procedure points at) is `schema_version`, `run_id`,
   `baseline_ref` (`refs/qb-baseline/<run_id>`), `baseline_sha_len` (the baseline
   sha's **length**, never its value), `baseline_clean`, and `passed` — redacted via
@@ -186,7 +186,7 @@ explicit, separate opt-in.
 ## From findings to a fix plan
 
 Audit findings become reviewable, verifiable work through planwright. Project a
-run's `QB-Audit/findings.jsonl` into planwright items with
+run's `.qb/audit/findings.jsonl` into planwright items with
 `python3 shared/scripts/findings_to_plan.py --root .`; it validates the projection
 with the plan linter and prints `planwright_plan_validation` / `secret_findings` /
 `violation_count`. The QB → planwright hand-off is **one-directional** — QB writes
@@ -197,7 +197,7 @@ execute a plan you copy it across (`cp .qb/plan.md .planwright/plan.md`) and run
 ## Observability
 
 Across runs, QB persists an aggregate telemetry series at
-`QB-Audit/telemetry-aggregate.json` (the fixed run-store layout defined in
+`.qb/audit/telemetry-aggregate.json` (the fixed run-store layout defined in
 `run_store.py`), appending one entry per run keyed by `run_id`. The trend reader
 (`telemetry_trends`) derives a per-dimension series over the five tracked
 dimensions — `precision`, `fix_safety`, `latency`, `cost`, and `quality` — and a
@@ -267,9 +267,9 @@ from a real evidence source by `production_gate_signals.assemble_signals` and na
 exactly as in `production_gate.PRODUCTION_GATE_CHECKS`:
 
 1. **`telemetry_emitted`** — a schema-valid per-run quality record exists
-   (`QB-Audit/telemetry.json`).
+   (`.qb/audit/telemetry.json`).
 2. **`rollback_drill_passed`** — the recoverability drill record records a pass
-   (`QB-Audit/recoverability.json`; see [Recover](#recover)).
+   (`.qb/audit/recoverability.json`; see [Recover](#recover)).
 3. **`least_privilege_ok`** — the write/network/script least-privilege invariants
    hold (`least_privilege.py`: default-deny writes, no implicit egress, no auto-run
    of repo scripts).
@@ -279,11 +279,11 @@ exactly as in `production_gate.PRODUCTION_GATE_CHECKS`:
 5. **`killswitch_proven`** — the kill-switch halts at a safe checkpoint with the
    documented kill-stop exit code (`budget.KillSwitch`; see [Pause / Kill](#pause--kill)).
 6. **`self_audit_clean`** — every QB-audits-QB finding is fixed or explicitly accepted
-   (`QB-Audit/self-audit.json` reconciled against
+   (`.qb/audit/self-audit.json` reconciled against
    [docs/accepted-findings.md](docs/accepted-findings.md)).
 
 The composite decision and the earned-autonomy authorization are persisted redacted
-under `QB-Audit/production-gate.json` and `QB-Audit/release-authorization.json`. The
+under `.qb/audit/production-gate.json` and `.qb/audit/release-authorization.json`. The
 gate **fails closed**: any single conjunct false denies operation, naming that
 conjunct in `failures`. It **re-evaluates current signals each time** and is never a
 one-time checkbox.

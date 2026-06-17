@@ -24,8 +24,8 @@ test:
 
 # self-audit -- "QB audits QB": run the headless engine over this repository at the
 # conservative A0 (report-only) default, writing the findings inventory + reports to
-# the gitignored QB-Audit/ store. Exit 0 = clean and 1 = findings are both DOCUMENTED
-# outcomes of a successful run (the produced QB-Audit/findings.jsonl is reconciled
+# the gitignored .qb/audit/ store. Exit 0 = clean and 1 = findings are both DOCUMENTED
+# outcomes of a successful run (the produced .qb/audit/findings.jsonl is reconciled
 # against the accepted-findings register, not gated here); only a boundary (2) or
 # internal-error (3) code fails the target. See the RUNBOOK exit-code contract.
 # install-hooks -- opt-in: install the local pre-push hook that runs `make check`
@@ -34,13 +34,13 @@ install-hooks:
 	bash scripts/install-hooks.sh
 
 self-audit:
-	@python3 shared/scripts/qb_headless.py --root . --out QB-Audit; \
+	@python3 shared/scripts/qb_headless.py --root . --out .qb/audit; \
 	code=$$?; \
 	if [ $$code -gt 1 ]; then \
 		echo "self-audit: run failed (exit $$code: boundary/internal error)" >&2; \
 		exit $$code; \
 	fi; \
-	echo "self-audit: completed (exit $$code; 0=clean, 1=findings) -> QB-Audit/findings.jsonl"
+	echo "self-audit: completed (exit $$code; 0=clean, 1=findings) -> .qb/audit/findings.jsonl"
 
 # release-manifest -- emit the deterministic sanitized-export integrity manifest
 # (per-file SHA-256 + root VERSION over the git-tracked tree). Run with --check to

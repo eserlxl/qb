@@ -125,7 +125,7 @@ class KillBudgetCampaignTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             base = Path(d)
             repo = self._repo(lv, base)
-            a1 = lv.run_campaign(repo, "A1", base / "a1" / "QB-Audit")
+            a1 = lv.run_campaign(repo, "A1", base / "a1" / ".qb/audit")
             prior = lv._store.load_prior_telemetry(a1.output_dir)
             results, report = lv._budget.run_session(
                 _policy(lv, "A2", {"max_fixes": 2}), repo.path, _green_items(lv, 5, prefix="pf"),

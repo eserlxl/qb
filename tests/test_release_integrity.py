@@ -3,7 +3,7 @@
 Pins the supply-chain integrity contract of the sanitized export (the git-tracked
 tree `git archive` ships): platform copies are byte-equal to the synced shared/ core
 (sync.sh --check semantics), the tree carries the expected root VERSION, and the
-gitignored working trees (.qb/, QB-Audit/, .planwright/) are excluded.
+gitignored working trees (.qb/, .planwright/) are excluded.
 """
 
 from __future__ import annotations
@@ -52,9 +52,10 @@ class ReleaseIntegrityTest(unittest.TestCase):
 
     def test_export_excludes_tool_state_trees(self):
         # The sanitized export = git-tracked files; the gitignored working trees must
-        # never appear, so a release never ships .qb/, QB-Audit/, or .planwright/.
+        # never appear, so a release never ships .qb/ (which now holds the audit
+        # run-store) or .planwright/.
         tracked = self._tracked()
-        for excluded in (".qb/", "QB-Audit/", ".planwright/"):
+        for excluded in (".qb/", ".planwright/"):
             offenders = [p for p in tracked if p.startswith(excluded)]
             self.assertEqual(offenders, [],
                              f"sanitized export must exclude {excluded}: {offenders}")

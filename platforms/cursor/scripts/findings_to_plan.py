@@ -1,6 +1,6 @@
-"""Project conformant QB-Audit findings into planwright plan items.
+"""Project conformant .qb/audit findings into planwright plan items.
 
-The audit engine emits graded ``Finding`` records into ``QB-Audit/findings.jsonl``;
+The audit engine emits graded ``Finding`` records into ``.qb/audit/findings.jsonl``;
 this module turns each into a planwright plan item in the exact ``export-planner.md``
 OUTPUT FORMAT, so the highest-value hardening work flows through the same reviewed
 planwright ``execute`` / ``cycle`` surface as planned work -- no second item format.
@@ -137,11 +137,11 @@ def main(argv=None) -> int:
     emitting the same result lines as validate_planwright_plan (so the projection is
     gated by the very linter that gates a hand-authored plan)."""
     parser = argparse.ArgumentParser(
-        description="Project QB-Audit findings into a planwright plan and validate it.")
+        description="Project .qb/audit findings into a planwright plan and validate it.")
     parser.add_argument("--root", default=".",
                         help="Repository root; findings' Surfaces resolve here. Default: cwd.")
     parser.add_argument("--out", default=None,
-                        help="Run store holding findings.jsonl. Default: <root>/QB-Audit.")
+                        help="Run store holding findings.jsonl. Default: <root>/.qb/audit.")
     parser.add_argument("--strict", action="store_true",
                         help="Promote advisories to violations (mirrors the validator).")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)

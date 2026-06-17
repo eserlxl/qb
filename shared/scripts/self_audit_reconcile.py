@@ -2,7 +2,7 @@
 
 Canonical host-neutral QB IP under ``shared/`` (Python standard library only).
 Closes the self-audit loop: it loads the QB-audits-QB findings inventory
-(``QB-Audit/findings.jsonl``, written by ``run_store``) and the committed
+(``.qb/audit/findings.jsonl``, written by ``run_store``) and the committed
 accepted-findings register (``docs/accepted-findings.md``, via
 ``accepted_findings``), reconciles them through ``production_gate.self_audit_clean``
 / ``unaccepted_findings``, and emits the ``self_audit_clean`` conjunct boolean plus

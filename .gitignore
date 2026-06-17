@@ -43,8 +43,5 @@ QB-sanitized.manifest
 .remember/
 .planwright/
 
-# Generated audit-engine output (reproducible; not source)
-QB-Audit/
-
-# Generated QB planning output (local-only plan files; not source)
+# Generated QB planning output and audit-engine store (local-only; not source)
 .qb/

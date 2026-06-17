@@ -89,10 +89,10 @@ Launch it through the bundled engine entry point:
 
 ```text
 Use $qb. Run the audit and harden engine over this repository.
-python3 scripts/qb_headless.py --root . --out QB-Audit
+python3 scripts/qb_headless.py --root . --out .qb/audit
 ```
 
-The exit code is the contract: `0` clean, `1` findings present, `2` policy/budget boundary, `3` internal error. The engine writes graded findings, per-fix evidence, and an append-only log to the fixed-name `QB-Audit/` store, plus `report.json`, `report.sarif`, and a human summary. At A0 nothing is written to the working tree; at A1+ each fix runs in git isolation, is kept only when its verification command passes, and is otherwise auto-reverted. Never commit, push, open a PR, or deploy; A3 deliver is explicit opt-in only; never write secrets into any output.
+The exit code is the contract: `0` clean, `1` findings present, `2` policy/budget boundary, `3` internal error. The engine writes graded findings, per-fix evidence, and an append-only log to the fixed-name `.qb/audit/` store, plus `report.json`, `report.sarif`, and a human summary. At A0 nothing is written to the working tree; at A1+ each fix runs in git isolation, is kept only when its verification command passes, and is otherwise auto-reverted. Never commit, push, open a PR, or deploy; A3 deliver is explicit opt-in only; never write secrets into any output.
 
 ## Step 1 Intake
 

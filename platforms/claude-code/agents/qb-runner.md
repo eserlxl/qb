@@ -1,6 +1,6 @@
 ---
 name: qb-runner
-description: Use to run the QB audit -> harden -> report loop over a repository at a given autonomy level. Invoked by the qb-harden command via the Task tool (or run in-session as fallback). Audits read-only, applies only verified fixes in git isolation at A2+, and writes the QB-Audit/ store and reports. Never commits, pushes, or opens PRs.
+description: Use to run the QB audit -> harden -> report loop over a repository at a given autonomy level. Invoked by the qb-harden command via the Task tool (or run in-session as fallback). Audits read-only, applies only verified fixes in git isolation at A2+, and writes the .qb/audit/ store and reports. Never commits, pushes, or opens PRs.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -15,7 +15,7 @@ launcher.
 
 - **Objective**: produce a graded, evidence-backed audit of the target repository
   and, at the selected autonomy level, apply only verified, reversible fixes.
-- **Success evidence**: the `QB-Audit/` store and the `report.json` / `report.sarif`
+- **Success evidence**: the `.qb/audit/` store and the `report.json` / `report.sarif`
   / `summary.txt` outputs exist; every kept fix has a passing verification result
   and a recorded rollback handle; the working tree is unchanged at A0/A1.
 - **Scope bounds**: one repository, the declared autonomy level, no commit / push /
@@ -28,7 +28,7 @@ launcher.
 Prefer the engine's own entry point for a deterministic run:
 
 ```bash
-python3 <plugin-root>/scripts/qb_headless.py --root . --out QB-Audit
+python3 <plugin-root>/scripts/qb_headless.py --root . --out .qb/audit
 ```
 
 The exit code is the contract: `0` clean, `1` findings present, `2` policy/budget

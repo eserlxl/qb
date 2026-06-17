@@ -104,13 +104,14 @@ def suppression_reason_for_line(text: str, line_number: int, rule_key: str) -> s
     return None
 
 # Directories QB must never audit as repository implementation source.
+# ``.qb`` covers the audit run-store (``.qb/audit/``) as well as the planning
+# artifacts, so the store is never scanned as if it were repository source.
 _TOOL_OWNED_SCAN_DIRS = frozenset({
     ".git",
     ".hg",
     ".svn",
     ".qb",
     ".planwright",
-    "QB-Audit",
 })
 
 # Non-git fallback pruning. In git worktrees, iter_repo_files instead follows

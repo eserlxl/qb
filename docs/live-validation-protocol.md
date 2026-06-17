@@ -64,7 +64,7 @@ permits promotion; a cold start (no telemetry) clamps to A1 and produces none.
 
 ## Telemetry captured per run
 
-Each run persists `QB-Audit/telemetry.json` via `telemetry.build_telemetry`, with:
+Each run persists `.qb/audit/telemetry.json` via `telemetry.build_telemetry`, with:
 
 - `schema_version` (`== TELEMETRY_SCHEMA_VERSION`), `run_id`, `autonomy_level`,
   `clamp_reason` (set when the sandbox clamp lowered the level).

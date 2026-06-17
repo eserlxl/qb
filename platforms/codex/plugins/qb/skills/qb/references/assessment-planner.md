@@ -51,7 +51,7 @@ You may use ripgrep/grep for discovery, e.g. searching for TODO/FIXME/TBD and
 placeholder/stub/mock/skeleton/not-implemented markers, phase/roadmap/architecture terms,
 readiness/production/security/policy terms, test/CI/artifact terms, and
 secret/token/credential terms (excluding .git, node_modules, .venv, dist, build,
-artifacts, and ignored local artifact directories such as .qb, .planwright, and QB-Audit).
+artifacts, and ignored local artifact directories such as .qb, .planwright, and .qb/audit).
 
 Do not print or copy secret values. If a secret-like value is detected, report only the file path and line number with the value redacted.
 

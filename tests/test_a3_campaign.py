@@ -41,7 +41,7 @@ def _head(repo: Path) -> str:
                  "git unavailable")
 class A3CampaignTests(unittest.TestCase):
     def _eligible(self, lv, repo, base):
-        a1 = lv.run_campaign(repo, "A1", base / "a1" / repo.name / "QB-Audit")
+        a1 = lv.run_campaign(repo, "A1", base / "a1" / repo.name / ".qb/audit")
         return lv._store.load_prior_telemetry(a1.output_dir)
 
     def test_a3_changeset_equals_promoted_under_earned_ceiling_and_optin(self) -> None:
@@ -50,7 +50,7 @@ class A3CampaignTests(unittest.TestCase):
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible(lv, repo, base)
-                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / "QB-Audit",
+                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / ".qb/audit",
                                       prior_telemetry=prior, enable_a3=True)
                 changesets = run.changesets()
                 self.assertEqual(len(changesets), 1)
@@ -63,7 +63,7 @@ class A3CampaignTests(unittest.TestCase):
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible(lv, repo, base)
-                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / "QB-Audit",
+                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / ".qb/audit",
                                       prior_telemetry=prior, enable_a3=False)
                 # A fix is kept and promoted, but delivery is opt-in: no changeset.
                 self.assertIn("kept", run.outcomes())
@@ -76,7 +76,7 @@ class A3CampaignTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
-                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / "QB-Audit",
+                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / ".qb/audit",
                                       prior_telemetry=None, enable_a3=True)
                 for result in run.results:
                     self.assertEqual(result["earned_ceiling"], "A1")
@@ -91,7 +91,7 @@ class A3CampaignTests(unittest.TestCase):
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 prior = self._eligible(lv, repo, base)
                 head_before = _head(repo.path)
-                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / "QB-Audit",
+                run = lv.run_campaign(repo, "A3", base / "a3" / repo.name / ".qb/audit",
                                       prior_telemetry=prior, enable_a3=True)
                 changesets = run.changesets()
                 self.assertEqual(len(changesets), 1)

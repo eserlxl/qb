@@ -8,7 +8,7 @@ the drill and the live gate share one rollback path. Canonical host-neutral QB I
 under ``shared/`` (standard library only).
 
 The structured result feeds the production gate's ``rollback_drill_passed`` signal
-and is persisted (redacted) into the QB-Audit store as an audit-trail record.
+and is persisted (redacted) into the .qb/audit store as an audit-trail record.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def run_drill(repo_root, run_id, mutate_fn=None) -> dict:
 
 
 def persist_evidence(record, output_dir) -> Path:
-    """Write a recoverability evidence record into the QB-Audit store, deterministically
+    """Write a recoverability evidence record into the .qb/audit store, deterministically
     (sorted keys) and redacted via run_store.redact so no secret value is ever emitted.
     Returns the written path."""
     out = Path(output_dir)
