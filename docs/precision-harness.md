@@ -48,6 +48,22 @@ with no matching label is a **false positive**; a label with no matching emitted
 finding is a **false negative**. Precision is `TP / (TP + FP)`; recall is
 `TP / (TP + FN)`, computed per analyzer and per category.
 
+## Telemetry feed design
+
+The harness output populates the precision_estimate telemetry field consumed by
+`release_gate.precision_gate`. For an analyzer-coverage evaluation run, derive
+the value from the report's `per_analyzer` precision values by taking the lowest
+non-null precision among the analyzers that are in scope for the release gate;
+if no in-scope analyzer has a measured precision value, leave the telemetry value
+as `null` so the existing gate fails closed. This keeps the feed conservative:
+one weak analyzer lowers the earned-autonomy ceiling instead of being hidden by a
+high aggregate average.
+
+This feed changes only the producer of telemetry for analyzer-coverage
+evaluation runs. `precision_gate` and the `PRECISION_FLOOR` threshold stay
+unchanged: the gate still reads the numeric `quality.precision_estimate` value
+and denies auto-apply when it is absent, malformed, or below the floor.
+
 ## Corpus layout
 
 ```
