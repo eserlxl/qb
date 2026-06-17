@@ -99,3 +99,22 @@ python3 -m unittest tests.test_sync_mechanism tests.test_version_and_structure \
   tests.test_sync_map_completeness tests.test_doc_consistency \
   tests.test_no_committed_secrets
 ```
+
+## Done-definition for `shared/` edits
+
+`shared/` is the single source of truth; `scripts/sync.sh` fans each shared file
+out to the three engine-bearing host packages, and `scripts/sync.sh --check`
+verifies the copies are byte-equal. Editing a `shared/` file without re-running the
+fan-out leaves the host copies stale — drift that only the gate catches.
+
+**Done-definition:** any change under `shared/` is not done until both of these run
+clean, in order:
+
+```bash
+make sync      # materialize shared/ into the host packages
+make check     # verify byte-equality + the full invariant suite
+```
+
+This is a repeatable contributor step, not tribal knowledge: a `shared/` change
+that skips `make sync` will fail `bash scripts/sync.sh --check` (and therefore
+`make check`).
