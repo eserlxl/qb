@@ -143,8 +143,7 @@ Together they cover the frozen finding categories `secret`, `injection`,
 dependency manifests, lockfiles, CI workflow action pinning, repository license
 state, committed dotenv/config hygiene, and local quality tools such as `ruff`.
 The `correctness` category is produced conditionally by the `pyflakes` adapter
-when `pyflakes` already exists. Advisory enrichment is networked only when
-explicitly enabled.
+when `pyflakes` already exists. Advisory enrichment is enabled only via the opt-in allow_networked/register_optional contract.
 
 Each run writes a fixed store:
 
