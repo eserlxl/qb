@@ -141,7 +141,12 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
     """
     declared = policy.autonomy_level
     earned = _release.permitted_autonomy(telemetry or {})
-    level = _clamp_level(declared, earned)
+    # Detect whether the required execution confinement can be established on this
+    # host; if not, clamp effective autonomy below apply-verified so no A2/A3 apply
+    # is attempted (a deterministic safe degradation, not attempt-and-revert).
+    sandbox_available = "process_group" in _cs.available_confinement_controls()
+    sandbox_ceiling = _policy.sandbox_autonomy_ceiling(sandbox_available=sandbox_available)
+    level = _clamp_level(_clamp_level(declared, earned), sandbox_ceiling)
     finding = fix_plan.finding
     action = ActionDescriptor(
         action_kind="fix",

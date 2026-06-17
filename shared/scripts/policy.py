@@ -26,6 +26,18 @@ A0, A1, A2, A3 = "A0", "A1", "A2", "A3"
 _LEVELS = (A0, A1, A2, A3)
 _CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
 
+
+def sandbox_autonomy_ceiling(*, sandbox_available: bool) -> str:
+    """Effective-autonomy ceiling from execution-sandbox availability.
+
+    When the required execution confinement cannot be established, cap autonomy
+    below apply-verified (A1) so no A2/A3 working-tree apply is attempted -- a
+    deterministic safe degradation rather than running analyzed-code verification
+    unconfined or attempting-and-reverting per fix. With the sandbox available there
+    is no sandbox-driven cap (A3).
+    """
+    return A3 if sandbox_available else A1
+
 SCHEMA_VERSION = 2
 
 # The CLOSED set of permitted top-level policy keys. Unknown key => parse error.
