@@ -68,17 +68,33 @@ def infer_mode(finding, root: str) -> str:
     return "improve"
 
 
-def project_finding(finding, root: str):
-    """Render one finding as a planwright item block, or ``None`` when it is not
-    projectable: its evidence is planning-state-anchored, or has no safe existing
-    repo file to name as a Surface."""
+def skip_reason(finding, root: str):
+    """Why a finding is not projectable into a plan item, or ``None`` when it is. Lets a
+    caller *report* a drop instead of silently losing it (the export-planner
+    'list skipped' discipline)."""
     if isinstance(finding, dict):
         finding = Finding.from_dict(finding)
     path = evidence_path(finding.evidence)
-    if not path or is_planning_state_surface(path):
+    if not path:
+        return "no evidence locator path to name as a Surface"
+    if is_planning_state_surface(path):
+        return (f"evidence is anchored in planning state ({path}); .qb/ and .planwright/ "
+                "are context/evidence only, never editable item Surfaces")
+    if _vpp.unsafe_surface(path, root):
+        return f"evidence path is not a safe repo-relative Surface ({path})"
+    if not (Path(root) / path).is_file():
+        return f"evidence Surface does not exist under root ({path})"
+    return None
+
+
+def project_finding(finding, root: str):
+    """Render one finding as a planwright item block, or ``None`` when it is not
+    projectable (see :func:`skip_reason`)."""
+    if isinstance(finding, dict):
+        finding = Finding.from_dict(finding)
+    if skip_reason(finding, root) is not None:
         return None
-    if _vpp.unsafe_surface(path, root) or not (Path(root) / path).is_file():
-        return None
+    path = evidence_path(finding.evidence)
     mode = infer_mode(finding, root)
     title = f"Resolve {finding.severity} {finding.category} finding {finding.id}"
     return "\n".join([
@@ -94,10 +110,18 @@ def project_finding(finding, root: str):
     ])
 
 
-def project_findings(findings, root: str) -> str:
-    """Render findings as a planwright plan body (blank-line-separated item blocks);
-    non-projectable (planning-state) findings are skipped."""
-    blocks = [b for b in (project_finding(f, root) for f in findings) if b is not None]
+def project_findings(findings, root: str, *, skipped=None) -> str:
+    """Render findings as a planwright plan body (blank-line-separated item blocks). A
+    finding that is not projectable is dropped; when ``skipped`` is a list, each drop is
+    appended as ``(finding, reason)`` so it is reported, never silently lost."""
+    blocks = []
+    for finding in findings:
+        f = Finding.from_dict(finding) if isinstance(finding, dict) else finding
+        block = project_finding(f, root)
+        if block is not None:
+            blocks.append(block)
+        elif skipped is not None:
+            skipped.append((f, skip_reason(f, root)))
     return ("\n\n".join(blocks) + "\n") if blocks else ""
 
 

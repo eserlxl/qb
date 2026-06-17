@@ -111,5 +111,19 @@ class FindingsToPlanConformanceTest(unittest.TestCase):
         self.assertEqual(self._errors(text), [])
 
 
+    def test_skipped_planning_state_finding_is_reported(self):
+        # A .qb/-anchored finding is dropped, but the drop is reported via `skipped`,
+        # never silently lost.
+        emitted = _finding(category="quality")
+        dropped = _finding(category="config", evidence=".qb/main-planning.md:1")
+        skipped = []
+        text = ftp.project_findings([emitted, dropped], str(self.root), skipped=skipped)
+        self.assertEqual(text.count("- [ ]"), 1)        # only the projectable finding
+        self.assertEqual(len(skipped), 1)               # the drop is reported, not silent
+        finding, reason = skipped[0]
+        self.assertEqual(finding.id, dropped.id)
+        self.assertIn("planning state", reason)
+
+
 if __name__ == "__main__":
     unittest.main()
