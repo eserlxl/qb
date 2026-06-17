@@ -14,10 +14,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.qb_monorepo import SHARED_DIR
+from tests.qb_monorepo import REPO_ROOT, SHARED_DIR
 
 STORE_PATH = SHARED_DIR / "scripts/run_store.py"
 SCHEMA_PATH = SHARED_DIR / "scripts/finding_schema.py"
+ROUNDTRIP_FIXTURE = REPO_ROOT / "tests/fixtures/findings_roundtrip.jsonl"
 
 
 def _load(name: str, path: Path):
@@ -53,6 +54,21 @@ class RunStoreTests(unittest.TestCase):
             json.dumps(record, sort_keys=True, indent=2) + "\n",
             encoding="utf-8",
         )
+
+    def test_roundtrip_fixture_findings_survive_write_read(self) -> None:
+        # The committed multi-category findings fixture round-trips through the store:
+        # every record stays conformant and all ids are preserved.
+        lines = [ln for ln in ROUNDTRIP_FIXTURE.read_text(encoding="utf-8").splitlines()
+                 if ln.strip()]
+        findings = [self.schema.Finding.from_dict(json.loads(ln)) for ln in lines]
+        self.assertGreaterEqual(len(findings), 5)
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            store.write_findings(findings)
+            back = store.read_findings()
+        self.assertEqual(sorted(f.id for f in findings), sorted(b["id"] for b in back))
+        for b in back:
+            self.assertEqual(self.schema.validate_finding(b), [], b)
 
     def test_layout_and_identifier_check(self) -> None:
         with tempfile.TemporaryDirectory() as d:
