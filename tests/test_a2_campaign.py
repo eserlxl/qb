@@ -107,6 +107,27 @@ class A2CampaignTests(unittest.TestCase):
                 self.assertGreaterEqual(measured, lv._telemetry.PRECISION_FLOOR)
                 self.assertTrue(a2.telemetry["quality"]["fix_safety_ok"])
 
+    def test_promotion_confined_to_allowlist_and_repo_root(self) -> None:
+        # The sole working-tree write path (_promote) stays within the policy write
+        # allowlist and repo_root; an out-of-allowlist byproduct is never promoted.
+        lv = _driver()
+        orch = lv._budget._orch
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            for repo in qb_corpus.build_corpus(base / "corpus"):
+                iso = orch._isolation.Isolation(
+                    repo.path, level="A2", run_id="allow", allowlist=["*.txt"]).open()
+                try:
+                    (iso.worktree_path / "ok.txt").write_text("fine\n", encoding="utf-8")
+                    (iso.worktree_path / "evil.py").write_text("x = 1\n", encoding="utf-8")
+                    promoted = orch._promote(iso, repo.path)
+                    self.assertIn("ok.txt", promoted)
+                    self.assertNotIn("evil.py", promoted)
+                    self.assertTrue((repo.path / "ok.txt").is_file())       # allowlisted: promoted
+                    self.assertFalse((repo.path / "evil.py").exists())      # filtered: not written
+                finally:
+                    iso.teardown()
+
 
 if __name__ == "__main__":
     unittest.main()
