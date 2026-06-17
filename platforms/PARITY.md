@@ -22,3 +22,27 @@ single authoritative statement of which capability set each host ships.
   `platforms/cursor`, and `platforms/codex/plugins/qb/skills/qb`. **Antigravity ships
   no engine module and is not a `scripts/sync.sh` destination** — it is deliberately
   planning-only.
+
+## Decision: Antigravity scope
+
+**Antigravity = planning-only is the chosen stance**, not an accident of incomplete
+porting. The rationale:
+
+- **Maintenance tax.** Each engine-bearing host is a `scripts/sync.sh` destination;
+  adding Antigravity would make it a fourth synced surface (every engine module and
+  its validator multiplied again), widening the sync map and the cross-host residue
+  surface the validators must guard.
+- **No evidenced demand.** Antigravity's role in QB is the planning workflow; there
+  is no evidenced demand for running the audit/harden engine under Antigravity that
+  would justify that ongoing tax.
+
+**Deferred alternative — full parity.** Antigravity could be promoted to an
+engine-bearing host by adding it to the `scripts/sync.sh` MAP and shipping the
+`shared/scripts/` engine under its skill, exactly as the other three hosts do. The
+cost is the maintenance tax above (a fourth sync destination plus a broadened
+validator and residue surface) and a per-host harden entry. This is recorded as an
+available future option, not a current commitment.
+
+This is a recorded maintainer decision, not a tested property; its
+**machine-checkable** consequences (engine absent under Antigravity; Antigravity
+absent from the sync map) are enumerated below and enforced separately.
