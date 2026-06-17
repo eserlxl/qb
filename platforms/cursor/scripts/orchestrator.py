@@ -174,7 +174,11 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         allowlist=list(policy.write_allowlist) or None,
     ).open()
     try:
-        record = _gate.gate_fix(isolation, fix_plan, apply_fn)
+        # Explicitly request the execution-sandbox contract's process confinement
+        # for the fix's verification command (the highest-value execution), rather
+        # than relying on the command-layer default. Fail-closed: a missing required
+        # control raises ConfinementUnavailable in command_safety before any spawn.
+        record = _gate.gate_fix(isolation, fix_plan, apply_fn, confinement=True)
         result["evidence"] = record.to_dict()
         result["outcome"] = record.outcome
         result["reason"] = record.reason
