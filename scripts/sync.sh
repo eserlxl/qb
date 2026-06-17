@@ -225,6 +225,11 @@ MAP=(
   "scripts/telemetry_aggregate.py|platforms/cursor/scripts/telemetry_aggregate.py"
   "scripts/telemetry_aggregate.py|platforms/codex/plugins/qb/skills/qb/scripts/telemetry_aggregate.py"
 
+  # shared/scripts/telemetry_trends.py
+  "scripts/telemetry_trends.py|platforms/claude-code/scripts/telemetry_trends.py"
+  "scripts/telemetry_trends.py|platforms/cursor/scripts/telemetry_trends.py"
+  "scripts/telemetry_trends.py|platforms/codex/plugins/qb/skills/qb/scripts/telemetry_trends.py"
+
   # shared/scripts/release_gate.py
   "scripts/release_gate.py|platforms/claude-code/scripts/release_gate.py"
   "scripts/release_gate.py|platforms/cursor/scripts/release_gate.py"
