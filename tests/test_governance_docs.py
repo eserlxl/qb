@@ -16,6 +16,9 @@ from tests.test_no_committed_secrets import SECRET_PATTERNS
 
 SECURITY = REPO_ROOT / "SECURITY.md"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
+CODEOWNERS = REPO_ROOT / "CODEOWNERS"
+ISSUE_TEMPLATE = REPO_ROOT / ".github/ISSUE_TEMPLATE/bug_report.md"
+PR_TEMPLATE = REPO_ROOT / ".github/PULL_REQUEST_TEMPLATE.md"
 VERSION_FILE = REPO_ROOT / "VERSION"
 
 
@@ -42,6 +45,15 @@ class GovernanceDocsTest(unittest.TestCase):
         self.assertIn("bump-version.sh", text)        # versioning/changelog convention
         self.assertIn("gate of record", text.lower())  # gate-of-record reference
         self.assertIn("secret", text.lower())          # no-secrets rule
+
+    def test_review_ownership_and_templates_present(self):
+        # Review ownership + report structure are explicit (Phase 8.3).
+        codeowners = self._read(CODEOWNERS)
+        self.assertRegex(codeowners, r"(?m)^\*\s+@\S+",
+                         "CODEOWNERS must assign a default owner (e.g. '* @owner')")
+        self.assertTrue(ISSUE_TEMPLATE.is_file(), f"missing issue template: {ISSUE_TEMPLATE}")
+        pr = self._read(PR_TEMPLATE)
+        self.assertIn("make check", pr, "PR template must reference the gate of record")
 
     def test_security_policy_has_no_secret_like_string(self):
         text = self._read(SECURITY)
