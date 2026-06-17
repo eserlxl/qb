@@ -69,6 +69,23 @@ The maximum level a context may use is earned, not chosen: the release gates
   is capped at A1 for that context. Improve precision (tune analyzers, accept
   false positives in the register) before requesting A2.
 
+## Execution sandbox contract
+
+QB confines every external command it runs on the analyzed repository's behalf —
+in particular each fix's verification command — under **process confinement**
+established before the child spawns. This is process confinement (a new
+session/process group plus conservative POSIX resource limits), **not** a
+filesystem/network namespace or container sandbox.
+
+The rule is **fail-closed**: when a required control cannot be established
+(`command_safety.ConfinementUnavailable`), the command is refused, never run
+unconfined, and the verification seam records `verification confinement
+unavailable` as non-green so an unconfined run is never kept. Repo-supplied
+scripts never execute unless `least_privilege.may_run_repo_script` authorizes
+them (`AUTO_RUN_REPO_SCRIPTS` is `False`). The full contract — guarantee,
+non-guarantee, supported controls, and governing symbols — lives in
+[docs/execution-sandbox.md](docs/execution-sandbox.md).
+
 ## Production gate
 
 Before authorizing earnest autonomous operation, confirm the composite
