@@ -17,7 +17,10 @@ non-deterministic fields are those the caller places under provenance.timing.
 
 from __future__ import annotations
 
+import importlib.util
 import json
+import sys
+from pathlib import Path
 
 REPORT_SCHEMA_VERSION = 1
 SARIF_VERSION = "2.1.0"
@@ -40,6 +43,21 @@ SIGNALS_SURFACING_DECISION = (
     "signals are surfaced in report.json and summary.txt; report.sarif remains "
     "standards-conformant SARIF without QB-specific operational signals"
 )
+
+
+def _load_sibling(module_name: str, filename: str):
+    if module_name in sys.modules:
+        return sys.modules[module_name]
+    path = Path(__file__).resolve().parent / filename
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_aggregate = _load_sibling("qb_telemetry_aggregate", "telemetry_aggregate.py")
+_trends = _load_sibling("qb_telemetry_trends", "telemetry_trends.py")
 
 
 def _category_rule(category: str) -> str:
@@ -88,7 +106,7 @@ def _store_signals(store, findings: list, hardening: list) -> dict:
         "fix_safety_ok",
         all(e.get("after_exit") in (0, None) for e in hardening if e.get("outcome") == "kept"),
     )
-    return {
+    signals = {
         "severity_counts": severity_counts,
         "fixes": fixes,
         "quality": {
@@ -97,6 +115,16 @@ def _store_signals(store, findings: list, hardening: list) -> dict:
         },
         "iterations": cost.get("iterations", summary.get("iterations", 0)),
     }
+    aggregate_path = getattr(store, "root", None)
+    if aggregate_path is not None:
+        aggregate_file = Path(aggregate_path) / _aggregate.AGGREGATE_TELEMETRY_FILENAME
+        aggregate = _aggregate.read_aggregate(aggregate_file)
+        if aggregate.get("runs"):
+            signals["trend_direction"] = {
+                dimension: _trends.direction_verdict(aggregate, dimension)
+                for dimension in sorted(_trends.DIMENSION_PATHS)
+            }
+    return signals
 
 
 def render_json(store, *, provenance=None) -> dict:
@@ -170,6 +198,9 @@ def render_summary_text(store) -> str:
         f"iterations={signals['iterations']}",
         f"stop: {summary.get('trigger', summary.get('stop', 'completed'))}",
     ]
+    if "trend_direction" in signals:
+        trend_text = json.dumps(signals["trend_direction"], sort_keys=True, separators=(",", ":"))
+        lines.insert(-1, f"trend_direction: {trend_text}")
     return "\n".join(lines) + "\n"
 
 

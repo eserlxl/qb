@@ -96,6 +96,8 @@ class ReportReproducibilityTests(unittest.TestCase):
             self.assertEqual(s1, s2)
             self.assertIn('"precision_estimate": null', s1)
             self.assertEqual(r1["signals"]["iterations"], 0)
+            self.assertNotIn("trend_direction", r1["signals"])
+            self.assertNotIn("trend_direction", self.report.render_summary_text(store))
 
     def test_raw_latency_stays_out_of_canonical_body(self) -> None:
         with tempfile.TemporaryDirectory() as d:
@@ -149,6 +151,42 @@ class ReportReproducibilityTests(unittest.TestCase):
             self.assertEqual(r1["signals"]["fixes"], {"kept": 1, "reverted": 0, "blocked": 0})
             self.assertEqual(r1["signals"]["quality"], {"precision_estimate": 1.0, "fix_safety_ok": True})
             self.assertEqual(r1["signals"]["iterations"], 4)
+            self.assertNotIn("trend_direction", r1["signals"])
+
+    def test_trend_direction_surfaces_only_when_series_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
+            aggregate_path = store.root / self.rs.AGGREGATE_TELEMETRY_FILENAME
+            base = {
+                "schema_version": 1,
+                "autonomy_level": "A2",
+                "clamp_reason": None,
+                "detection": {"findings_total": 1},
+                "action": {"fixes_attempted": 1},
+            }
+            first = {
+                **base,
+                "run_id": "r1",
+                "cost": {"wall_ms": 20, "tokens": 40},
+                "quality": {"precision_estimate": 0.5, "fix_safety_ok": True, "false_positive_signals": 2},
+            }
+            second = {
+                **base,
+                "run_id": "r2",
+                "cost": {"wall_ms": 10, "tokens": 20},
+                "quality": {"precision_estimate": 0.9, "fix_safety_ok": True, "false_positive_signals": 1},
+            }
+            self.rs._telemetry_aggregate.append_or_update(aggregate_path, first)
+            self.rs._telemetry_aggregate.append_or_update(aggregate_path, second)
+
+            report = self.report.render_json(store)
+            summary = self.report.render_summary_text(store)
+            sarif = self.report.render_sarif(store)
+
+        self.assertEqual(report["signals"]["trend_direction"]["precision"], "improving")
+        self.assertEqual(report["signals"]["trend_direction"]["cost"], "improving")
+        self.assertIn("trend_direction:", summary)
+        self.assertNotIn("trend_direction", json.dumps(sarif, sort_keys=True))
 
     def test_provenance_block_contents_and_degradation(self) -> None:
         with tempfile.TemporaryDirectory() as d:
