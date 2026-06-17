@@ -64,6 +64,15 @@ the telemetry-earned ceiling, and this sandbox clamp.
   `release_gate.rollback_run(repo, handle)` resets to the baseline and cleans
   untracked files; `release_gate.baseline_clean(repo, handle)` confirms a clean
   tree at the baseline. The rollback drill proves this end to end.
+- **Recoverability evidence record:** `recoverability_drill.run_drill` reuses that
+  same `release_gate` capture/rollback/`baseline_clean` path and returns a
+  redaction-safe record; `recoverability_drill.run_and_persist` writes it to
+  `QB-Audit/recoverability.json`. The format (the single committed source the
+  production-gate procedure points at) is `schema_version`, `run_id`,
+  `baseline_ref` (`refs/qb-baseline/<run_id>`), `baseline_sha_len` (the baseline
+  sha's **length**, never its value), `baseline_clean`, and `passed` — redacted via
+  `run_store.redact` and written with sorted keys, so the audit trail proves
+  recoverability without persisting any secret value.
 
 ## Live-validation protocol
 
