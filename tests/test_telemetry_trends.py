@@ -128,6 +128,25 @@ class TelemetryTrendTests(unittest.TestCase):
         series = self._series_for_dimension("precision", [self.trends.UNMEASURED, None])
         self.assertEqual(self.trends.direction_verdict(series, "precision"), "unmeasured")
 
+    def test_render_and_emit_trend_artifacts_are_reproducible(self) -> None:
+        series = self._series()
+        json_a = self.trends.render_trend_json(series, window=2)
+        json_b = self.trends.render_trend_json(series, window=2)
+        summary_a = self.trends.render_trend_summary(series, window=2)
+        summary_b = self.trends.render_trend_summary(series, window=2)
+
+        self.assertEqual(json_a, json_b)
+        self.assertEqual(summary_a, summary_b)
+        self.assertIn('"schema_version": 1', json_a)
+        self.assertIn("precision: verdict=insufficient-data latest=0.5", summary_a)
+
+        with tempfile.TemporaryDirectory() as d:
+            json_path = Path(d) / "trend.json"
+            summary_path = Path(d) / "trend.txt"
+            rendered = self.trends.emit_trend_artifacts(series, json_path, summary_path, window=2)
+            self.assertEqual(json_path.read_text(encoding="utf-8"), rendered["json"])
+            self.assertEqual(summary_path.read_text(encoding="utf-8"), rendered["summary"])
+
 
 if __name__ == "__main__":
     unittest.main()

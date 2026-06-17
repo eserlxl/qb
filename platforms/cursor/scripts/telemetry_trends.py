@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
+TREND_REPORT_SCHEMA_VERSION = 1
 DIMENSION_PATHS = {
     "precision": ("quality", "precision_estimate"),
     "fix_safety": ("quality", "fix_safety_ok"),
@@ -109,3 +111,44 @@ def direction_verdict(source, dimension: str, window: int = 3) -> str:
     if dimension in LOWER_IS_BETTER:
         return VERDICT_REGRESSING if increasing else VERDICT_IMPROVING
     return VERDICT_IMPROVING if increasing else VERDICT_REGRESSING
+
+
+def build_trend_report(source, window: int = 3) -> dict:
+    """Build the deterministic trend artifact payload."""
+    series = extract_series(source)
+    return {
+        "schema_version": TREND_REPORT_SCHEMA_VERSION,
+        "window": window,
+        "series": series,
+        "verdicts": {
+            dimension: direction_verdict(source, dimension, window)
+            for dimension in sorted(DIMENSION_PATHS)
+        },
+    }
+
+
+def render_trend_json(source, window: int = 3) -> str:
+    """Render a byte-stable JSON trend artifact."""
+    return json.dumps(build_trend_report(source, window), sort_keys=True, indent=2) + "\n"
+
+
+def render_trend_summary(source, window: int = 3) -> str:
+    """Render a concise, deterministic text summary."""
+    report = build_trend_report(source, window)
+    lines = [f"trend_window={window}"]
+    for dimension in sorted(DIMENSION_PATHS):
+        rows = report["series"][dimension]
+        latest = rows[-1]["value"] if rows else UNMEASURED
+        lines.append(
+            f"{dimension}: verdict={report['verdicts'][dimension]} latest={latest}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def emit_trend_artifacts(source, json_path, summary_path, window: int = 3) -> dict:
+    """Write JSON and text trend artifacts and return their rendered bytes."""
+    json_text = render_trend_json(source, window)
+    summary_text = render_trend_summary(source, window)
+    Path(json_path).write_text(json_text, encoding="utf-8")
+    Path(summary_path).write_text(summary_text, encoding="utf-8")
+    return {"json": json_text, "summary": summary_text}
