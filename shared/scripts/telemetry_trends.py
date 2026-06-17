@@ -13,6 +13,12 @@ DIMENSION_PATHS = {
     "cost": ("cost", "tokens"),
     "quality": ("quality", "false_positive_signals"),
 }
+LOWER_IS_BETTER = frozenset({"latency", "cost", "quality"})
+VERDICT_IMPROVING = "improving"
+VERDICT_STABLE = "stable"
+VERDICT_REGRESSING = "regressing"
+VERDICT_INSUFFICIENT = "insufficient-data"
+VERDICT_UNMEASURED = "unmeasured"
 
 
 def _load_sibling(module_name: str, filename: str):
@@ -68,3 +74,38 @@ def extract_series(source) -> dict[str, list[dict]]:
         dimension: dimension_series(source, dimension)
         for dimension in sorted(DIMENSION_PATHS)
     }
+
+
+def _measured_number(value):
+    if value in (None, UNMEASURED):
+        return None
+    if isinstance(value, bool):
+        return 1 if value else 0
+    if isinstance(value, (int, float)):
+        return value
+    return None
+
+
+def direction_verdict(source, dimension: str, window: int = 3) -> str:
+    """Classify the last N rows as improving, stable, regressing, or non-committal."""
+    if window < 2:
+        raise ValueError("trend verdict window must be at least 2")
+    rows = dimension_series(source, dimension)[-window:]
+    measured = [
+        numeric
+        for numeric in (_measured_number(row.get("value")) for row in rows)
+        if numeric is not None
+    ]
+    if not measured:
+        return VERDICT_UNMEASURED
+    if len(measured) < 2:
+        return VERDICT_INSUFFICIENT
+
+    first = measured[0]
+    last = measured[-1]
+    if last == first:
+        return VERDICT_STABLE
+    increasing = last > first
+    if dimension in LOWER_IS_BETTER:
+        return VERDICT_REGRESSING if increasing else VERDICT_IMPROVING
+    return VERDICT_IMPROVING if increasing else VERDICT_REGRESSING

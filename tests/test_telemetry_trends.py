@@ -63,6 +63,24 @@ class TelemetryTrendTests(unittest.TestCase):
             },
         ])
 
+    def _series_for_dimension(self, dimension: str, values: list) -> dict:
+        runs = []
+        path = self.trends.DIMENSION_PATHS[dimension]
+        for index, value in enumerate(values, start=1):
+            run = {
+                "run_id": f"r{index}",
+                "quality": {
+                    "precision_estimate": self.trends.UNMEASURED,
+                    "fix_safety_ok": self.trends.UNMEASURED,
+                    "false_positive_signals": self.trends.UNMEASURED,
+                },
+                "cost": {"wall_ms": self.trends.UNMEASURED, "tokens": self.trends.UNMEASURED},
+            }
+            section, key = path
+            run[section][key] = value
+            runs.append(run)
+        return {"runs": runs}
+
     def test_extract_series_preserves_unmeasured_and_none(self) -> None:
         series = self.trends.extract_series(self._series())
 
@@ -89,6 +107,26 @@ class TelemetryTrendTests(unittest.TestCase):
             precision,
             [{"run_id": "r1", "value": None}, {"run_id": "r2", "value": 0.5}],
         )
+
+    def test_direction_verdict_improving_for_higher_is_better_dimension(self) -> None:
+        series = self._series_for_dimension("precision", [0.4, 0.9])
+        self.assertEqual(self.trends.direction_verdict(series, "precision"), "improving")
+
+    def test_direction_verdict_regressing_for_lower_is_better_dimension(self) -> None:
+        series = self._series_for_dimension("cost", [10, 20])
+        self.assertEqual(self.trends.direction_verdict(series, "cost"), "regressing")
+
+    def test_direction_verdict_stable_when_window_edges_match(self) -> None:
+        series = self._series_for_dimension("latency", [15, 15])
+        self.assertEqual(self.trends.direction_verdict(series, "latency"), "stable")
+
+    def test_direction_verdict_short_series_is_non_committal(self) -> None:
+        series = self._series_for_dimension("precision", [0.8])
+        self.assertEqual(self.trends.direction_verdict(series, "precision"), "insufficient-data")
+
+    def test_direction_verdict_all_unmeasured_is_non_committal(self) -> None:
+        series = self._series_for_dimension("precision", [self.trends.UNMEASURED, None])
+        self.assertEqual(self.trends.direction_verdict(series, "precision"), "unmeasured")
 
 
 if __name__ == "__main__":
