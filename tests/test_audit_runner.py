@@ -94,6 +94,16 @@ def _networked_stub(runner, *, emit=False):
     return _Net()
 
 
+def _unreachable_networked_stub(runner):
+    class _NetBroken:
+        descriptor = runner.AnalyzerDescriptor(id="net-unreachable", categories=("dependency",), offline=False)
+
+        def analyze(self, repo_root, config):
+            raise RuntimeError("enrichment source unreachable")
+
+    return _NetBroken()
+
+
 def _make_fixture(root: Path) -> None:
     (root / "clean.txt").write_text("nothing to see here\n", encoding="utf-8")
     token = "ghp_" + "F" * 30  # github_legacy_pat; split so it is not a committed literal
@@ -201,6 +211,30 @@ class AuditRunnerTests(unittest.TestCase):
                 output_dir=Path(d) / "on-again" / self.runner.OUTPUT_DIR_NAME,
             )["summary"]
             self.assertEqual(enabled, enabled_again)
+
+    def test_enabled_unreachable_networked_analyzer_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            _make_fixture(repo)
+
+            reg = self.runner.AnalyzerRegistry()
+            reg.register(self.runner.ReferenceAnalyzer())
+            reg.register(_unreachable_networked_stub(self.runner))
+            result = self.runner.run_audit(
+                repo, config=self.runner.AnalyzerConfig(allow_networked=True), registry=reg,
+                output_dir=Path(d) / "unreachable" / self.runner.OUTPUT_DIR_NAME,
+            )
+
+        summary = result["summary"]
+        self.assertTrue(summary["allow_networked"])
+        self.assertNotIn("net-unreachable", summary["analyzers_run"])
+        self.assertTrue(any(
+            s["id"] == "net-unreachable" and "RuntimeError: enrichment source unreachable" in s["reason"]
+            for s in summary["analyzers_skipped"]
+        ))
+        self.assertEqual(summary["total_findings"], 1)  # reference finding only; no fabricated dependency
+        self.assertNotIn("dependency", summary["category_counts"])
 
     def test_combined_fail_closed_policy_defaults(self) -> None:
         """Optional tools degrade when absent; networked analyzers stay disabled unless explicitly allowed."""
