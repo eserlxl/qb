@@ -46,3 +46,18 @@ available future option, not a current commitment.
 This is a recorded maintainer decision, not a tested property; its
 **machine-checkable** consequences (engine absent under Antigravity; Antigravity
 absent from the sync map) are enumerated below and enforced separately.
+
+## Enforced invariants
+
+These are machine-checkable and pinned by `tests/test_host_parity_contract.py`:
+
+1. **Engine present in engine-bearing hosts.** Each of `platforms/claude-code/scripts/`,
+   `platforms/cursor/scripts/`, and `platforms/codex/plugins/qb/skills/qb/scripts/`
+   contains the engine modules (`audit_runner.py`, `orchestrator.py`, `budget.py`,
+   `release_gate.py`).
+2. **Engine absent under Antigravity.** No engine module appears anywhere under
+   `platforms/antigravity/` — it is planning-only.
+3. **Antigravity is not a sync destination.** No `scripts/sync.sh` MAP entry targets a
+   path under `platforms/antigravity/`.
+4. **The contract matches reality.** This document's matrix (engine-bearing for the
+   three hosts, planning-only for Antigravity) matches the on-disk facts above.
