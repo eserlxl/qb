@@ -1,0 +1,10 @@
+{
+  "fixture": "breadth-positive",
+  "expected_findings": [
+    {
+      "category": "dependency",
+      "evidence": ".github/workflows/ci.yml:5",
+      "rule_key": "github-action-broad-ref"
+    }
+  ]
+}
