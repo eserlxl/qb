@@ -213,3 +213,8 @@ authorizes auto-delivery — that remains a separate, deliberate opt-in.
 from the historical engine docstring phase markers (e.g. "Phase 3.2", "Phase 7.1")
 that appear inside the engine source — do not conflate a roadmap phase with a
 docstring's development marker when locating an evidence artifact.
+
+Read this gate alongside [Recover](#recover), [Pause / Kill](#pause--kill), and
+[Trip responses](#trip-responses): treat authorization, operation, and recovery as one flow —
+the gate authorizes operation, the kill-switch and trip responses govern it while it
+runs, and the recover procedure undoes the whole run.
