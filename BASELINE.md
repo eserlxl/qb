@@ -148,3 +148,18 @@ This is the authoritative "before" state every forward phase closes against.
 These statements mirror the existing README and RUNBOOK claims (notably the
 sandbox "not yet shipped" caveat and the planning-only Antigravity model) and do
 not supersede them.
+
+## A2/A3 trusted-code precondition and gate of record
+
+Two operator-facing preconditions are part of the baseline so safety is not
+misread:
+
+- **Trusted-code precondition.** Because execution sandboxing of analyzed code is
+  not yet shipped, QB confines *writes* (throwaway worktree) but does **not**
+  contain arbitrary code execution. A2 (apply-verified) and A3 (deliver) are safe
+  only against **trusted code** until the sandbox ships; do not rely on QB to
+  contain untrusted code. This mirrors the README caveat and does not remove it.
+- **Gate of record.** Cloud CI (the GitHub Actions `validate.yml` workflow behind
+  the README badge) is **disabled on the account**, so a green **local**
+  `make check` / `scripts/validate.sh` — not the cloud badge — is the
+  authoritative no-regression signal.
