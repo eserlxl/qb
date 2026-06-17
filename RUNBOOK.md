@@ -91,6 +91,36 @@ explicit, separate opt-in.
   is capped at A1 for that context. Improve precision (tune analyzers, accept
   false positives in the register) before requesting A2.
 
+## Budget raise paths
+
+Each budget ceiling that can halt a run maps to a deliberate raise-path — the
+evidence that justifies a raise, a conservative step, and the guardrail that must
+hold first. A raise is **never** auto-applied; it takes effect only when you edit
+`policy.budgets`. The mapping mirrors `budget.RAISE_PATHS`:
+
+- **`max_findings`** — findings reached the ceiling with findings unprocessed.
+  Raise `max_findings` one increment; triage P0/P1 first, because a wider finding
+  budget broadens scope, not fix depth.
+- **`max_fixes`** — fixes applied reached the ceiling while verified fixes remained
+  queued. Raise `max_fixes` one increment, but only when `precision_estimate` is at
+  or above the precision floor and fix-safety holds.
+- **`max_iterations`** — orchestration iterations hit the ceiling before the queue
+  drained. Raise `max_iterations` one increment; confirm iterations are productive,
+  not looping on the same finding.
+- **`max_wall_seconds`** — the run halted at the wall-time ceiling with work still
+  queued. Raise `max_wall_seconds` (e.g. +50%); confirm the run was making progress
+  (fixes kept), not spinning.
+- **`max_tokens`** — token spend hit the ceiling before completion. Raise
+  `max_tokens`; confirm token use is proportional to fixes kept, not waste.
+
+**Advisory recommender.** `budget.recommend_budget(stop_report, aggregate)` reads a
+run's stop report plus the aggregate telemetry series and advises whether a hit
+ceiling is `constraining` (legitimately limiting useful work — consider a raise),
+`protecting` (correctly guarding against a regressing or wasteful run — hold), or
+`insufficient-evidence` (too little trend history — do not raise, fail-closed). It
+is **output-only**: it returns advice and never mutates a budget, so widening a
+ceiling always remains a deliberate `policy.budgets` edit.
+
 ## Execution sandbox contract
 
 QB confines every external command it runs on the analyzed repository's behalf —

@@ -19,6 +19,7 @@ invariants but intentionally excluded from the analyzer-naming assertion.
 
 from __future__ import annotations
 
+import dataclasses
 import re
 import sys
 import unittest
@@ -32,16 +33,22 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 import audit_runner  # noqa: E402  (path set above)
+import budget  # noqa: E402
 import finding_schema  # noqa: E402
 
 ROOT_README = REPO_ROOT / "README.md"
 ROOT_VERSION = REPO_ROOT / "VERSION"
+RUNBOOK = REPO_ROOT / "RUNBOOK.md"
 
 # Derived sources of truth (computed once, not copied into the test).
 PRODUCER_ANALYZERS = sorted(
     type(a).__name__ for a in audit_runner.build_default_registry().analyzers()
 )
 FINDING_CATEGORIES = sorted(finding_schema.CATEGORIES)
+# RUNBOOK budget raise-path terms, derived from the budget engine (not hardcoded).
+BUDGET_CEILINGS = sorted(f.name for f in dataclasses.fields(budget.Budget))
+BUDGET_ADVICE = sorted((budget.ADVICE_CONSTRAINING, budget.ADVICE_PROTECTING,
+                        budget.ADVICE_INSUFFICIENT))
 HOST_NAMES = ("Claude Code", "Cursor", "Codex", "Antigravity")
 _VERSION_HEADER = re.compile(r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\]", re.MULTILINE)
 # The shields.io badge: label 'version', the (possibly escaped) message, a
@@ -138,6 +145,23 @@ class DocConsistencyTest(unittest.TestCase):
         self.assertIn(
             "planning-only", text.lower(), "antigravity README must state planning-only"
         )
+
+    def test_runbook_budget_raise_paths_match_engine(self):
+        # The RUNBOOK budget raise-path guidance must name every budget ceiling and
+        # every recommender advice value derived from budget.py, plus the recommender
+        # and the explicit raise mechanism, so the operator narrative cannot drift
+        # from the engine's actual ceilings/recommender.
+        text = self._read(RUNBOOK)
+        missing_ceilings = [name for name in BUDGET_CEILINGS if name not in text]
+        self.assertEqual(missing_ceilings, [],
+                         f"RUNBOOK omits budget ceilings: {missing_ceilings}")
+        missing_advice = [a for a in BUDGET_ADVICE if a not in text]
+        self.assertEqual(missing_advice, [],
+                         f"RUNBOOK omits recommender advice values: {missing_advice}")
+        self.assertIn("recommend_budget", text,
+                      "RUNBOOK must name the advisory recommender (recommend_budget)")
+        self.assertIn("policy.budgets", text,
+                      "RUNBOOK must state policy.budgets as the explicit raise mechanism")
 
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]
