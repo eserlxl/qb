@@ -8,6 +8,10 @@ event. It is the human-on-the-loop companion to the engine's fail-closed default
 > autonomous *operation*, never auto-delivery. QB never commits, pushes, opens a
 > PR, or deploys unless you explicitly enable it for that run.
 
+The local gate of record and its recorded verified floor (the `make check` run,
+expected exit status, and test counts) live in the committed
+[BASELINE.md](BASELINE.md); compare against it to recognize a regression.
+
 ## Autonomy levels
 
 | Level | Behavior |

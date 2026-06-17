@@ -289,7 +289,9 @@ Green **local** validation is the gate of record. Each host package runs
 `make check` aggregates all four. Cloud CI — the GitHub Actions `validate.yml`
 workflow behind the badge above — is **disabled on the account**, so a passing
 local `make check` / `scripts/validate.sh`, not the cloud badge, is the
-authoritative signal.
+authoritative signal. The committed [BASELINE.md](BASELINE.md) records the
+gate-of-record run (command, exit status, version, and date) so any deviation
+reads as a regression.
 
 ### Documentation consistency
 
