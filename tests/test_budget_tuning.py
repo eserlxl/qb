@@ -63,5 +63,69 @@ class RaisePathMappingTest(unittest.TestCase):
             self.assertIn(field, steps, f"no raise-path step references Budget.{field}")
 
 
+def _run(rid, *, precision, fp_signals, fix_safety_ok=True, wall_ms=10, tokens=10):
+    return {
+        "schema_version": 1, "run_id": rid, "autonomy_level": "A2",
+        "cost": {"wall_ms": wall_ms, "tokens": tokens},
+        "quality": {"precision_estimate": precision, "fix_safety_ok": fix_safety_ok,
+                    "false_positive_signals": fp_signals},
+    }
+
+
+def _agg(runs):
+    return {"schema_version": 1, "runs": runs}
+
+
+def _ceiling_report(trigger="max_fixes"):
+    return budget.StopReport(trigger, 5, 5, 0, budget.BUDGET_STOP_EXIT)
+
+
+class BudgetRecommenderTest(unittest.TestCase):
+    def test_constraining_when_precision_and_fix_safety_hold(self):
+        agg = _agg([
+            _run("r1", precision=0.5, fp_signals=2),
+            _run("r2", precision=0.7, fp_signals=2),
+            _run("r3", precision=0.9, fp_signals=1),  # precision + quality improving
+        ])
+        rec = budget.recommend_budget(_ceiling_report("max_fixes"), agg)
+        self.assertEqual(rec["advice"], budget.ADVICE_CONSTRAINING)
+        self.assertEqual(rec["ceiling"], "max_fixes")
+        self.assertEqual(rec["raise_path"], budget.raise_path("max_fixes"))
+
+    def test_protecting_when_precision_regressing(self):
+        agg = _agg([
+            _run("r1", precision=0.9, fp_signals=1),
+            _run("r2", precision=0.7, fp_signals=2),
+            _run("r3", precision=0.5, fp_signals=3),  # precision regressing
+        ])
+        rec = budget.recommend_budget(_ceiling_report("max_fixes"), agg)
+        self.assertEqual(rec["advice"], budget.ADVICE_PROTECTING)
+        self.assertIsNone(rec["raise_path"])
+
+    def test_insufficient_evidence_with_too_few_runs(self):
+        agg = _agg([_run("r1", precision=0.9, fp_signals=1)])  # single run
+        rec = budget.recommend_budget(_ceiling_report("max_fixes"), agg)
+        self.assertEqual(rec["advice"], budget.ADVICE_INSUFFICIENT)
+        self.assertIsNone(rec["raise_path"])
+
+    def test_insufficient_evidence_when_precision_unmeasured(self):
+        agg = _agg([
+            _run("r1", precision=None, fp_signals=1),
+            _run("r2", precision=None, fp_signals=1),
+        ])
+        rec = budget.recommend_budget(_ceiling_report("max_fixes"), agg)
+        self.assertEqual(rec["advice"], budget.ADVICE_INSUFFICIENT)
+
+    def test_non_ceiling_trigger_is_never_a_raise(self):
+        agg = _agg([
+            _run("r1", precision=0.8, fp_signals=1),
+            _run("r2", precision=0.9, fp_signals=1),
+        ])
+        rec = budget.recommend_budget(_ceiling_report("completed"), agg)
+        self.assertEqual(rec["advice"], budget.ADVICE_PROTECTING)
+        self.assertIsNone(rec["ceiling"])
+        self.assertIsNone(rec["raise_path"])
+
+
 if __name__ == "__main__":
     unittest.main()

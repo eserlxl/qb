@@ -47,6 +47,7 @@ def _load_sibling(module_name: str, filename: str):
 
 _orch = _load_sibling("qb_orchestrator", "orchestrator.py")
 _telemetry = _load_sibling("qb_telemetry", "telemetry.py")
+_trends = _load_sibling("qb_telemetry_trends", "telemetry_trends.py")
 
 
 @dataclass
@@ -249,3 +250,53 @@ def raise_path(trigger: str):
     or ``None`` for a non-ceiling trigger (``completed`` / ``kill``). Advisory only --
     it reads nothing and mutates nothing."""
     return RAISE_PATHS.get(trigger)
+
+
+# --- Phase 4.4: advisory budget recommender (output-only) --------------------
+# A ceiling that halts a run is either *constraining* (legitimately limiting useful
+# work -> consider raising) or *protecting* (correctly guarding against waste or
+# regression -> hold). When the trend evidence is too thin to tell, the advice is
+# *insufficient-evidence* -> do not raise (fail-closed). The recommender is pure:
+# it reads a StopReport + the aggregate telemetry series and returns advice; it never
+# mutates a budget. Applying a raise is always an explicit policy.budgets edit.
+ADVICE_CONSTRAINING = "constraining"
+ADVICE_PROTECTING = "protecting"
+ADVICE_INSUFFICIENT = "insufficient-evidence"
+
+_INSUFFICIENT_VERDICTS = frozenset({_trends.VERDICT_INSUFFICIENT, _trends.VERDICT_UNMEASURED})
+
+
+def recommend_budget(stop_report, aggregate, *, window: int = 3) -> dict:
+    """Advise whether the ceiling a run hit is constraining vs. protecting vs.
+    insufficient-evidence (Phase 4.4). Output only -- never mutates a budget.
+
+    ``aggregate`` is an aggregate telemetry series (or a path to one). A raise is
+    advised only when the run was producing good work -- precision and fix-safety
+    holding (stable/improving) and not regressing on quality -- so a ceiling that
+    halts a regressing run reads as protecting, and thin evidence reads as
+    insufficient (fail-closed: do not raise)."""
+    trigger = getattr(stop_report, "trigger", None)
+    path = raise_path(trigger)
+
+    # Non-ceiling trigger (completed/kill): the budget did not bind -> nothing to raise.
+    if path is None:
+        return {"advice": ADVICE_PROTECTING, "ceiling": None, "raise_path": None,
+                "reason": f"trigger '{trigger}' is not a budget ceiling; the budget did not bind"}
+
+    precision = _trends.direction_verdict(aggregate, "precision", window)
+    fix_safety = _trends.direction_verdict(aggregate, "fix_safety", window)
+    quality = _trends.direction_verdict(aggregate, "quality", window)
+
+    # Fail-closed: without enough precision/fix-safety history, do not advise a raise.
+    if precision in _INSUFFICIENT_VERDICTS or fix_safety in _INSUFFICIENT_VERDICTS:
+        return {"advice": ADVICE_INSUFFICIENT, "ceiling": trigger, "raise_path": None,
+                "reason": "insufficient precision/fix-safety trend evidence to justify a raise"}
+
+    # The ceiling is correctly protecting against a regressing run -> hold.
+    if _trends.VERDICT_REGRESSING in (precision, fix_safety, quality):
+        return {"advice": ADVICE_PROTECTING, "ceiling": trigger, "raise_path": None,
+                "reason": "precision/fix-safety/quality is regressing; the ceiling is guarding against waste"}
+
+    # Good work being limited by the ceiling -> the ceiling is constraining.
+    return {"advice": ADVICE_CONSTRAINING, "ceiling": trigger, "raise_path": path,
+            "reason": "precision and fix-safety are holding/improving; the ceiling is limiting useful work"}
