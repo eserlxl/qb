@@ -155,10 +155,15 @@ def render_summary_text(store) -> str:
     sev_counts = signals["severity_counts"]
     fixes = signals["fixes"]
     quality = signals["quality"]
+    # Established process-confinement controls (names only, no command output), so a
+    # reader can confirm fix verification "ran contained" from the summary alone.
+    confinement = sorted({c for e in evidence for c in (e.get("confinement_controls") or [])})
+    confinement_str = ",".join(confinement) if confinement else "none"
     lines = [
         "QB audit report",
         f"findings: {len(findings)} (" + ", ".join(f"{s}={sev_counts[s]}" for s in _SEVERITIES) + ")",
         f"hardening: kept={fixes['kept']} reverted={fixes['reverted']} blocked={fixes['blocked']}",
+        f"confinement: {confinement_str}",
         "signals: "
         f"precision={quality['precision_estimate']} "
         f"fix_safety_ok={quality['fix_safety_ok']} "

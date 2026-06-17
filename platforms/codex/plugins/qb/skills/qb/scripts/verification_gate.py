@@ -85,6 +85,7 @@ class EvidenceRecord:
     rollback_handle: str | None
     outcome: str          # "kept" | "reverted"
     reason: str
+    confinement_controls: tuple = ()   # process-confinement control names actually established
 
     def to_dict(self) -> dict:
         return {
@@ -95,17 +96,26 @@ class EvidenceRecord:
             "rollback_handle": self.rollback_handle,
             "outcome": self.outcome,
             "reason": self.reason,
+            # Control names only (never command output): lets a reviewer confirm
+            # the verification "ran contained" from the evidence record alone.
+            "confinement_controls": list(self.confinement_controls),
         }
 
 
-def run_verification(command, cwd, timeout=120, confinement=None):
-    """Run the verification command (argv); return (exit_code, combined_output)."""
+def run_verification(command, cwd, timeout=120, confinement=None, established_controls=None):
+    """Run the verification command (argv); return (exit_code, combined_output).
+
+    The verification command runs the audited repo's own code; it gets a minimized
+    environment so QB's secrets are never inherited, and confinement defaults to the
+    command layer's confine-by-default (unavailable required controls fail closed).
+
+    When ``established_controls`` (a list) is supplied, it is populated with the
+    NAMES of the process-confinement controls actually established for this run --
+    control names only, never command output -- so a caller can record in evidence
+    that the verification "ran contained".
+    """
     assert_argv(command)
     try:
-        # The verification command runs the audited repo's own code; give it a
-        # minimized environment so QB's secrets are never inherited by repo code.
-        # Confinement is an explicit opt-in and defaults off, preserving the
-        # current verification path for existing callers.
         completed = _cs.run_command(command, cwd=str(cwd), timeout=timeout,
                                     env=_cs.minimal_env(), confinement=confinement)
     except subprocess.TimeoutExpired:
@@ -114,6 +124,8 @@ def run_verification(command, cwd, timeout=120, confinement=None):
         return 1, f"verification confinement unavailable: {exc}"
     except Exception as exc:  # command error counts as non-green
         return 1, f"verification error: {type(exc).__name__}: {exc}"
+    if established_controls is not None:
+        established_controls.extend(getattr(completed, "qb_confinement", {}).get("controls", ()))
     output = (completed.stdout or "") + (completed.stderr or "")
     return completed.returncode, output
 
@@ -130,15 +142,19 @@ def gate_fix(isolation, fix_plan, apply_fn, timeout=120, confinement=None) -> Ev
 
     handle = isolation.capture_handle()
     apply_fn(isolation)
+    established_controls: list = []
     exit_code, output = run_verification(
-        command, cwd=isolation.worktree_path, timeout=timeout, confinement=confinement
+        command, cwd=isolation.worktree_path, timeout=timeout, confinement=confinement,
+        established_controls=established_controls,
     )
     redacted = redact(output)[:_OUTPUT_CAP]
+    controls = tuple(established_controls)
 
     if exit_code == 0:
         return EvidenceRecord(finding_id, list(command), exit_code, redacted, handle,
-                              "kept", "verification green")
+                              "kept", "verification green", confinement_controls=controls)
 
     isolation.restore(handle)
     return EvidenceRecord(finding_id, list(command), exit_code, redacted, handle,
-                          "reverted", f"verification non-green (exit {exit_code})")
+                          "reverted", f"verification non-green (exit {exit_code})",
+                          confinement_controls=controls)
