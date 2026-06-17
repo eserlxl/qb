@@ -15,7 +15,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.qb_monorepo import SHARED_DIR
+from tests.qb_monorepo import SHARED_DIR, REPO_ROOT
 
 MODULE_PATH = SHARED_DIR / "scripts/qb_headless.py"
 
@@ -75,6 +75,19 @@ class HeadlessTests(unittest.TestCase):
             # redaction: the secret value never reaches any output file
             for name in ("findings.jsonl", "report.json", "summary.txt"):
                 self.assertNotIn(token, (out / name).read_text())
+
+    def test_self_audit_on_qb_repo_yields_documented_exit_code(self) -> None:
+        # Phase 7.3: "QB audits QB" must be a repeatable run that produces the
+        # findings inventory with a DOCUMENTED exit code (0 clean / 1 findings) when
+        # run against this repository -- never a boundary (2) or internal-error (3)
+        # code. This pins the `self-audit` Make target's end-to-end behavior.
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "QB-Audit"
+            code = self.hl.run_headless(REPO_ROOT, output_dir=out)
+            self.assertIn(code, (self.hl.EXIT_CLEAN, self.hl.EXIT_FINDINGS),
+                          f"self-audit returned non-documented exit code {code}")
+            self.assertTrue((out / "findings.jsonl").exists(),
+                            "self-audit did not produce findings.jsonl")
 
     def test_main_returns_exit_code(self) -> None:
         with tempfile.TemporaryDirectory() as d:
