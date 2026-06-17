@@ -366,6 +366,11 @@ local gate of record. Antigravity is checked for the platform-model and CHANGELO
 invariants but is excluded from the analyzer-naming assertion, since it is
 planning-only and ships no audit engine.
 
+## Security
+
+QB's vulnerability-reporting policy, supported-versions statement, and the
+trusted-code precondition for A2/A3 autonomy live in [SECURITY.md](SECURITY.md).
+
 ## Attribution
 
 QB is an independent project inspired by Alican Kiraz's
