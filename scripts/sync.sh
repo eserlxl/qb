@@ -254,6 +254,11 @@ MAP=(
   "scripts/production_gate.py|platforms/claude-code/scripts/production_gate.py"
   "scripts/production_gate.py|platforms/cursor/scripts/production_gate.py"
   "scripts/production_gate.py|platforms/codex/plugins/qb/skills/qb/scripts/production_gate.py"
+
+  # shared/scripts/accepted_findings.py
+  "scripts/accepted_findings.py|platforms/claude-code/scripts/accepted_findings.py"
+  "scripts/accepted_findings.py|platforms/cursor/scripts/accepted_findings.py"
+  "scripts/accepted_findings.py|platforms/codex/plugins/qb/skills/qb/scripts/accepted_findings.py"
 )
 
 # Number of distinct shared source files (for the summary line).

@@ -68,6 +68,35 @@ class ProductionGateTests(unittest.TestCase):
         self.assertTrue(self.pg.self_audit_clean(findings, accepted_ids=["QBF-1", "QBF-2"]))
         self.assertEqual([f["id"] for f in self.pg.unaccepted_findings(findings, ["QBF-1"])], ["QBF-2"])
 
+    def test_accepted_findings_register_loader(self) -> None:
+        # Phase 7.3: the committed register parses into the accepted_ids set that
+        # self_audit_clean consumes. Only backtick-wrapped ids of list items under
+        # the "## Accepted" heading are read; prose, indented examples, and other
+        # sections are ignored.
+        af = _load("qb_accepted_findings_under_test", SHARED_DIR / "scripts/accepted_findings.py")
+        sample = (
+            "# Accepted findings register\n\n"
+            "## Format\n"
+            "    - `QBF-NOT-PARSED` -- indented example outside the section\n\n"
+            "## Accepted\n"
+            "- `QBF-1` -- known false positive (reviewer: maintainer)\n"
+            "- `QBF-2` -- vendored fixture (reviewer: maintainer)\n"
+            "Some prose mentioning `QBF-PROSE` should be ignored.\n\n"
+            "## Other\n"
+            "- `QBF-OTHER` -- different section\n"
+        )
+        ids = af.parse_accepted_ids(sample)
+        self.assertEqual(ids, {"QBF-1", "QBF-2"})
+        # The loader yields a set against the real repo register (currently empty).
+        real = af.load_accepted_ids(REPO_ROOT)
+        self.assertIsInstance(real, set)
+        # An absent register accepts nothing (fail-closed).
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(af.load_accepted_ids(d), set())
+        # The parsed set composes with self_audit_clean.
+        self.assertTrue(self.pg.self_audit_clean([{"id": "QBF-1"}], accepted_ids=ids))
+        self.assertFalse(self.pg.self_audit_clean([{"id": "QBF-X"}], accepted_ids=ids))
+
 
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
 class SelfAuditDogfoodTests(unittest.TestCase):
