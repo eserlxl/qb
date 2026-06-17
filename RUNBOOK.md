@@ -208,3 +208,8 @@ A **passing gate authorizes operation, never delivery.** A3 (commit / push / PR)
 stays **explicit opt-in** even when the gate passes: `a3_enabled_by_default` is
 `False` regardless of the gate outcome, so authorizing autonomous operation never
 authorizes auto-delivery — that remains a separate, deliberate opt-in.
+
+**Numbering hazard.** The roadmap-Phase-7 vocabulary in this procedure is distinct
+from the historical engine docstring phase markers (e.g. "Phase 3.2", "Phase 7.1")
+that appear inside the engine source — do not conflate a roadmap phase with a
+docstring's development marker when locating an evidence artifact.
