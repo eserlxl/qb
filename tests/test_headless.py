@@ -89,6 +89,35 @@ class HeadlessTests(unittest.TestCase):
             self.assertTrue((out / "findings.jsonl").exists(),
                             "self-audit did not produce findings.jsonl")
 
+    def test_production_gate_entrypoint_reports_decision(self) -> None:
+        # Phase 7.4: the production-gate decision is reachable through a dedicated
+        # entrypoint with a documented exit code (0 passed / 1 denied), not only an
+        # in-test call.
+        sig = _load("qb_production_gate_signals_for_headless",
+                    SHARED_DIR / "scripts/production_gate_signals.py")
+        store = _load("qb_run_store_for_headless", SHARED_DIR / "scripts/run_store.py")
+        recov = _load("qb_recoverability_for_headless", SHARED_DIR / "scripts/recoverability_drill.py")
+        with tempfile.TemporaryDirectory() as d:
+            audit = Path(d) / "QB-Audit"
+            rs = store.RunStore(audit).open()
+            rs.write_telemetry({"schema_version": 1,
+                                "quality": {"precision_estimate": 0.95, "fix_safety_ok": True}})
+            rs.write_findings([])
+            recov.persist_evidence(
+                {"schema_version": 1, "run_id": "r", "baseline_ref": "refs/qb-baseline/r",
+                 "baseline_sha_len": 40, "baseline_clean": True, "passed": True}, audit)
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            code = sig.main(["--root", str(repo), "--out", str(audit),
+                             "--scripts-dir", str(SHARED_DIR / "scripts")])
+            self.assertEqual(code, sig.GATE_PASSED)
+            # An empty store denies (fail-closed) with a documented non-zero code.
+            empty = Path(d) / "empty-QB-Audit"
+            empty.mkdir()
+            code = sig.main(["--root", str(repo), "--out", str(empty),
+                             "--scripts-dir", str(SHARED_DIR / "scripts")])
+            self.assertEqual(code, sig.GATE_DENIED)
+
     def test_main_returns_exit_code(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d) / "repo"

@@ -26,9 +26,18 @@ autonomy; it does not gate operation).
 
 from __future__ import annotations
 
+import argparse
 import sys
 from importlib import util as _import_util
 from pathlib import Path
+
+# Entrypoint exit-code contract (fail-closed: a crash never reports passed):
+#   0 GATE_PASSED  -- every conjunct holds; autonomous operation authorized.
+#   1 GATE_DENIED  -- at least one conjunct failed; named in the printed failures.
+#   2 GATE_ERROR   -- an internal error occurred assembling the decision.
+GATE_PASSED = 0
+GATE_DENIED = 1
+GATE_ERROR = 2
 
 
 def _load_sibling(module_name, filename):
@@ -138,3 +147,34 @@ def gate_decision(audit_dir, repo_root, scripts_dir=None) -> dict:
     result["signals"] = signals
     result["permitted_autonomy"] = permitted_autonomy(audit_dir)
     return result
+
+
+def main(argv=None) -> int:
+    """CLI entrypoint: assemble the six signals and report the production-gate
+    authorization decision with a documented exit code. Fail-closed: an internal
+    error returns GATE_ERROR, never a passed decision."""
+    parser = argparse.ArgumentParser(
+        description="Assemble the six production-gate signals and report the authorization decision.")
+    parser.add_argument("--root", default=".",
+                        help="Repository root (for least-privilege + the self-audit register).")
+    parser.add_argument("--out", default=None,
+                        help=f"QB-Audit store directory; default <root>/{_store.OUTPUT_DIR_NAME}.")
+    parser.add_argument("--scripts-dir", default=None,
+                        help="Engine scripts dir for the supply-chain check; default this module's dir.")
+    args = parser.parse_args(argv)
+    audit_dir = args.out if args.out is not None else str(Path(args.root) / _store.OUTPUT_DIR_NAME)
+    try:
+        decision = gate_decision(audit_dir, args.root, scripts_dir=args.scripts_dir)
+    except Exception as exc:  # fail-closed: never report passed on a crashed assembly
+        sys.stderr.write(
+            f"production_gate_signals: internal error: {type(exc).__name__}: {exc}\n")
+        return GATE_ERROR
+    failures = ",".join(decision["failures"]) or "none"
+    print(f"production_gate passed={decision['passed']} failures={failures} "
+          f"permitted_autonomy={decision['permitted_autonomy']} "
+          f"a3_enabled_by_default={decision['a3_enabled_by_default']}")
+    return GATE_PASSED if decision["passed"] else GATE_DENIED
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
