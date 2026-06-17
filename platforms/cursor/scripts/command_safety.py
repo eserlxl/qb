@@ -10,9 +10,10 @@ with two halves:
    strings into a command line. ``assert_argv`` and ``run_command`` enforce this;
    Phase 2.3 (tool adapters) and Phase 3 (the fixer's verification commands) MUST
    use ``run_command`` rather than any shell-string form. ``run_command`` also
-   owns the default-off stdlib process-confinement seam: requested confinement
-   is established before spawn, and unavailable required controls raise
-   ``ConfinementUnavailable`` before any child process runs. A companion rule:
+   owns the confine-by-default stdlib process-confinement seam: confinement is
+   applied by default and established before spawn, unavailable required controls
+   raise ``ConfinementUnavailable`` before any child process runs, and the single
+   sanctioned escape is the explicit ``unconfined(reason)`` opt-out. A companion rule:
    ``AUTO_RUN_REPO_SCRIPTS`` is False -- QB never auto-executes scripts provided
    by the repository under audit absent explicit, sandboxed authorization.
 
@@ -101,7 +102,7 @@ class ConfinementSpec:
     inheriting an off default.
     """
 
-    enabled: bool = False
+    enabled: bool = True
     require: tuple[str, ...] = ("process_group",)
     resource_limits: bool = True
     opt_out_reason: str | None = None
@@ -136,10 +137,11 @@ def available_confinement_controls() -> tuple[str, ...]:
 
 def _normalize_confinement(confinement) -> ConfinementSpec:
     if confinement is None:
-        # Default policy. Distinct from the explicit opt-out below so the two can
-        # diverge: today both are off; once confine-by-default lands, None means
-        # "apply the default confinement" while False stays the sanctioned opt-out.
-        return ConfinementSpec(enabled=False, require=(), resource_limits=False)
+        # Default policy: confine by default. None means "apply the default
+        # confinement"; on a supported host the child runs contained, and a
+        # missing required control fails closed. The explicit opt-out below
+        # (False) is the only sanctioned way to run unconfined.
+        return ConfinementSpec()
     if confinement is False:
         # The explicit, auditable unconfined opt-out (a bare False shorthand).
         return ConfinementSpec(enabled=False, require=(), resource_limits=False,
@@ -216,10 +218,11 @@ def assert_argv(argv):
 def run_command(argv, cwd=None, timeout=None, env=None, confinement=None):
     """Run an external command from an argv vector with no system shell.
 
-    Confinement is opt-in and default-off. When requested, the wrapper
-    establishes the available stdlib process boundary before spawning the child;
-    if a required control cannot be established, it raises
-    ConfinementUnavailable instead of silently running unconfined.
+    Confinement is applied by default (confinement=None): the wrapper establishes
+    the available stdlib process boundary before spawning the child, and if a
+    required control cannot be established it raises ConfinementUnavailable instead
+    of silently running unconfined. Pass the explicit ``unconfined(reason)`` opt-out
+    (or confinement=False) to run a trusted command without confinement.
     """
     args = assert_argv(argv)
     spec = _normalize_confinement(confinement)
