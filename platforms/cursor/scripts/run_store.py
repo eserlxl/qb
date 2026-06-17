@@ -13,6 +13,7 @@ mirroring the ``.qb/`` convention):
   run-log.jsonl           -- append-only orchestration events (seq-ordered)
   summary.json            -- run summary (counts, stop reason)
   telemetry.json          -- schema-versioned quality/autonomy telemetry
+  telemetry-aggregate.json -- schema-versioned multi-run telemetry series
 
 Redaction is mandatory: no secret value is ever persisted (the existing
 length-bounded SECRET_PATTERNS are applied before write). Overwrite is opt-in: a
@@ -53,8 +54,10 @@ def _load_sibling(module_name: str, filename: str):
 _fs = _load_sibling("qb_finding_schema", "finding_schema.py")
 _core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 _telemetry = _load_sibling("qb_telemetry", "telemetry.py")
+_telemetry_aggregate = _load_sibling("qb_telemetry_aggregate", "telemetry_aggregate.py")
 serialize_finding = _fs.serialize_finding
 TELEMETRY_FILENAME = _telemetry.TELEMETRY_FILENAME
+AGGREGATE_TELEMETRY_FILENAME = _telemetry_aggregate.AGGREGATE_TELEMETRY_FILENAME
 # telemetry.json is required for a completed run: even report-only A0 emits
 # quality/autonomy telemetry, and a missing file should be visible to layout
 # validation instead of silently pinning later runs to cold-start behavior.
@@ -64,6 +67,7 @@ REQUIRED_SUBPATHS = (
     RUN_LOG_FILENAME,
     SUMMARY_FILENAME,
     TELEMETRY_FILENAME,
+    AGGREGATE_TELEMETRY_FILENAME,
 )
 
 

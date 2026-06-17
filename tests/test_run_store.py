@@ -47,12 +47,20 @@ class RunStoreTests(unittest.TestCase):
     def _store(self, d):
         return self.rs.RunStore(Path(d) / self.rs.OUTPUT_DIR_NAME).open()
 
+    def _write_aggregate(self, store) -> None:
+        record = self.rs._telemetry_aggregate.build_aggregate([])
+        (store.root / self.rs.AGGREGATE_TELEMETRY_FILENAME).write_text(
+            json.dumps(record, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
     def test_layout_and_identifier_check(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)
             store.write_findings([self._finding()])
             store.write_summary({"total_findings": 1})
             store.write_telemetry({"schema_version": 1, "run_id": "r1"})
+            self._write_aggregate(store)
             self.assertEqual(self.rs.validate_store_layout(store.root), [])
             mis = self.rs.validate_store_layout(Path(d) / "Wrong-Name")
             self.assertTrue(any("invalid_store_dir_name" in e for e in mis))
@@ -64,6 +72,17 @@ class RunStoreTests(unittest.TestCase):
             store.write_summary({"total_findings": 1})
             errors = self.rs.validate_store_layout(store.root)
             self.assertIn(f"missing_store_path={self.rs.TELEMETRY_FILENAME}", errors)
+
+    def test_layout_requires_aggregate_telemetry(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            store.write_findings([self._finding()])
+            store.write_summary({"total_findings": 1})
+            store.write_telemetry({"schema_version": 1, "run_id": "r1"})
+            errors = self.rs.validate_store_layout(store.root)
+            self.assertIn(f"missing_store_path={self.rs.AGGREGATE_TELEMETRY_FILENAME}", errors)
+            self._write_aggregate(store)
+            self.assertEqual(self.rs.validate_store_layout(store.root), [])
 
     def test_findings_round_trip_sorted(self) -> None:
         with tempfile.TemporaryDirectory() as d:
