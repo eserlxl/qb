@@ -64,6 +64,33 @@ python3 scripts/release-manifest.py --check --output QB-sanitized.manifest
 
 It exits `0` only when the tree still matches the manifest.
 
+## Release integrity
+
+The sanitized export ships with a deterministic integrity manifest
+(`scripts/release-manifest.py`). Be precise about what it does and does not
+guarantee.
+
+**Guaranteed:**
+
+- A **deterministic file list** of the git-tracked tree (sorted; same tree → same
+  manifest), each entry a **SHA-256** of the file's bytes, plus the root **VERSION**.
+- **Byte-equality to the synced `shared/` core** — every platform copy matches its
+  `shared/` source and every shared file is mapped into the fan-out (the
+  `scripts/sync.sh --check` invariant, also pinned by
+  `tests/test_release_integrity.py`).
+- **Exclusion of tool-state trees** — the export is the tracked tree, so `.qb/`,
+  `QB-Audit/`, and `.planwright/` are never shipped.
+
+**NOT guaranteed:**
+
+- **No cryptographic signing.** The manifest proves *integrity* (the listed files are
+  intact and hash as recorded), not *authenticity* — there is no GPG/sigstore
+  signature, so it does not prove *who* produced the artifact, only that its listed
+  files hash as recorded.
+
+To check a built artifact, run the verify recipe in **Verify a sanitized export**
+above; it exits `0` only when the tree still matches its manifest.
+
 ## Autonomy levels
 
 | Level | Behavior |
