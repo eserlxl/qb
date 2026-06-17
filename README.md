@@ -297,6 +297,10 @@ directory.
 
 ## Development
 
+The full contribution workflow — the `shared/` sync requirement, the gate of record,
+the versioning/changelog convention, and the no-secrets rule — is documented in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 After editing shared planner specs, references, validators, or engine modules,
 sync the generated platform copies and run the invariant suite:
 

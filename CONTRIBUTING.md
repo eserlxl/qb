@@ -36,3 +36,26 @@ at least one such subsection with a **real bullet** — an empty or placeholder 
 platform changelogs share the same latest version header
 (`tests/test_doc_consistency.py`), so bump all of them together through
 `scripts/bump-version.sh`.
+
+## Contribution workflow
+
+1. Branch from `main` and make your change.
+2. **For any change under `shared/`:** run `make sync` to materialize the canonical
+   source into the host packages, then `make check`. `shared/` is the single source
+   of truth; skipping `make sync` leaves the platform copies stale and fails
+   `bash scripts/sync.sh --check` (and therefore `make check`). For changes outside
+   `shared/`, `make check` alone is sufficient.
+3. Satisfy the **gate of record** before opening a PR or pushing: a green local
+   `make check` on a clean working tree is the one authoritative quality gate (cloud
+   CI is disabled). See [RUNBOOK.md → Gate of record](RUNBOOK.md#gate-of-record); you
+   may install the optional pre-push hook with `scripts/install-hooks.sh`.
+4. Add a changelog entry and bump the version through `scripts/bump-version.sh` (see
+   **Versioning and changelog** above) — never hand-edit version fields.
+
+## No secrets
+
+Never commit a real credential. Every tracked file is scanned by
+`tests/test_no_committed_secrets.py` (run under `make check`); a committed
+secret-shaped string fails the gate. A deliberate test fixture may opt out with an
+inline `pragma: allowlist secret` marker, but production code, docs, and config must
+carry no real secret value.
