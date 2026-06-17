@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import types
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -69,17 +70,32 @@ def _quality_finding():
     )
 
 
+def make_plan(verify_command, *, finding_id="QBF-campaign000", category="quality",
+              severity="P3", confidence="medium", evidence="fix_target.txt:1"):
+    """A FixPlan-shaped object with an explicit verify command, for campaigns that
+    must exercise a specific green/non-green verification outcome (the corpus's own
+    verify is an always-green no-op)."""
+    finding = types.SimpleNamespace(id=finding_id, category=category, severity=severity,
+                                    confidence=confidence, evidence=evidence)
+    return types.SimpleNamespace(finding=finding, verify_command=list(verify_command))
+
+
+def session_policy(declared_level, *, categories=("quality",), allowlist=("*.txt",)):
+    """The standard campaign policy at a declared level (quality auto-fixable, .txt writes)."""
+    return _policy.parse_policy({
+        "autonomy_level": declared_level,
+        "auto_fixable_categories": list(categories),
+        "default_min_confidence": "medium",
+        "write_allowlist": list(allowlist),
+    })
+
+
 def run_campaign(repo, declared_level, output_dir, *, prior_telemetry=None, enable_a3=False):
     """Run one declared-level session over a corpus repo, persist + return telemetry.
 
     ``repo`` exposes ``.name`` and ``.path`` (a tests.qb_corpus.CorpusRepo).
     """
-    policy = _policy.parse_policy({
-        "autonomy_level": declared_level,
-        "auto_fixable_categories": ["quality"],
-        "default_min_confidence": "medium",
-        "write_allowlist": ["*.txt"],
-    })
+    policy = session_policy(declared_level)
     finding = _quality_finding()
     plan = _fixer.plan_fix(finding, repo.path)
     results, report = _budget.run_session(
