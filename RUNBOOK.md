@@ -177,7 +177,29 @@ non-guarantee, supported controls, and governing symbols — lives in
 ## Production gate
 
 Before authorizing earnest autonomous operation, confirm the composite
-`production_gate` passes on **current** signals: telemetry emitted, rollback drill
-passed, least-privilege + supply-chain invariants holding, kill-switch proven, and
-a clean (or fully-accepted) self-audit. The gate fails closed; it re-evaluates each
-time and is never a one-time checkbox. A3 remains explicit opt-in regardless.
+`production_gate` passes on **current** signals. With cloud CI disabled, operator
+discipline is load-bearing, so walk **one step per conjunct** — each is assembled
+from a real evidence source by `production_gate_signals.assemble_signals` and named
+exactly as in `production_gate.PRODUCTION_GATE_CHECKS`:
+
+1. **`telemetry_emitted`** — a schema-valid per-run quality record exists
+   (`QB-Audit/telemetry.json`).
+2. **`rollback_drill_passed`** — the recoverability drill record records a pass
+   (`QB-Audit/recoverability.json`; see [Recover](#recover)).
+3. **`least_privilege_ok`** — the write/network/script least-privilege invariants
+   hold (`least_privilege.py`: default-deny writes, no implicit egress, no auto-run
+   of repo scripts).
+4. **`supply_chain_ok`** — the engine's dependency-free core holds (the `make check`
+   posture). This is **interim**: the authoritative published-integrity source is the
+   Phase 8 release manifest + SHA-256, not this signal.
+5. **`killswitch_proven`** — the kill-switch halts at a safe checkpoint with the
+   documented kill-stop exit code (`budget.KillSwitch`; see [Pause / Kill](#pause--kill)).
+6. **`self_audit_clean`** — every QB-audits-QB finding is fixed or explicitly accepted
+   (`QB-Audit/self-audit.json` reconciled against
+   [docs/accepted-findings.md](docs/accepted-findings.md)).
+
+The composite decision and the earned-autonomy authorization are persisted redacted
+under `QB-Audit/production-gate.json` and `QB-Audit/release-authorization.json`. The
+gate **fails closed**: any single conjunct false denies operation, naming that
+conjunct in `failures`. It **re-evaluates current signals each time** and is never a
+one-time checkbox. A3 remains explicit opt-in regardless.
