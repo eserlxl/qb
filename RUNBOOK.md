@@ -34,6 +34,22 @@ and no auto-push** — it only verifies; delivery stays a separate, explicit opt
 (see the A3 note above). The recorded verified floor (command, exit status, version,
 date, and per-guard mapping) lives in [BASELINE.md](BASELINE.md).
 
+### Optional: enforce the gate locally with a pre-push hook
+
+To run the gate of record automatically before every `git push`, install the
+**opt-in** pre-push hook (there is no enforcing hook by default):
+
+```bash
+scripts/install-hooks.sh             # install (explicit opt-in); or: make install-hooks
+scripts/install-hooks.sh --dry-run   # preview; writes nothing
+scripts/install-hooks.sh --uninstall # remove it
+```
+
+It copies `scripts/hooks/pre-push` — which runs the existing `make check` target —
+into `.git/hooks/pre-push`, so a red gate blocks the push. Nothing installs it
+automatically, it performs **no network access and no push**, and it writes only
+inside this repo's `.git/hooks/`.
+
 ## Autonomy levels
 
 | Level | Behavior |

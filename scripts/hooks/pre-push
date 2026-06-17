@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# QB pre-push hook: run the gate of record (make check) before a push is allowed.
+#
+# Installed ONLY on explicit opt-in via scripts/install-hooks.sh. A red gate blocks
+# the push. This hook never mutates the repo and never pushes on your behalf -- it
+# only runs the read-only verification gate.
+set -euo pipefail
+
+# Resolve the repo root from git so the hook works regardless of the caller's CWD.
+ROOT="$(git rev-parse --show-toplevel)"
+
+echo "QB pre-push: running 'make check' (gate of record) before push..."
+make -C "$ROOT" check
+echo "QB pre-push: gate of record passed; allowing push."

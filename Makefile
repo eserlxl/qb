@@ -1,4 +1,4 @@
-.PHONY: sync check test baseline self-audit export-sanitized
+.PHONY: sync check test baseline self-audit install-hooks export-sanitized
 
 sync:
 	bash scripts/sync.sh
@@ -28,6 +28,11 @@ test:
 # outcomes of a successful run (the produced QB-Audit/findings.jsonl is reconciled
 # against the accepted-findings register, not gated here); only a boundary (2) or
 # internal-error (3) code fails the target. See the RUNBOOK exit-code contract.
+# install-hooks -- opt-in: install the local pre-push hook that runs `make check`
+# (the gate of record) before every push. Explicit only; performs no push.
+install-hooks:
+	bash scripts/install-hooks.sh
+
 self-audit:
 	@python3 shared/scripts/qb_headless.py --root . --out QB-Audit; \
 	code=$$?; \
