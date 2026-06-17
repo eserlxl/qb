@@ -42,6 +42,8 @@ import telemetry_trends  # noqa: E402
 ROOT_README = REPO_ROOT / "README.md"
 ROOT_VERSION = REPO_ROOT / "VERSION"
 RUNBOOK = REPO_ROOT / "RUNBOOK.md"
+SECURITY = REPO_ROOT / "SECURITY.md"
+CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 
 # Derived sources of truth (computed once, not copied into the test).
 PRODUCER_ANALYZERS = sorted(
@@ -207,6 +209,31 @@ class DocConsistencyTest(unittest.TestCase):
         self.assertEqual(
             listed, PRODUCTION_GATE_CHECKS,
             f"RUNBOOK production-gate conjuncts {listed} != engine {PRODUCTION_GATE_CHECKS}")
+
+    def test_governance_docs_consistent_with_readme_posture(self):
+        # The Phase-8.3 policy docs must restate the README's load-bearing posture:
+        # SECURITY.md the trusted-code precondition, CONTRIBUTING.md the no-secrets
+        # rule -- so the new governance docs cannot drift from the README.
+        readme = self._read(ROOT_README)
+        security = self._read(SECURITY)
+        contributing = self._read(CONTRIBUTING)
+
+        # Trusted-code precondition: the README references it; SECURITY.md states it.
+        self.assertIn("trusted-code precondition", readme.lower(),
+                      "README must reference the trusted-code precondition")
+        self.assertIn("trusted code", security.lower(),
+                      "SECURITY.md must state the trusted-code precondition")
+        self.assertIn("not yet shipped", security.lower(),
+                      "SECURITY.md must mirror the sandbox-not-yet-shipped posture")
+
+        # No-secrets rule: the README carries the secret-hygiene posture; CONTRIBUTING
+        # carries the rule and names the enforcing guard.
+        self.assertIn("secret hygiene", readme.lower(),
+                      "README must carry the secret-hygiene posture")
+        self.assertIn("## No secrets", contributing,
+                      "CONTRIBUTING.md must carry the No secrets section")
+        self.assertIn("test_no_committed_secrets", contributing,
+                      "CONTRIBUTING.md no-secrets rule must name the enforcing guard")
 
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]
