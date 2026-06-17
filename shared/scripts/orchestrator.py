@@ -149,6 +149,8 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
     # Effective level = the most restrictive of declared, earned ceiling, and the
     # sandbox-availability clamp (the lowest always wins).
     level = _release.most_restrictive(declared, earned, sandbox_ceiling)
+    clamp_reason = (None if sandbox_available
+                    else f"sandbox unavailable -> autonomy capped to {sandbox_ceiling}")
     finding = fix_plan.finding
     action = ActionDescriptor(
         action_kind="fix",
@@ -158,6 +160,7 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         target_path=_evidence_path(finding),
     )
     result = {"level": level, "declared_level": declared, "earned_ceiling": earned,
+              "clamp_reason": clamp_reason,
               "outcome": None, "reason": None, "promoted": [], "changeset": None, "evidence": None}
 
     # A0 is report-only: never open isolation, never write. (Only a declared A0 lands

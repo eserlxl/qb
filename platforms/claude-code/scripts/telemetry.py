@@ -61,7 +61,7 @@ def redact(value):
     return value
 
 
-def build_telemetry(*, run_id, autonomy_level, findings, evidence, cost=None) -> dict:
+def build_telemetry(*, run_id, autonomy_level, findings, evidence, cost=None, clamp_reason=None) -> dict:
     """Build the per-run telemetry record from findings + per-fix evidence."""
     by_severity = {s: 0 for s in _SEVERITIES}
     by_category: dict = {}
@@ -90,6 +90,9 @@ def build_telemetry(*, run_id, autonomy_level, findings, evidence, cost=None) ->
         "schema_version": TELEMETRY_SCHEMA_VERSION,
         "run_id": run_id,
         "autonomy_level": autonomy_level,
+        # Why effective autonomy was capped below the declared level (e.g.
+        # "sandbox unavailable -> autonomy capped to A1"); None when not clamped.
+        "clamp_reason": clamp_reason,
         "detection": {
             "findings_total": len(list(findings)),
             "by_severity": by_severity,
