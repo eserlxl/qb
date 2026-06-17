@@ -97,6 +97,50 @@ class ProductionGateTests(unittest.TestCase):
         self.assertTrue(self.pg.self_audit_clean([{"id": "QBF-1"}], accepted_ids=ids))
         self.assertFalse(self.pg.self_audit_clean([{"id": "QBF-X"}], accepted_ids=ids))
 
+    def test_self_audit_reconcile_feeds_conjunct(self) -> None:
+        # Phase 7.3: reconciliation loads findings.jsonl + the accepted register and
+        # emits the self_audit_clean conjunct boolean plus the unaccepted-id list.
+        recon = _load("qb_self_audit_reconcile_under_test",
+                      SHARED_DIR / "scripts/self_audit_reconcile.py")
+        with tempfile.TemporaryDirectory() as d:
+            audit = Path(d) / "QB-Audit"
+            audit.mkdir()
+            (audit / "findings.jsonl").write_text(
+                '{"id": "QBF-A", "severity": "P3"}\n'
+                '{"id": "QBF-B", "severity": "P2"}\n', encoding="utf-8")
+            repo = Path(d) / "repo"
+            (repo / "docs").mkdir(parents=True)
+
+            # No register -> nothing accepted -> conjunct False, both ids unaccepted.
+            result = recon.reconcile(audit, repo)
+            self.assertFalse(result["self_audit_clean"])
+            self.assertEqual(result["unaccepted_ids"], ["QBF-A", "QBF-B"])
+            self.assertEqual(result["findings_total"], 2)
+
+            # Accept one -> still False, only the other id remains unaccepted.
+            (repo / "docs" / "accepted-findings.md").write_text(
+                "## Accepted\n- `QBF-A` -- reviewed false positive (reviewer: maintainer)\n",
+                encoding="utf-8")
+            result = recon.reconcile(audit, repo)
+            self.assertFalse(result["self_audit_clean"])
+            self.assertEqual(result["unaccepted_ids"], ["QBF-B"])
+            self.assertEqual(result["accepted_total"], 1)
+
+            # Accept both -> conjunct True, no unaccepted ids.
+            (repo / "docs" / "accepted-findings.md").write_text(
+                "## Accepted\n"
+                "- `QBF-A` -- reviewed (reviewer: maintainer)\n"
+                "- `QBF-B` -- reviewed (reviewer: maintainer)\n", encoding="utf-8")
+            result = recon.reconcile(audit, repo)
+            self.assertTrue(result["self_audit_clean"])
+            self.assertEqual(result["unaccepted_ids"], [])
+
+        # An empty inventory (no findings.jsonl) reconciles clean (nothing to accept).
+        with tempfile.TemporaryDirectory() as d:
+            result = recon.reconcile(Path(d) / "QB-Audit", Path(d))
+            self.assertTrue(result["self_audit_clean"])
+            self.assertEqual(result["unaccepted_ids"], [])
+
 
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
 class SelfAuditDogfoodTests(unittest.TestCase):

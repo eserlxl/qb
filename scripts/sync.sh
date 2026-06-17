@@ -259,6 +259,11 @@ MAP=(
   "scripts/accepted_findings.py|platforms/claude-code/scripts/accepted_findings.py"
   "scripts/accepted_findings.py|platforms/cursor/scripts/accepted_findings.py"
   "scripts/accepted_findings.py|platforms/codex/plugins/qb/skills/qb/scripts/accepted_findings.py"
+
+  # shared/scripts/self_audit_reconcile.py
+  "scripts/self_audit_reconcile.py|platforms/claude-code/scripts/self_audit_reconcile.py"
+  "scripts/self_audit_reconcile.py|platforms/cursor/scripts/self_audit_reconcile.py"
+  "scripts/self_audit_reconcile.py|platforms/codex/plugins/qb/skills/qb/scripts/self_audit_reconcile.py"
 )
 
 # Number of distinct shared source files (for the summary line).
