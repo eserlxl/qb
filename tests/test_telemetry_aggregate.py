@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -57,6 +58,26 @@ class TelemetryAggregateTests(unittest.TestCase):
             self.assertEqual(entry["autonomy_level"], source["autonomy_level"])
             for key in self.aggregate.TELEMETRY_SLICES:
                 self.assertEqual(entry[key], source[key])
+
+    def test_append_or_update_preserves_order_and_replaces_duplicate_run_id(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / self.aggregate.AGGREGATE_TELEMETRY_FILENAME
+            self.assertEqual(self.aggregate.read_aggregate(path), self.aggregate.build_aggregate([]))
+
+            first = self._record("run-1")
+            second = self._record("run-2")
+            replacement = self._record("run-1", kept=False)
+
+            self.aggregate.append_or_update(path, first)
+            self.aggregate.append_or_update(path, second)
+            updated = self.aggregate.append_or_update(path, replacement)
+            reread = self.aggregate.read_aggregate(path)
+
+        self.assertEqual(updated, reread)
+        self.assertEqual(updated["run_count"], 2)
+        self.assertEqual([run["run_id"] for run in updated["runs"]], ["run-1", "run-2"])
+        self.assertEqual(updated["runs"][0]["action"]["fixes_reverted"], 1)
+        self.assertEqual(updated["runs"][1]["action"]["fixes_kept"], 1)
 
 
 if __name__ == "__main__":

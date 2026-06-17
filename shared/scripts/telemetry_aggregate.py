@@ -8,6 +8,7 @@ vocabulary; each entry reuses the existing detection/action/cost/quality slices.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -50,3 +51,39 @@ def build_aggregate(records) -> dict:
         "run_count": len(runs),
         "runs": runs,
     }
+
+
+def read_aggregate(path) -> dict:
+    """Read an aggregate series, returning an empty series when absent or invalid."""
+    target = Path(path)
+    if not target.is_file():
+        return build_aggregate([])
+    try:
+        data = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return build_aggregate([])
+    if data.get("schema_version") != AGGREGATE_TELEMETRY_SCHEMA_VERSION:
+        return build_aggregate([])
+    runs = data.get("runs")
+    if not isinstance(runs, list):
+        return build_aggregate([])
+    return build_aggregate([run for run in runs if isinstance(run, dict)])
+
+
+def append_or_update(path, record: dict) -> dict:
+    """Append one run, or replace the existing entry with the same run_id in place."""
+    target = Path(path)
+    aggregate = read_aggregate(target)
+    entry = _copy_run(dict(record))
+    run_id = entry.get("run_id", "")
+    runs = list(aggregate["runs"])
+    for index, existing in enumerate(runs):
+        if existing.get("run_id") == run_id:
+            runs[index] = entry
+            break
+    else:
+        runs.append(entry)
+    updated = build_aggregate(runs)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(updated, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return updated
