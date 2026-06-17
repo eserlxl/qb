@@ -47,6 +47,21 @@ telemetry-earned ceiling (`release_gate.permitted_autonomy`), and the
 sandbox-availability clamp (`policy.sandbox_autonomy_ceiling`). A cold start (no
 prior telemetry) is fail-closed to A1.
 
+## Reviewable-changeset contract (A3)
+
+A3 assembles a **reviewable changeset** over promoted files; it never delivers.
+The changeset is `{"files": [...promoted...], "commit_permitted":
+bool(policy.allow_commit)}`. Two invariants hold:
+
+- `commit_permitted` **reflects policy** (`policy.allow_commit`) and nothing else;
+  it is a declaration, not an action.
+- QB **executes no commit, push, or PR** in this seam — assembling the changeset
+  leaves `HEAD` unchanged. Delivery is always an explicit, separate opt-in, even
+  after the production gate passes.
+
+A changeset is produced only when `enable_a3` is set **and** the earned ceiling
+permits promotion; a cold start (no telemetry) clamps to A1 and produces none.
+
 ## Telemetry captured per run
 
 Each run persists `QB-Audit/telemetry.json` via `telemetry.build_telemetry`, with:

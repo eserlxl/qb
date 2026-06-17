@@ -73,7 +73,11 @@ the A1 → A2 → A3 progression and pass conditions, the per-run telemetry fiel
 (`telemetry.build_telemetry`), the rollback drill
 (`release_gate.run_rollback_drill`), and the precision/fix-safety judging anchored
 to `PRECISION_FLOOR = 0.80`. The protocol runs over a trusted/neutralized corpus;
-untrusted, self-executing targets are gated on the execution sandbox.
+untrusted, self-executing targets are gated on the execution sandbox. It also
+records the **reviewable-changeset contract**: A3 assembles a changeset whose
+`commit_permitted` only reflects `policy.allow_commit`, and QB executes no
+commit/push/PR in that seam (`HEAD` is left unchanged) — delivery stays an
+explicit, separate opt-in.
 
 ## Trip responses
 
