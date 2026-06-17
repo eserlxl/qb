@@ -118,3 +118,33 @@ make check     # verify byte-equality + the full invariant suite
 This is a repeatable contributor step, not tribal knowledge: a `shared/` change
 that skips `make sync` will fail `bash scripts/sync.sh --check` (and therefore
 `make check`).
+
+## Capability and gap baseline
+
+This is the authoritative "before" state every forward phase closes against.
+
+### Shipped today
+
+- Repo-aware staged planning (`.qb/` artifacts) with read-only, dependency-free
+  validators at every step and a planwright export path.
+- A dependency-free audit engine, A0 report-only by default, with the six producer
+  analyzers and frozen finding categories named in the README.
+- Disposable git **write isolation** for proposed fixes — a throwaway worktree; the
+  target working tree is untouched until a fix verifies and is promoted.
+- Policy, verification, rollback, release, and production gates with fail-closed
+  defaults and a namespaced pre-run reversal handle (`refs/qb-baseline/<run_id>`).
+- Four native host packages over one synced shared core (Antigravity planning-only).
+
+### Known gaps (each tagged to its closing phase)
+
+| Gap | Status today | Closing phase |
+|---|---|---|
+| Execution sandboxing of analyzed code | QB confines *writes*, not arbitrary code execution — "not yet shipped" (README) | Phase 1 hardens confine-by-default / sandboxed authorization; full execution sandboxing of analyzed code remains a boundary item per the README |
+| Live A2/A3 autonomy proofs | Gates exist; end-to-end campaign evidence over a labelled corpus is pending | Phase 3 (corpus campaigns / autonomy proofs) |
+| Disabled cloud CI | Local `make check` is the gate of record | Phase 0 (this baseline + regression net compensate) |
+| Analyzer breadth / environment-dependence | `pyflakes`/`ruff` optional and dormant when absent | Phase 2 (analyzer coverage) |
+| Antigravity parity | Planning-only; not a `sync.sh` destination; ships no audit engine | Phase 5 (multi-host parity) |
+
+These statements mirror the existing README and RUNBOOK claims (notably the
+sandbox "not yet shipped" caveat and the planning-only Antigravity model) and do
+not supersede them.
