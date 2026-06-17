@@ -18,6 +18,7 @@ Mapping (see README "Findings -> planwright items"):
 
 from __future__ import annotations
 
+import argparse
 import sys
 from importlib import util as _import_util
 from pathlib import Path
@@ -129,3 +130,56 @@ def load_findings(root: str, output_dir=None):
     """Load conformant findings from the run store under ``root`` (or ``output_dir``)."""
     out = Path(output_dir) if output_dir is not None else Path(root) / _store.OUTPUT_DIR_NAME
     return _store.RunStore(out).read_findings()
+
+
+def main(argv=None) -> int:
+    """Round-trip CLI: project a findings store into a planwright plan and validate it,
+    emitting the same result lines as validate_planwright_plan (so the projection is
+    gated by the very linter that gates a hand-authored plan)."""
+    parser = argparse.ArgumentParser(
+        description="Project QB-Audit findings into a planwright plan and validate it.")
+    parser.add_argument("--root", default=".",
+                        help="Repository root; findings' Surfaces resolve here. Default: cwd.")
+    parser.add_argument("--out", default=None,
+                        help="Run store holding findings.jsonl. Default: <root>/QB-Audit.")
+    parser.add_argument("--strict", action="store_true",
+                        help="Promote advisories to violations (mirrors the validator).")
+    args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+
+    findings = load_findings(args.root, args.out)
+    skipped: list = []
+    text = project_findings(findings, args.root, skipped=skipped)
+    errors, advisories, item_count = _vpp.validate_plan(text, args.root)
+
+    secret_findings = 0
+    core = _vpp._load_analyzer_core()
+    if core is None:
+        advisories.append("secret scan unavailable (analyzer_core not loadable)")
+    else:
+        for name, line in core.scan_text_for_secrets(text):
+            secret_findings += 1
+            errors.append(f"secret_pattern={name}::projected-plan:{line}")
+
+    if args.strict:
+        errors = errors + [f"strict_note={a}" for a in advisories]
+
+    status = "failed" if errors else "passed"
+    print(f"planwright_plan_validation={status}")
+    print(f"findings_loaded={len(findings)}")
+    print(f"findings_projected={item_count}")
+    print(f"findings_skipped={len(skipped)}")
+    print(f"pending_item_count={item_count}")
+    print(f"secret_findings={secret_findings}")
+    print(f"violation_count={len(errors)}")
+    print(f"advisory_count={len(advisories)}")
+    for finding, reason in skipped:
+        print(f"skipped={finding.id}::{reason}")
+    for note in advisories:
+        print(f"note={note}")
+    for err in errors:
+        print(f"error={err}")
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
