@@ -229,6 +229,29 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertFalse(self.rg.fix_safety_gate(bad)[0], bad)
             self.assertEqual(self.rg.permitted_autonomy(bad), "A1", bad)
 
+    def test_permitted_autonomy_fails_closed_on_malformed_telemetry(self) -> None:
+        # Phase 7.2: the autonomy decision fed to the finale must always be SAFE.
+        # Every malformed/partial telemetry shape must deny auto-apply (cap A1)
+        # WITHOUT raising -- including a record whose precision passes but whose
+        # fix_safety_ok key is missing (it must NOT silently grant A2).
+        malformed = [
+            {"quality": None},                                       # quality=null
+            "not-a-dict",                                            # non-dict telemetry
+            None,                                                    # None telemetry
+            {"quality": {"precision_estimate": True,                 # boolean precision
+                         "fix_safety_ok": True}},
+            {"quality": {"precision_estimate": "0.95",               # non-numeric precision
+                         "fix_safety_ok": True}},
+            {"quality": {"precision_estimate": 0.95}},               # missing fix_safety_ok
+            {"quality": {"fix_safety_ok": True}},                    # missing precision
+        ]
+        for bad in malformed:
+            try:
+                level = self.rg.permitted_autonomy(bad)
+            except Exception as exc:  # the decision must fail closed, never crash
+                self.fail(f"permitted_autonomy raised on {bad!r}: {exc!r}")
+            self.assertEqual(level, "A1", bad)
+
     def test_budget_threads_loaded_telemetry_to_single_orchestrator_clamp(self) -> None:
         budget = _load("qb_budget_for_release_gate_test", BUDGET_PATH)
         policy_mod = _load("qb_policy_for_release_gate_test", POLICY_PATH)
