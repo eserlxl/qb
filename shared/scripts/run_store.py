@@ -38,6 +38,7 @@ FINDINGS_FILENAME = "findings.jsonl"
 EVIDENCE_DIRNAME = "evidence"
 RUN_LOG_FILENAME = "run-log.jsonl"
 SUMMARY_FILENAME = "summary.json"
+SELF_AUDIT_FILENAME = "self-audit.json"
 
 
 def _load_sibling(module_name: str, filename: str):
@@ -152,7 +153,23 @@ class RunStore:
         (self.root / TELEMETRY_FILENAME).write_text(
             json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
+    def write_self_audit(self, record: dict):
+        """Persist a redacted self-audit evidence record (the QB-audits-QB
+        reconciliation result: clean flag, accepted count, unaccepted ids)
+        deterministically (sorted keys). No secret value is ever emitted (redacted
+        via the same length-bounded SECRET_PATTERNS as every other artifact).
+        Returns the written path."""
+        data = redact(dict(record))
+        path = self.root / SELF_AUDIT_FILENAME
+        path.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        return path
+
     # -- read side (consumed by Phase 5.2 reporting) -----------------------
+    def read_self_audit(self) -> dict:
+        path = self.root / SELF_AUDIT_FILENAME
+        if not path.is_file():
+            return {}
+        return json.loads(path.read_text(encoding="utf-8"))
     def read_findings(self) -> list:
         path = self.root / FINDINGS_FILENAME
         if not path.is_file():

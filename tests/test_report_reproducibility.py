@@ -114,6 +114,30 @@ class ReportReproducibilityTests(unittest.TestCase):
         self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
         self.assertIn("<redacted>", back["note"])
 
+    def test_self_audit_evidence_record_round_trips_and_redacts(self) -> None:
+        # Phase 7.3: the self-audit reconciliation result persists into the QB-Audit
+        # store as a redacted, deterministic record (clean flag, accepted count,
+        # unaccepted ids) and emits no secret value.
+        with tempfile.TemporaryDirectory() as d:
+            store = self.rs.RunStore(Path(d) / self.rs.OUTPUT_DIR_NAME).open()
+            secret = "ghp_" + "C" * 36
+            record = {
+                "self_audit_clean": False,
+                "findings_total": 2,
+                "accepted_total": 1,
+                "unaccepted_ids": ["QBF-UNREVIEWED"],
+                "note": f"reconciled near {secret}",   # secret-shaped material -> redacted
+            }
+            first = store.write_self_audit(record).read_text(encoding="utf-8")
+            second = store.write_self_audit(record).read_text(encoding="utf-8")
+            self.assertEqual(first, second)                  # deterministic re-write
+            back = store.read_self_audit()
+        self.assertFalse(back["self_audit_clean"])
+        self.assertEqual(back["accepted_total"], 1)
+        self.assertEqual(back["unaccepted_ids"], ["QBF-UNREVIEWED"])
+        self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
+        self.assertIn("<redacted>", back["note"])
+
     def test_report_reproducible_except_timing(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
