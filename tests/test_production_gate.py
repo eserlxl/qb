@@ -215,6 +215,44 @@ class ProductionGateSignalsTests(unittest.TestCase):
             self.assertFalse(self.sig.telemetry_emitted(empty_audit))
             self.assertFalse(self.sig.rollback_drill_passed(empty_audit))
 
+    def test_single_broken_real_signal_denies_gate_with_named_failure(self) -> None:
+        # Phase 7.4: at the ASSEMBLY level, breaking ONE real signal source (the
+        # others left real-True) denies the gate with EXACTLY that conjunct named in
+        # failures -- the per-signal routing the literal-boolean gate test cannot see.
+        # (least_privilege_ok / killswitch_proven are proven-positive above and have no
+        # fixture-breakable source, so the four source-breakable conjuncts are covered.)
+        scripts = SHARED_DIR / "scripts"
+
+        with tempfile.TemporaryDirectory() as d:  # telemetry_emitted
+            audit, repo = self._all_real_signals(d)
+            (audit / "telemetry.json").unlink()
+            decision = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            self.assertFalse(decision["passed"])
+            self.assertEqual(decision["failures"], ["telemetry_emitted"])
+
+        with tempfile.TemporaryDirectory() as d:  # rollback_drill_passed
+            audit, repo = self._all_real_signals(d)
+            (audit / "recoverability.json").unlink()
+            decision = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            self.assertFalse(decision["passed"])
+            self.assertEqual(decision["failures"], ["rollback_drill_passed"])
+
+        with tempfile.TemporaryDirectory() as d:  # self_audit_clean
+            audit, repo = self._all_real_signals(d)
+            (audit / "findings.jsonl").write_text('{"id": "QBF-UNREVIEWED"}\n', encoding="utf-8")
+            decision = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            self.assertFalse(decision["passed"])
+            self.assertEqual(decision["failures"], ["self_audit_clean"])
+
+        with tempfile.TemporaryDirectory() as d:  # supply_chain_ok
+            audit, repo = self._all_real_signals(d)
+            tainted = Path(d) / "tainted-scripts"
+            tainted.mkdir()
+            (tainted / "x.py").write_text("import requests\n", encoding="utf-8")
+            decision = self.sig.gate_decision(audit, repo, scripts_dir=tainted)
+            self.assertFalse(decision["passed"])
+            self.assertEqual(decision["failures"], ["supply_chain_ok"])
+
 
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
 class SelfAuditDogfoodTests(unittest.TestCase):
