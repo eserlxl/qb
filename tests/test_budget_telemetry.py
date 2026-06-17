@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from tests.qb_monorepo import SHARED_DIR
 
 BUDGET_PATH = SHARED_DIR / "scripts/budget.py"
+TELEMETRY_PATH = SHARED_DIR / "scripts/telemetry.py"
 
 
 def _load(name: str, path: Path):
@@ -30,6 +33,7 @@ def _load(name: str, path: Path):
 
 
 budget = _load("qb_budget", BUDGET_PATH)
+telemetry = _load("qb_telemetry", TELEMETRY_PATH)
 
 
 class _FakeClock:
@@ -84,6 +88,37 @@ class TelemetryCostMappingTest(unittest.TestCase):
         meter.add_tokens(42)
         cost = budget.telemetry_cost(meter)
         self.assertEqual(cost, {"wall_ms": 1000, "iterations": 3, "tokens": 42})
+
+
+class RunSessionCostWiringTest(unittest.TestCase):
+    """run_session builds a finale telemetry record whose ``cost`` block carries the
+    BudgetMeter's real wall_ms/iterations, never the UNMEASURED sentinel."""
+
+    @staticmethod
+    def _fix_plan():
+        finding = SimpleNamespace(category="quality", severity="P3",
+                                  confidence="low", evidence="x.py:1")
+        return SimpleNamespace(finding=finding)
+
+    def test_finale_telemetry_carries_real_metered_cost(self):
+        # A0 (report-only) so run_finding short-circuits before isolation/git.
+        policy = SimpleNamespace(autonomy_level="A0")
+        items = [(self._fix_plan(), lambda: None) for _ in range(3)]
+        clock = _FakeClock(1000.0, 1000.05)  # 0.05s elapsed -> 50 wall_ms
+
+        with tempfile.TemporaryDirectory() as repo:
+            _results, report = budget.run_session(policy, repo, items, clock=clock)
+
+        self.assertEqual(report.trigger, "completed")
+        self.assertIsNotNone(report.telemetry)
+        cost = report.telemetry["cost"]
+        self.assertEqual(cost["wall_ms"], 50)
+        self.assertEqual(cost["iterations"], 3)
+        # Real measured values flow through -- never the UNMEASURED sentinel.
+        self.assertNotEqual(cost["wall_ms"], telemetry.UNMEASURED)
+        self.assertNotEqual(cost["iterations"], telemetry.UNMEASURED)
+        self.assertIsInstance(cost["wall_ms"], int)
+        self.assertIsInstance(cost["iterations"], int)
 
 
 if __name__ == "__main__":

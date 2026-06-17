@@ -46,6 +46,7 @@ def _load_sibling(module_name: str, filename: str):
 
 
 _orch = _load_sibling("qb_orchestrator", "orchestrator.py")
+_telemetry = _load_sibling("qb_telemetry", "telemetry.py")
 
 
 @dataclass
@@ -80,6 +81,10 @@ class StopReport:
     fixes_applied: int
     fixes_reverted: int
     exit_code: int
+    # The per-run quality/cost telemetry built at the run finale (Phase 4.3). Its
+    # ``cost`` block carries the BudgetMeter's real wall_ms/iterations rather than
+    # UNMEASURED. ``None`` only when telemetry construction was not performed.
+    telemetry: dict | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -149,6 +154,7 @@ def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
     ceiling; with no telemetry, the session promotes nothing above A1 (fail-closed)."""
     meter = BudgetMeter(Budget.from_policy(policy), clock=clock)
     results = []
+    considered_findings = []
     trigger = "completed"
 
     for index, (fix_plan, apply_fn) in enumerate(items):
@@ -167,6 +173,7 @@ def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
                                    run_id=f"{run_id}-{index}", enable_a3=enable_a3,
                                    telemetry=telemetry)
         results.append(result)
+        considered_findings.append(fix_plan.finding)
         if result["outcome"] == "kept":
             meter.fixes_applied += 1
         elif result["outcome"] == "reverted":
@@ -175,4 +182,19 @@ def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
     exit_code = {"completed": CLEAN_EXIT, "kill": KILL_STOP_EXIT}.get(trigger, BUDGET_STOP_EXIT)
     report = StopReport(trigger, meter.findings_considered, meter.fixes_applied,
                         meter.fixes_reverted, exit_code)
+
+    # Run-finale telemetry build (Phase 4.3): forward the metered run-boundary cost
+    # (real wall_ms + iterations from the BudgetMeter, not UNMEASURED) together with
+    # the run's detection/action outcomes, so the per-run quality record carries
+    # measured cost instead of leaving latency/iterations unmeasured.
+    evidence = [{"outcome": r.get("outcome"),
+                 "after_exit": (r.get("evidence") or {}).get("after_exit")}
+                for r in results]
+    report.telemetry = _telemetry.build_telemetry(
+        run_id=run_id,
+        autonomy_level=policy.autonomy_level,
+        findings=considered_findings,
+        evidence=evidence,
+        cost=telemetry_cost(meter),
+    )
     return results, report
