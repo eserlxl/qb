@@ -138,6 +138,32 @@ class ReportReproducibilityTests(unittest.TestCase):
         self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
         self.assertIn("<redacted>", back["note"])
 
+    def test_production_gate_evidence_record_round_trips_and_redacts(self) -> None:
+        # Phase 7.4: the production-gate decision persists into the QB-Audit store as a
+        # redacted, deterministic record (checks/failures/passed) with no secret value,
+        # and a passing gate still records A3 as explicit opt-in (a3 default False).
+        with tempfile.TemporaryDirectory() as d:
+            store = self.rs.RunStore(Path(d) / self.rs.OUTPUT_DIR_NAME).open()
+            secret = "ghp_" + "D" * 36
+            record = {
+                "passed": True,
+                "failures": [],
+                "checks": {"telemetry_emitted": True, "rollback_drill_passed": True,
+                           "least_privilege_ok": True, "supply_chain_ok": True,
+                           "killswitch_proven": True, "self_audit_clean": True},
+                "a3_enabled_by_default": False,
+                "note": f"gate passed near {secret}",   # secret-shaped -> redacted
+            }
+            first = store.write_production_gate(record).read_text(encoding="utf-8")
+            second = store.write_production_gate(record).read_text(encoding="utf-8")
+            self.assertEqual(first, second)                  # deterministic re-write
+            back = store.read_production_gate()
+        self.assertTrue(back["passed"])
+        self.assertFalse(back["a3_enabled_by_default"])      # A3 explicit opt-in even on a passing gate
+        self.assertEqual(back["failures"], [])
+        self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
+        self.assertIn("<redacted>", back["note"])
+
     def test_report_reproducible_except_timing(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)

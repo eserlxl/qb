@@ -39,6 +39,7 @@ EVIDENCE_DIRNAME = "evidence"
 RUN_LOG_FILENAME = "run-log.jsonl"
 SUMMARY_FILENAME = "summary.json"
 SELF_AUDIT_FILENAME = "self-audit.json"
+PRODUCTION_GATE_FILENAME = "production-gate.json"
 
 
 def _load_sibling(module_name: str, filename: str):
@@ -164,9 +165,25 @@ class RunStore:
         path.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
         return path
 
+    def write_production_gate(self, record: dict):
+        """Persist a redacted production-gate evidence record (the composite gate's
+        checks/failures/passed/a3_enabled_by_default) deterministically (sorted
+        keys); no secret value is ever emitted. A passing gate still records A3 as
+        explicit opt-in (``a3_enabled_by_default`` False). Returns the written path."""
+        data = redact(dict(record))
+        path = self.root / PRODUCTION_GATE_FILENAME
+        path.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        return path
+
     # -- read side (consumed by Phase 5.2 reporting) -----------------------
     def read_self_audit(self) -> dict:
         path = self.root / SELF_AUDIT_FILENAME
+        if not path.is_file():
+            return {}
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def read_production_gate(self) -> dict:
+        path = self.root / PRODUCTION_GATE_FILENAME
         if not path.is_file():
             return {}
         return json.loads(path.read_text(encoding="utf-8"))
