@@ -60,7 +60,8 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
     def test_secret_findings_use_high_confidence_policy(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            _write(root, "settings.txt", "token = 'sk-AAAAAAAAAAAAAAAAAAAAAAAA'\n")
+            token = "sk-" + ("A" * 24)
+            _write(root, "settings.txt", f"token = '{token}'\n")
             findings = self.core.SecretHygieneAnalyzer().analyze(str(root), self.cfg)
         self.assertTrue(findings)
         self.assertEqual({f.confidence for f in findings}, {"high"})
