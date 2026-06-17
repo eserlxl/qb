@@ -58,6 +58,42 @@ class A1CampaignTests(unittest.TestCase):
                 self.assertEqual(run.promoted(), [])
                 self.assertIn("kept", run.outcomes())
 
+    def test_working_tree_byte_identical_after_a1(self) -> None:
+        lv = _driver()
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            for repo in qb_corpus.build_corpus(base / "corpus"):
+                self.assertEqual(_git_porcelain(repo.path), "", f"{repo.name} dirty before run")
+                lv.run_campaign(repo, "A1", base / "out" / repo.name / "QB-Audit")
+                # A1 confines writes to throwaway isolation: the target tree is unchanged.
+                self.assertEqual(_git_porcelain(repo.path), "",
+                                 f"{repo.name} working tree changed after A1 run")
+
+    def test_cold_start_declared_a2_a3_clamps_to_a1(self) -> None:
+        lv = _driver()
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            for repo in qb_corpus.build_corpus(base / "corpus"):
+                for level in ("A2", "A3"):
+                    run = lv.run_campaign(
+                        repo, level, base / "out" / repo.name / level / "QB-Audit",
+                        prior_telemetry=None)
+                    for result in run.results:
+                        self.assertEqual(result["earned_ceiling"], "A1", f"{repo.name} {level}")
+                    self.assertEqual(run.promoted(), [], f"{repo.name} {level} promoted on cold start")
+
+    def test_a1_telemetry_is_loadable_and_a2_eligible(self) -> None:
+        lv = _driver()
+        rs = _load_path("qb_run_store_a1c", SHARED_DIR / "scripts" / "run_store.py")
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            for repo in qb_corpus.build_corpus(base / "corpus"):
+                run = lv.run_campaign(repo, "A1", base / "out" / repo.name / "QB-Audit")
+                loaded = rs.load_prior_telemetry(run.output_dir)
+                self.assertEqual(loaded["schema_version"], lv._telemetry.TELEMETRY_SCHEMA_VERSION)
+                # The A1 run kept a green-verified fix, so the record earns A2 for Phase 3.3.
+                self.assertEqual(lv._telemetry.max_permitted_autonomy(loaded), "A2")
+
 
 if __name__ == "__main__":
     unittest.main()
