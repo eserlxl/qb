@@ -24,6 +24,15 @@ from pathlib import Path
 # A neutralized, stdlib-only no-op verification command -- trusted to execute.
 NEUTRAL_VERIFY = ["python3", "-c", ""]
 
+# The two sanctioned trusted-code preconditions for a corpus target. Every corpus
+# repo MUST carry one; an untrusted, self-executing target is not permitted in the
+# corpus until full execution sandboxing ships (its verification command would run
+# repo-supplied code). See docs/live-validation-protocol.md.
+TRUST_TAGS = frozenset({"trusted-verification", "neutralized-noop"})
+# Why each corpus repo is safe to run: its verification is a stdlib-only no-op, so
+# no repo-supplied code is executed during the audit->report run.
+NEUTRAL_PRECONDITION = "verification is a stdlib-only no-op; no repo-supplied code is executed"
+
 _MIT_LICENSE = "MIT License\n\nPermission is hereby granted, free of charge, ...\n"
 # A Makefile whose `test` target is a stdlib-only no-op (neutralized verification).
 _NEUTRAL_MAKEFILE = "test:\n\tpython3 -c \"\"\n"
@@ -51,7 +60,8 @@ _SPECS = (
 class CorpusRepo:
     name: str
     path: Path
-    trust: str            # "trusted-verification" | "neutralized-noop"
+    trust: str            # one of TRUST_TAGS
+    precondition: str     # why this target is safe to run (the trusted-code basis)
     verify_command: list   # stdlib-only no-op verification argv
     labels: dict          # category -> count of seeded findings (ground truth)
 
@@ -88,8 +98,14 @@ def build_corpus(base_dir) -> list:
         (path / "Makefile").write_text(_NEUTRAL_MAKEFILE, encoding="utf-8")
         _git(path, "add", "-A")
         _git(path, "commit", "-q", "-m", "corpus")
-        repos.append(CorpusRepo(
+        repo = CorpusRepo(
             name=name, path=path, trust="neutralized-noop",
+            precondition=NEUTRAL_PRECONDITION,
             verify_command=list(NEUTRAL_VERIFY), labels=dict(labels),
-        ))
+        )
+        # Fail closed: a corpus target must carry a sanctioned trusted-code
+        # precondition, never an untrusted self-executing one.
+        if repo.trust not in TRUST_TAGS or not repo.precondition:
+            raise ValueError(f"corpus repo {name!r} lacks a valid trusted-code precondition")
+        repos.append(repo)
     return repos

@@ -14,6 +14,26 @@ the rollback drill, and the precision/fix-safety thresholds a campaign must clea
 > not a filesystem/network namespace, so untrusted targets remain out of scope
 > until full sandboxing ships.
 
+## Trusted-code preconditions
+
+Running QB over a target executes that target's verification command. Until full
+execution sandboxing ships, that is safe **only against trusted code**, so every
+corpus repo carries one of two sanctioned trusted-code preconditions
+(`tests/qb_corpus.TRUST_TAGS`):
+
+- **`neutralized-noop`** — the verification command is a stdlib-only no-op
+  (`["python3", "-c", ""]`), so no repo-supplied code runs during the
+  audit → report run. Every fixture in the current corpus is tagged this way.
+- **`trusted-verification`** — the verification command is real but the target is
+  trusted (author-controlled), reserved for future fixtures.
+
+The corpus builder **fails closed**: a repo without a valid trust tag and a stated
+precondition is rejected. **Untrusted or network-fetched, self-executing targets
+are not permitted in the corpus** — they are gated on the Phase 1 execution
+sandbox (process confinement, fail-closed-and-cap; see
+[execution-sandbox.md](execution-sandbox.md)), and full containment of untrusted
+code requires the not-yet-shipped filesystem/network namespace.
+
 ## Autonomy progression
 
 | Rung | Claim under test | Pass condition |
