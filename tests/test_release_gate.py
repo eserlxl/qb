@@ -135,6 +135,42 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertFalse(self.rg.baseline_clean(repo, handle))  # fail-closed on HEAD drift
             self.rg.release_baseline(repo, handle)
 
+    def test_authorize_release_gate_on_recorded_telemetry(self) -> None:
+        # Phase 7.2: authorize the earned-autonomy ceiling against a RECORDED
+        # telemetry.json (persisted to the run store and read back), not just an
+        # in-memory dict. A2 is granted only when precision_estimate >=
+        # PRECISION_FLOOR AND fix_safety_ok; any other recorded shape caps at A1.
+        store = _load("qb_run_store_for_release_gate_test", SHARED_DIR / "scripts/run_store.py")
+
+        def _record(run_id, evidence):
+            with tempfile.TemporaryDirectory() as d:
+                rs = store.RunStore(Path(d) / "QB-Audit").open()
+                rs.write_telemetry(self.t.build_telemetry(
+                    run_id=run_id, autonomy_level="A2", findings=[], evidence=evidence))
+                return rs.read_telemetry()
+
+        # Granted: precision 0.9 >= floor, fix-safety clean -> A2.
+        granted = _record("rec-a2",
+                          [{"outcome": "kept", "after_exit": 0}] * 9
+                          + [{"outcome": "reverted", "after_exit": 1}])
+        self.assertGreaterEqual(granted["quality"]["precision_estimate"], self.rg.PRECISION_FLOOR)
+        self.assertTrue(granted["quality"]["fix_safety_ok"])
+        self.assertEqual(self.rg.permitted_autonomy(granted), "A2")
+
+        # Below floor: precision 0.1 < floor -> denied (A1).
+        below = _record("rec-a1",
+                        [{"outcome": "kept", "after_exit": 0}]
+                        + [{"outcome": "reverted", "after_exit": 1}] * 9)
+        self.assertLess(below["quality"]["precision_estimate"], self.rg.PRECISION_FLOOR)
+        self.assertEqual(self.rg.permitted_autonomy(below), "A1")
+
+        # Fix-safety breach (a kept fix did not verify green) -> denied even at high precision.
+        breach = _record("rec-breach",
+                         [{"outcome": "kept", "after_exit": 0}] * 8
+                         + [{"outcome": "kept", "after_exit": 3}])
+        self.assertFalse(breach["quality"]["fix_safety_ok"])
+        self.assertEqual(self.rg.permitted_autonomy(breach), "A1")
+
     def _telemetry(self, kept, reverted):
         return self.t.build_telemetry(run_id="r", autonomy_level="A2", findings=[],
                                       evidence=[{"outcome": "kept", "after_exit": 0}] * kept
