@@ -122,9 +122,13 @@ repository context.
 
 Proposed fixes are tried in disposable git **write isolation** (a throwaway
 worktree; the target working tree is never touched until a fix verifies and is
-promoted), which is delivered today. Execution sandboxing of analyzed code is a
-**Phase 3** boundary item and is **not yet shipped**, so QB confines *writes*,
-not arbitrary code execution — do not rely on it to contain untrusted code.
+promoted). Analyzed-code verification additionally runs under **process
+confinement** by default — a new session/process group plus conservative resource
+limits, established before the command spawns. When the required control cannot be
+established QB **fails closed and caps autonomy** below apply-verified rather than
+running unconfined (see [docs/execution-sandbox.md](docs/execution-sandbox.md)).
+This is process confinement, not a filesystem or network namespace, so it is not a
+full container sandbox for fully untrusted code.
 
 The built-in producer analyzers are `SecretHygieneAnalyzer`,
 `CommandInjectionAnalyzer`, `QualityAnalyzer`, `DependencyAnalyzer`,
