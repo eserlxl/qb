@@ -13,6 +13,7 @@ and is persisted (redacted) into the QB-Audit store as an audit-trail record.
 
 from __future__ import annotations
 
+import json
 import sys
 from importlib import util as _import_util
 from pathlib import Path
@@ -30,8 +31,10 @@ def _load_sibling(module_name: str, filename: str):
 
 
 _rg = _load_sibling("qb_release_gate", "release_gate.py")
+_store = _load_sibling("qb_run_store", "run_store.py")
 
 RECOVERABILITY_EVIDENCE_SCHEMA_VERSION = 1
+RECOVERABILITY_EVIDENCE_FILENAME = "recoverability.json"
 _SCRATCH = ".qb-recoverability-drill.scratch"
 
 
@@ -61,3 +64,30 @@ def run_drill(repo_root, run_id, mutate_fn=None) -> dict:
         "baseline_clean": bool(clean),
         "passed": bool(clean),
     }
+
+
+def persist_evidence(record, output_dir) -> Path:
+    """Write a recoverability evidence record into the QB-Audit store, deterministically
+    (sorted keys) and redacted via run_store.redact so no secret value is ever emitted.
+    Returns the written path."""
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    redacted = _store.redact(record)
+    path = out / RECOVERABILITY_EVIDENCE_FILENAME
+    path.write_text(json.dumps(redacted, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def read_evidence(output_dir) -> dict:
+    """Read back the recoverability evidence record, or {} when absent."""
+    path = Path(output_dir) / RECOVERABILITY_EVIDENCE_FILENAME
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def run_and_persist(repo_root, run_id, output_dir, mutate_fn=None) -> dict:
+    """Run the drill and persist its (redacted) evidence record; return the record."""
+    record = run_drill(repo_root, run_id, mutate_fn)
+    persist_evidence(record, output_dir)
+    return record

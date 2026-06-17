@@ -64,6 +64,28 @@ class ReportReproducibilityTests(unittest.TestCase):
             "default_min_confidence": "medium", "write_allowlist": ["*.txt"],
             "budgets": {"max_fixes": 5}})
 
+    def test_recoverability_evidence_record_round_trips_and_redacts(self) -> None:
+        # Phase 7.1: the recoverability evidence record persists deterministically into
+        # the QB-Audit store and emits no secret value (redacted via run_store.redact).
+        drill = _load("qb_recoverability_drill_for_repro",
+                      SHARED_DIR / "scripts/recoverability_drill.py")
+        secret = "ghp_" + "A" * 36
+        record = {
+            "schema_version": 1, "run_id": "drill-run", "baseline_ref": "refs/qb/x",
+            "baseline_clean": True, "passed": True,
+            "note": f"captured near {secret}",   # secret-shaped material must be redacted
+        }
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / self.rs.OUTPUT_DIR_NAME
+            first = drill.persist_evidence(record, out).read_text(encoding="utf-8")
+            second = drill.persist_evidence(record, out).read_text(encoding="utf-8")
+            self.assertEqual(first, second)                  # deterministic re-write
+            back = drill.read_evidence(out)
+        self.assertEqual(back["run_id"], "drill-run")
+        self.assertTrue(back["passed"])
+        self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
+        self.assertIn("<redacted>", back["note"])
+
     def test_report_reproducible_except_timing(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)
