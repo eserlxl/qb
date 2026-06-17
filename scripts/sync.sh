@@ -135,6 +135,11 @@ MAP=(
   "scripts/precision_harness.py|platforms/cursor/scripts/precision_harness.py"
   "scripts/precision_harness.py|platforms/codex/plugins/qb/skills/qb/scripts/precision_harness.py"
 
+  # shared/scripts/findings_to_plan.py
+  "scripts/findings_to_plan.py|platforms/claude-code/scripts/findings_to_plan.py"
+  "scripts/findings_to_plan.py|platforms/cursor/scripts/findings_to_plan.py"
+  "scripts/findings_to_plan.py|platforms/codex/plugins/qb/skills/qb/scripts/findings_to_plan.py"
+
   # shared/scripts/command_safety.py
   "scripts/command_safety.py|platforms/claude-code/scripts/command_safety.py"
   "scripts/command_safety.py|platforms/cursor/scripts/command_safety.py"
