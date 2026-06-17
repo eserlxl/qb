@@ -68,6 +68,29 @@ class VersionConsistencyTests(unittest.TestCase):
                 )
 
 
+    def test_bumper_lockstep_targets_all_equal_version(self) -> None:
+        # Consolidate scripts/bump-version.sh's lockstep targets into one assertion:
+        # the THREE JSON plugin manifests and EVERY platform SKILL.md frontmatter must
+        # equal root VERSION. Unlike test_all_manifests_match_the_version_file (which
+        # SKIPS a platform whose manifest is absent), this asserts the three known
+        # manifests EXIST, so a deleted or renamed manifest fails rather than silently
+        # skipping.
+        declared = VERSION_FILE.read_text(encoding="utf-8").strip()
+        for platform in (CLAUDE_CODE, CURSOR, CODEX):
+            with self.subTest(manifest=platform["manifest"]):
+                self.assertTrue(platform["manifest"].is_file(),
+                                f"expected JSON manifest missing (bump target): {platform['manifest']}")
+                self.assertEqual(load_manifest(platform)["version"], declared,
+                                 f"{platform['manifest']} version != VERSION ({declared})")
+        skills = sorted((REPO_ROOT / "platforms").rglob("SKILL.md"))
+        self.assertTrue(skills, "no platform SKILL.md files found (bump target absent)")
+        for skill in skills:
+            with self.subTest(skill=skill):
+                self.assertEqual(
+                    frontmatter_version(skill.read_text(encoding="utf-8")), declared,
+                    f"{skill} metadata.version != VERSION ({declared})")
+
+
 class StructuralInvariantTests(unittest.TestCase):
     """Pin the load-bearing per-host shape (accepted, not exhaustive)."""
 
