@@ -52,6 +52,7 @@ _isolation = _load_sibling("qb_isolation", "isolation.py")
 _gate = _load_sibling("qb_verification_gate", "verification_gate.py")
 _cs = _load_sibling("qb_command_safety", "command_safety.py")
 _release = _load_sibling("qb_release_gate", "release_gate.py")
+_lp = _load_sibling("qb_least_privilege", "least_privilege.py")
 
 ActionDescriptor = _policy.ActionDescriptor
 evaluate = _policy.evaluate
@@ -174,6 +175,14 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         allowlist=list(policy.write_allowlist) or None,
     ).open()
     try:
+        # The fix's verification command is repo-supplied code: only execute it
+        # under explicit sandboxed authorization (the required process-confinement
+        # control must be establishable on this host). Fail closed -- block and
+        # never auto-run a repo script unconfined.
+        if not _lp.repo_script_authorized():
+            result["outcome"] = "blocked"
+            result["reason"] = "repo-script-unauthorized: sandbox unavailable"
+            return result
         # Explicitly request the execution-sandbox contract's process confinement
         # for the fix's verification command (the highest-value execution), rather
         # than relying on the command-layer default. Fail-closed: a missing required

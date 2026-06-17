@@ -84,6 +84,20 @@ def may_run_repo_script(*, sandboxed_authorization: bool = False) -> bool:
     return bool(AUTO_RUN_REPO_SCRIPTS) or bool(sandboxed_authorization)
 
 
+def repo_script_authorized(*, required_controls=("process_group",)) -> bool:
+    """Authorization to execute a repo-supplied command on this host.
+
+    Sandboxed authorization is granted only when the required process-confinement
+    controls can actually be established (``command_safety`` reports them
+    available); otherwise this is fail-closed (no auto-run of a repo script
+    unconfined). Composes the host-availability check with ``may_run_repo_script``
+    so the decision lives in one place rather than at each call site.
+    """
+    available = set(_cs.available_confinement_controls())
+    sandboxed = set(required_controls).issubset(available)
+    return may_run_repo_script(sandboxed_authorization=sandboxed)
+
+
 # --- supply chain: dependency-free core --------------------------------------
 _ALLOWED_IMPORT_ROOTS = set(getattr(sys, "stdlib_module_names", set())) | {"__future__"}
 

@@ -88,7 +88,13 @@ def _make_targets(makefile_text: str) -> set:
 
 
 def select_verify_command(repo_root, finding=None) -> list | None:
-    """Deterministically choose ONE verify command (argv), preferring repo commands."""
+    """Deterministically choose ONE verify command (argv), preferring repo commands.
+
+    The returned command is repo-supplied code. It is never executed here; the
+    orchestrator runs it only under sandboxed authorization
+    (``least_privilege.repo_script_authorized``) and process confinement, never
+    auto-run unconfined (``AUTO_RUN_REPO_SCRIPTS`` is False).
+    """
     root = Path(repo_root)
     makefile = root / "Makefile"
     if makefile.is_file():
