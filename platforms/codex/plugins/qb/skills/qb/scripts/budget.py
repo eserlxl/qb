@@ -126,6 +126,19 @@ class BudgetMeter:
         return None
 
 
+def telemetry_cost(meter: BudgetMeter) -> dict:
+    """Map BudgetMeter values to telemetry.build_telemetry cost fields.
+
+    ``wall_ms`` is the meter's elapsed monotonic seconds converted once to
+    integer milliseconds; iterations and tokens keep the meter's counters.
+    """
+    return {
+        "wall_ms": int(round(meter.elapsed() * 1000)),
+        "iterations": meter.iterations,
+        "tokens": meter.tokens,
+    }
+
+
 def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
                 enable_a3=False, telemetry=None, clock=time.monotonic):
     """Run findings under budget + kill-switch control. items: [(fix_plan, apply_fn), ...].
