@@ -215,7 +215,7 @@ planning-only.
 | Claude Code | `/qb-plan` or `/qb-plan auto` | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
 | Cursor | `/qb-plan` or `/qb-plan auto` | `/qb-assess`, `/qb-audit`, `/qb-implement` | `/qb-harden` |
 | Codex | `Use $qb ...` or `Use $qb auto ...` | Ask `$qb` for Step 1.5, Step 2, Step 3, Step 3.5, or Step 4 | Ask `$qb` to audit and harden |
-| Antigravity | `Use the qb skill ...` | Ask the skill for Step 1.5, Step 2, Step 3, or Step 4 | — (planning-only) |
+| Antigravity | `/qb-plan` or `/qb-plan auto` | Ask the skill for Step 1.5, Step 2, Step 3, or Step 4 | — (planning-only) |
 
 Long-running work is launched through each host's native pattern:
 

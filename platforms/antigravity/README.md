@@ -117,16 +117,22 @@ Manual installation is also possible by copying `skills/qb/` to one of those des
 
 ## Quick Start
 
-Open Antigravity in the repository you want to plan and ask:
+Open Antigravity in the repository you want to plan and invoke the slash command:
 
 ```text
-Use the qb skill to inspect this repo and plan this project.
+/qb-plan
 ```
 
 QB will perform a bounded read-only scan, ask four intake questions, then create the first planning artifact:
 
 ```text
 .qb/main-planning.md
+```
+
+You can also run the entire planning sequence automatically without prompts:
+
+```text
+/qb-plan auto
 ```
 
 The bundled prompts and validator expect these exact `.qb/` filenames; create them verbatim and do not rename them.

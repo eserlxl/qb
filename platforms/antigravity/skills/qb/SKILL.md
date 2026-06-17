@@ -41,6 +41,7 @@ Bundled support files:
 3. If the user directly asks for Step 2, read `references/second-planner.md` and execute it.
 4. If the user directly asks for Step 3, read `references/third-planner.md` and execute it.
 5. If the user asks only for the Antigravity task prompt text, print the matching Step 2, Step 3, or gated Step 4 copy block without modifying files.
+6. **Auto mode:** If the user specifies 'auto' (e.g. via the `/qb-plan auto` command), run Steps 1, 1.5, 2, and 3 non-interactively: auto-derive intake fields, auto-pass all gates, skip Step 4, validate at each step, and automatically export implementation-ready items to `.qb/plan.md`. No confirmation prompts may block this mode. Print `QB_PLAN_AUTO_OK:` on success or `QB_PLAN_AUTO_ERROR:` on failure.
 
 This is a native Antigravity Agent Skill workflow. Do not use legacy package-manager or migration commands for this skill.
 

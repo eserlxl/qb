@@ -146,6 +146,13 @@ if [[ -n "${PLUGIN_ROOT:-}" ]]; then
     "planning",
     "skills",
     "project-management"
+  ],
+  "slash_commands": [
+    {
+      "name": "qb-plan",
+      "description": "Start the QB planning workflow. Pass \\\`auto\\\` to run non-interactively.",
+      "instruction": "Invoke the \\\`qb\\\` skill and run its workflow from the beginning.\n\n**Auto mode.** If the invocation includes the \\\`auto\\\` flag, run the \\\`qb\\\` skill in its **\"Auto mode (non-interactive)\"** path: do not prompt for anything; auto-derive the four Step-1 fields from the repository and, if any field cannot be derived, print \\\`QB_PLAN_AUTO_ERROR: missing required field(s): ...\\\` and stop; auto-pass Gate 1 and Gate 2; skip Step 4; validate Step 1, Step 2, and Step 3 before running the automatic Step 3.5 export whenever Step 2 produced sub-plans; produce and validate \\\`.qb/plan.md\\\`; then print the single final result line (\\\`QB_PLAN_AUTO_OK:\\\` on success, \\\`QB_PLAN_AUTO_ERROR:\\\` on failure) so an external caller such as planwright can detect the outcome. No approval, confirmation, or implementation-gate question may block \\\`.qb/plan.md\\\` generation in auto mode. Without the flag, run the interactive flow defined in the qb skill.\n\nWrite all planning output under \\\`.qb/\\\` in the user's active workspace, in English."
+    }
   ]
 }
 JSON
