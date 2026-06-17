@@ -59,7 +59,7 @@ def write_allowed(repo_root, rel_path: str, allowlist) -> bool:
         return False                       # empty allowlist => deny all writes
     try:
         resolve_within(repo_root, rel_path)  # refuses traversal / out-of-repo
-    except (ValueError, Exception):
+    except Exception:  # fail-closed: any resolution error denies the write
         return False
     return any(fnmatch(rel_path, glob) for glob in allowlist)
 
