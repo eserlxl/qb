@@ -94,11 +94,30 @@ class ConfinementSpec:
     This is process confinement, not a filesystem namespace or container
     sandbox. Callers that require unsupported controls must request them and let
     the fail-closed establishment path refuse the run.
+
+    ``opt_out_reason`` is set only on an explicit, sanctioned unconfined opt-out
+    (see ``unconfined``); it is None on every confined or default spec and exists
+    so an audited unconfined run carries a stated reason rather than silently
+    inheriting an off default.
     """
 
     enabled: bool = False
     require: tuple[str, ...] = ("process_group",)
     resource_limits: bool = True
+    opt_out_reason: str | None = None
+
+
+def unconfined(reason: str) -> "ConfinementSpec":
+    """The single sanctioned way to run a command unconfined, with an audit reason.
+
+    Internal callers that must run a trusted command outside confinement use this
+    instead of relying on the default, so the opt-out is explicit and auditable
+    (the reason is surfaced in ``qb_confinement``). A blank reason is rejected.
+    """
+    if not reason or not reason.strip():
+        raise ValueError("an explicit unconfined opt-out must carry a stated reason")
+    return ConfinementSpec(enabled=False, require=(), resource_limits=False,
+                           opt_out_reason=reason.strip())
 
 
 def available_confinement_controls() -> tuple[str, ...]:
@@ -116,8 +135,15 @@ def available_confinement_controls() -> tuple[str, ...]:
 
 
 def _normalize_confinement(confinement) -> ConfinementSpec:
-    if confinement in (None, False):
+    if confinement is None:
+        # Default policy. Distinct from the explicit opt-out below so the two can
+        # diverge: today both are off; once confine-by-default lands, None means
+        # "apply the default confinement" while False stays the sanctioned opt-out.
         return ConfinementSpec(enabled=False, require=(), resource_limits=False)
+    if confinement is False:
+        # The explicit, auditable unconfined opt-out (a bare False shorthand).
+        return ConfinementSpec(enabled=False, require=(), resource_limits=False,
+                               opt_out_reason="explicit unconfined opt-out")
     if confinement is True:
         return ConfinementSpec()
     if isinstance(confinement, ConfinementSpec):
@@ -128,10 +154,12 @@ def _normalize_confinement(confinement) -> ConfinementSpec:
             require = (raw_require,)
         else:
             require = tuple(str(item) for item in raw_require)
+        enabled = bool(confinement.get("enabled", True))
         return ConfinementSpec(
-            enabled=bool(confinement.get("enabled", True)),
+            enabled=enabled,
             require=require,
             resource_limits=bool(confinement.get("resource_limits", True)),
+            opt_out_reason=(None if enabled else (confinement.get("reason") or None)),
         )
     raise TypeError("confinement must be None, bool, ConfinementSpec, or dict")
 
@@ -210,6 +238,7 @@ def run_command(argv, cwd=None, timeout=None, env=None, confinement=None):
     completed.qb_confinement = {
         "enabled": spec.enabled,
         "controls": controls,
+        "opt_out_reason": spec.opt_out_reason,
     }
     return completed
 
