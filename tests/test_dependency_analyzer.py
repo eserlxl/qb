@@ -68,6 +68,32 @@ class DependencyAnalyzerTests(unittest.TestCase):
         self.assertEqual(analyzer.last_enrichment_status, "skipped:disabled")
         self.assertGreaterEqual(len(rules), 3)
 
+    def test_pyproject_dependencies_are_parsed_offline(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            root.joinpath("pyproject.toml").write_text(
+                '[project]\n'
+                'dependencies = [\n'
+                '  "flask>=3.0",\n'
+                '  "django==4.2.1",\n'
+                ']\n'
+                '[tool.poetry.dependencies]\n'
+                'python = "^3.11"\n'
+                'requests = "^2.31"\n'
+                'urllib3 = "2.2.1"\n',
+                encoding="utf-8",
+            )
+            analyzer = self.dep.DependencyAnalyzer()
+            findings = analyzer.analyze(d, _cfg(False))
+
+        evidences = [f.evidence for f in findings if f.evidence.startswith("pyproject.toml")]
+        self.assertIn("pyproject.toml:3", evidences)  # flask>=3.0
+        self.assertIn("pyproject.toml:8", evidences)  # requests = "^2.31"
+        self.assertNotIn("pyproject.toml:4", evidences)  # django==4.2.1
+        self.assertNotIn("pyproject.toml:9", evidences)  # urllib3 = "2.2.1"
+        for f in findings:
+            self.assertEqual(self.validate(f), [])
+
     def test_default_path_is_network_free(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             _fixture(Path(d))

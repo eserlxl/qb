@@ -49,6 +49,7 @@ iter_repo_files = _core.iter_repo_files
 _ENV_NAME_RE = re.compile(r"^\.env(?:\.[A-Za-z0-9_-]+)*$")
 # Legitimate, commit-safe templates -- never flagged.
 _TEMPLATE_SUFFIXES = frozenset({"example", "sample", "template", "dist", "defaults"})
+_NPMRC_CREDENTIAL_KEYS = frozenset({"_authtoken", "_password", "username", "email"})
 
 
 def _is_committed_env(path: Path) -> bool:
@@ -60,6 +61,24 @@ def _is_committed_env(path: Path) -> bool:
     return suffix not in _TEMPLATE_SUFFIXES
 
 
+def _is_template_name(path: Path) -> bool:
+    suffix = path.name.rsplit(".", 1)[-1].lower()
+    return suffix in _TEMPLATE_SUFFIXES
+
+
+def _npmrc_credential_lines(text: str) -> list[int]:
+    lines: list[int] = []
+    for line_number, raw in enumerate(text.splitlines(), start=1):
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key = line.split("=", 1)[0].strip().lower()
+        key = key.rsplit(":", 1)[-1]
+        if key in _NPMRC_CREDENTIAL_KEYS:
+            lines.append(line_number)
+    return lines
+
+
 class ConfigHygieneAnalyzer:
     """Read-only analyzer: flags a present, non-template dotenv config file."""
 
@@ -69,7 +88,8 @@ class ConfigHygieneAnalyzer:
         offline=True,
     )
 
-    _RULE = "committed-dotenv-file"
+    _RULE_ENV = "committed-dotenv-file"
+    _RULE_NPMRC = "committed-npmrc-credential-key"
 
     def analyze(self, repo_root: str, config) -> list:
         root = Path(repo_root).resolve()
@@ -83,7 +103,7 @@ class ConfigHygieneAnalyzer:
             rel = rel_path.as_posix()
             evidence = f"{rel}:1"
             finding = Finding(
-                id=compute_finding_id("config", evidence, self._RULE),
+                id=compute_finding_id("config", evidence, self._RULE_ENV),
                 category="config",
                 severity="P2",
                 confidence="medium",
@@ -105,4 +125,36 @@ class ConfigHygieneAnalyzer:
             if validate_finding(finding):
                 continue
             findings.append(finding)
+
+        for path in iter_repo_files(root):
+            rel_path = path.relative_to(root)
+            if path.name != ".npmrc" or _is_template_name(path):
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                continue
+            rel = rel_path.as_posix()
+            for line in _npmrc_credential_lines(text):
+                evidence = f"{rel}:{line}"
+                finding = Finding(
+                    id=compute_finding_id("config", evidence, self._RULE_NPMRC),
+                    category="config",
+                    severity="P2",
+                    confidence="medium",
+                    evidence=evidence,
+                    rationale=(
+                        f"An npm config file ({rel}) contains a credential-bearing key; "
+                        "committed package-manager auth config can expose registry credentials."
+                    ),
+                    suggested_fix=(
+                        "Move registry credentials to the user or CI environment and keep only "
+                        "non-secret registry configuration in the repository."
+                    ),
+                    fix_strategy="manual",
+                )
+                if validate_finding(finding):
+                    continue
+                findings.append(finding)
+        findings.sort(key=lambda item: (item.evidence, item.id))
         return findings

@@ -27,6 +27,10 @@ import importlib.util
 import re
 import sys
 from pathlib import Path
+try:
+    import tomllib
+except ImportError:  # pragma: no cover - Python <3.11 fallback
+    tomllib = None
 
 
 def _load_sibling(module_name: str, filename: str):
@@ -48,6 +52,7 @@ compute_finding_id = _ai.compute_finding_id
 
 _LOCKFILES = ("package-lock.json", "yarn.lock", "pnpm-lock.yaml")
 _REQ_LINE = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*(.*)$")
+_EXACT_VERSION_RE = re.compile(r"^\s*\d+(?:\.\d+)+(?:[-+][0-9A-Za-z.-]+)?\s*$")
 _ADVISORY_SEVERITY = {
     "critical": "P0",
     "high": "P1",
@@ -55,6 +60,18 @@ _ADVISORY_SEVERITY = {
     "medium": "P2",
     "low": "P3",
 }
+
+
+def _is_exact_pin(spec: str) -> bool:
+    spec = (spec or "").strip()
+    return "==" in spec or "===" in spec or bool(_EXACT_VERSION_RE.match(spec))
+
+
+def _line_for_token(text: str, token: str, start: int = 1) -> int:
+    for line_number, raw in enumerate(text.splitlines(), start=1):
+        if line_number >= start and token in raw:
+            return line_number
+    return start
 
 
 def parse_requirements(text: str) -> list:
@@ -70,7 +87,59 @@ def parse_requirements(text: str) -> list:
             continue
         name = match.group(1)
         spec = match.group(2).strip()
-        deps.append({"name": name, "spec": spec, "line": line_number, "pinned": "==" in spec})
+        deps.append({"name": name, "spec": spec, "line": line_number, "pinned": _is_exact_pin(spec)})
+    return deps
+
+
+def parse_pyproject(text: str) -> list:
+    """Parse pyproject.toml dependency declarations into dependency records."""
+    if tomllib is None:
+        return []
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return []
+
+    deps: list = []
+    project = data.get("project", {}) if isinstance(data, dict) else {}
+    entries = list(project.get("dependencies", []) or [])
+    optional = project.get("optional-dependencies", {}) or {}
+    if isinstance(optional, dict):
+        for group_entries in optional.values():
+            if isinstance(group_entries, list):
+                entries.extend(group_entries)
+    for entry in entries:
+        if not isinstance(entry, str):
+            continue
+        parsed = _REQ_LINE.match(entry)
+        if not parsed:
+            continue
+        name = parsed.group(1)
+        spec = parsed.group(2).strip()
+        deps.append({
+            "name": name,
+            "spec": spec,
+            "line": _line_for_token(text, entry),
+            "pinned": _is_exact_pin(spec),
+        })
+
+    poetry = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
+    if isinstance(poetry, dict):
+        for name, raw_spec in sorted(poetry.items()):
+            if str(name).lower() == "python":
+                continue
+            if isinstance(raw_spec, str):
+                spec = raw_spec
+            elif isinstance(raw_spec, dict):
+                spec = str(raw_spec.get("version", ""))
+            else:
+                spec = str(raw_spec)
+            deps.append({
+                "name": str(name),
+                "spec": spec,
+                "line": _line_for_token(text, str(name)),
+                "pinned": _is_exact_pin(spec),
+            })
     return deps
 
 
@@ -121,6 +190,24 @@ class DependencyAnalyzer:
                         f"Offline manifest audit: dependency '{dep['name']}' is not pinned to an exact "
                         f"version ({dep['spec'] or 'no version specifier'}).",
                         "Pin the dependency to an exact version (name==X.Y.Z) and commit a lockfile.",
+                    ))
+
+        pyproject_path = root / "pyproject.toml"
+        if pyproject_path.is_file():
+            try:
+                text = pyproject_path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                text = ""
+            for dep in parse_pyproject(text):
+                dep["evidence"] = f"pyproject.toml:{dep['line']}"
+                inventory.append(dep)
+                if not dep["pinned"]:
+                    findings.append(self._finding(
+                        "dependency", "P2", "medium", dep["evidence"],
+                        f"unpinned-pyproject:{dep['name']}",
+                        f"Offline pyproject audit: dependency '{dep['name']}' is not pinned to an "
+                        f"exact version ({dep['spec'] or 'no version specifier'}).",
+                        "Pin the dependency to an exact version in pyproject.toml and regenerate the lockfile.",
                     ))
 
         pkg_path = root / "package.json"

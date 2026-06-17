@@ -68,6 +68,24 @@ class ConfigAnalyzerTests(unittest.TestCase):
     def test_clean_repo_yields_nothing(self) -> None:
         self.assertEqual(self._analyze({"README.md": "# p\n", "config.json": "{}\n"}), [])
 
+    def test_committed_npmrc_credentials_are_flagged(self) -> None:
+        findings = self._analyze({
+            ".npmrc": (
+                "registry=https://registry.npmjs.org/\n"
+                "//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n"
+            )
+        })
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].category, "config")
+        self.assertEqual(findings[0].evidence, ".npmrc:2")
+        self.assertEqual(self.ai.validate_finding(findings[0]), [])
+
+    def test_npmrc_without_credentials_is_clean(self) -> None:
+        self.assertEqual(
+            self._analyze({".npmrc": "registry=https://registry.npmjs.org/\n"}),
+            [],
+        )
+
     def test_descriptor_and_default_registration(self) -> None:
         descriptor = self.mod.ConfigHygieneAnalyzer().descriptor
         self.assertEqual(descriptor.id, "config-hygiene")
