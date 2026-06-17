@@ -86,6 +86,34 @@ class ReportReproducibilityTests(unittest.TestCase):
         self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
         self.assertIn("<redacted>", back["note"])
 
+    def test_release_gate_authorization_record_round_trips_and_redacts(self) -> None:
+        # Phase 7.2: the release-gate authorization decision persists deterministically
+        # into the QB-Audit store as a redacted record (permitted level + gate reason
+        # tokens) and emits no secret value (redacted via run_store.redact).
+        rg = _load("qb_release_gate_for_repro", SHARED_DIR / "scripts/release_gate.py")
+        granted = rg.authorization_record(
+            {"schema_version": 1, "quality": {"precision_estimate": 0.95, "fix_safety_ok": True}})
+        self.assertEqual(granted["permitted_autonomy"], "A2")
+        self.assertEqual(granted["precision_reason"], "precision-ok")
+        self.assertEqual(granted["fix_safety_reason"], "fix-safety-ok")
+        denied = rg.authorization_record(
+            {"schema_version": 1, "quality": {"precision_estimate": 0.1, "fix_safety_ok": False}})
+        self.assertEqual(denied["permitted_autonomy"], "A1")
+        self.assertIn("precision-below-floor", denied["precision_reason"])
+        self.assertEqual(denied["fix_safety_reason"], "fix-safety-breach")
+
+        secret = "ghp_" + "B" * 36
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / self.rs.OUTPUT_DIR_NAME
+            tainted = dict(granted, note=f"authorized near {secret}")  # secret-shaped material
+            first = rg.persist_authorization(tainted, out).read_text(encoding="utf-8")
+            second = rg.persist_authorization(tainted, out).read_text(encoding="utf-8")
+            self.assertEqual(first, second)                  # deterministic re-write
+            back = rg.read_authorization(out)
+        self.assertEqual(back["permitted_autonomy"], "A2")
+        self.assertNotIn(secret, json.dumps(back))           # no secret value emitted
+        self.assertIn("<redacted>", back["note"])
+
     def test_report_reproducible_except_timing(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store, _ = self._store(Path(d) / self.rs.OUTPUT_DIR_NAME)

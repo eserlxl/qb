@@ -21,6 +21,7 @@ Release gates (read Phase-7.1 telemetry; fail-closed):
 
 from __future__ import annotations
 
+import json
 import sys
 from importlib import util as _import_util
 from pathlib import Path
@@ -148,3 +149,52 @@ def most_restrictive(*levels) -> str:
     can raise the effective autonomy above another's cap.
     """
     return min(levels, key=lambda level: _AUTONOMY_RANK.get(level, 0))
+
+
+# --- release-gate authorization evidence record (Phase 7.2) -------------------
+# The earned-autonomy decision is persisted as a redacted, reproducible audit
+# record: the permitted level plus the gate reason tokens (precision-ok /
+# precision-below-floor=... / no-precision-data, and fix-safety-ok / fix-safety-
+# breach), never a raw telemetry value. Mirrors recoverability_drill's record
+# pattern so the audit trail proves the autonomy decision without persisting any
+# secret value (redaction is via run_store.redact before write).
+AUTHORIZATION_EVIDENCE_SCHEMA_VERSION = 1
+AUTHORIZATION_EVIDENCE_FILENAME = "release-authorization.json"
+
+_store = _load_sibling("qb_run_store", "run_store.py")
+
+
+def authorization_record(telemetry: dict, floor: float = PRECISION_FLOOR) -> dict:
+    """Build the redaction-safe release-gate authorization record: the permitted
+    autonomy level plus the precision/fix-safety gate reasons. Carries no raw
+    telemetry value -- only the level and the engine's reason tokens."""
+    precision_ok, precision_reason = precision_gate(telemetry, floor)
+    fix_safety_ok, fix_safety_reason = fix_safety_gate(telemetry)
+    return {
+        "schema_version": AUTHORIZATION_EVIDENCE_SCHEMA_VERSION,
+        "permitted_autonomy": permitted_autonomy(telemetry, floor),
+        "precision_ok": bool(precision_ok),
+        "precision_reason": precision_reason,
+        "fix_safety_ok": bool(fix_safety_ok),
+        "fix_safety_reason": fix_safety_reason,
+    }
+
+
+def persist_authorization(record, output_dir) -> Path:
+    """Write the authorization record into the QB-Audit store deterministically
+    (sorted keys) and redacted via run_store.redact, so no secret value is ever
+    emitted. Returns the written path."""
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    redacted = _store.redact(record)
+    path = out / AUTHORIZATION_EVIDENCE_FILENAME
+    path.write_text(json.dumps(redacted, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def read_authorization(output_dir) -> dict:
+    """Read back the release-gate authorization record, or {} when absent."""
+    path = Path(output_dir) / AUTHORIZATION_EVIDENCE_FILENAME
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
