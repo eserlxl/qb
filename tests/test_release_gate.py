@@ -99,6 +99,42 @@ class RollbackDrillTests(unittest.TestCase):
             self.rg.release_baseline(repo, handle)
             self.assertNotEqual(_git(repo, "show-ref", handle["ref"]).returncode, 0)
 
+    def test_partial_rollback_fails_closed(self) -> None:
+        # Phase 7.1 negative path: a partial/corrupt rollback must report FAILURE,
+        # never a silent pass. Proven two ways -- residue the rollback cannot remove,
+        # and a divergent HEAD even with an otherwise-clean tree.
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_repo(repo)
+
+            # (1) Residue survives rollback: a nested git repo is skipped by
+            # `git clean -fd`, so the tree never returns to baseline -> drill False.
+            def mutate_with_residue(r):
+                (Path(r) / "a.txt").write_text("CHANGED\n", encoding="utf-8")
+                nested = Path(r) / "nested"
+                nested.mkdir()
+                subprocess.run(["git", "init", "-q", str(nested)], check=True)
+                (nested / "f.txt").write_text("residue\n", encoding="utf-8")
+
+            self.assertFalse(self.rg.run_rollback_drill(repo, "residue", mutate_with_residue))
+            # the drill did not silently pass: residue is still present after rollback
+            self.assertTrue((repo / "nested").exists())
+            self.assertNotEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")
+
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_repo(repo)
+            handle = self.rg.capture_baseline(repo, "divergent")
+            # (2) Divergent HEAD with a clean tree: a rollback that lands on the wrong
+            # commit must still read as not-clean (HEAD != captured baseline sha).
+            (repo / "a.txt").write_text("v2\n", encoding="utf-8")
+            _git(repo, "add", "-A")
+            _git(repo, "commit", "-q", "-m", "advance HEAD")
+            self.assertEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")  # clean tree
+            self.assertNotEqual(_git(repo, "rev-parse", "HEAD").stdout.strip(), handle["sha"])
+            self.assertFalse(self.rg.baseline_clean(repo, handle))  # fail-closed on HEAD drift
+            self.rg.release_baseline(repo, handle)
+
     def _telemetry(self, kept, reverted):
         return self.t.build_telemetry(run_id="r", autonomy_level="A2", findings=[],
                                       evidence=[{"outcome": "kept", "after_exit": 0}] * kept
