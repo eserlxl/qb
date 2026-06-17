@@ -23,3 +23,22 @@ The gate of record is `make check`, run on a clean working tree.
 `python3 -m unittest discover -s tests`. The run recorded above completed with every
 sub-step green. No source, engine, or test behavior was changed to capture this
 baseline.
+
+## Test-suite counts
+
+The full unit-test discovery is the frozen regression reference. Reproduce with:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+| Metric | Baseline value |
+|---|---|
+| Test modules (`tests/test_*.py`) | 44 |
+| Test functions | 324 |
+| Failures | 0 |
+| Errors | 0 |
+| Exit status | 0 |
+
+A run reporting fewer than 44 modules or fewer than 324 passing functions, or any
+failure or error, is a regression against this reference.
