@@ -140,6 +140,11 @@ MAP=(
   "scripts/findings_to_plan.py|platforms/cursor/scripts/findings_to_plan.py"
   "scripts/findings_to_plan.py|platforms/codex/plugins/qb/skills/qb/scripts/findings_to_plan.py"
 
+  # shared/scripts/recoverability_drill.py
+  "scripts/recoverability_drill.py|platforms/claude-code/scripts/recoverability_drill.py"
+  "scripts/recoverability_drill.py|platforms/cursor/scripts/recoverability_drill.py"
+  "scripts/recoverability_drill.py|platforms/codex/plugins/qb/skills/qb/scripts/recoverability_drill.py"
+
   # shared/scripts/command_safety.py
   "scripts/command_safety.py|platforms/claude-code/scripts/command_safety.py"
   "scripts/command_safety.py|platforms/cursor/scripts/command_safety.py"
