@@ -21,8 +21,9 @@ Verification boundary:
   * Write isolation is delivered by ``isolation.py``: verification runs inside
     the disposable worktree, not the operator's checked-out tree.
   * The environment floor is always ``command_safety.minimal_env()``.
-  * Execution process confinement is opt-in via ``confinement=...`` and defaults
-    off; unsupported requested controls fail closed instead of running unconfined.
+  * Execution process confinement is applied by default (``confinement=None``); a
+    required control that cannot be established fails closed instead of running
+    unconfined, and the orchestrator then caps autonomy below apply-verified.
 
 The two guarantees Phase 3.4 asserts: every kept fix verified green; every
 reverted fix leaves the isolation tree back at the captured handle.
@@ -39,7 +40,7 @@ from pathlib import Path
 _OUTPUT_CAP = 2000
 _TIMEOUT_EXIT = 124
 
-# Floor-preservation checklist for the default-off confinement extension:
+# Floor-preservation checklist for the confine-by-default confinement extension:
 # - environment minimization: run_verification always passes _cs.minimal_env().
 # - worktree write isolation: gate_fix verifies inside isolation.worktree_path.
 # - secret redaction: gate_fix redacts captured output before evidence storage.

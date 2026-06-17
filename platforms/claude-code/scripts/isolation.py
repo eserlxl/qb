@@ -22,10 +22,11 @@ Guarantees:
     raise rather than fall back to writing the live tree.
   * Path-allowlist write guard: writes are confined to the isolation root and, if
     an allowlist is given, to its globs.
-  * Execution filesystem confinement is not claimed by this worktree wrapper.
-    Verification callers that require a filesystem execution boundary must request
-    that confinement control and fail closed when the stdlib wrapper cannot
-    establish it, rather than running the verification child unconfined.
+  * Execution filesystem confinement is not claimed by this worktree wrapper: it
+    delivers write isolation, not a filesystem/network namespace. Process
+    confinement of the verification child is applied by default in
+    ``command_safety`` and fails closed when the required control cannot be
+    established, rather than running the verification child unconfined.
   * Deterministic teardown: removes the worktree and branch; the operator's tree
     is byte-identical to its pre-run state when nothing is promoted.
 
