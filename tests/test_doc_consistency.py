@@ -35,6 +35,8 @@ if str(_SCRIPTS_DIR) not in sys.path:
 import audit_runner  # noqa: E402  (path set above)
 import budget  # noqa: E402
 import finding_schema  # noqa: E402
+import telemetry_aggregate  # noqa: E402
+import telemetry_trends  # noqa: E402
 
 ROOT_README = REPO_ROOT / "README.md"
 ROOT_VERSION = REPO_ROOT / "VERSION"
@@ -49,6 +51,14 @@ FINDING_CATEGORIES = sorted(finding_schema.CATEGORIES)
 BUDGET_CEILINGS = sorted(f.name for f in dataclasses.fields(budget.Budget))
 BUDGET_ADVICE = sorted((budget.ADVICE_CONSTRAINING, budget.ADVICE_PROTECTING,
                         budget.ADVICE_INSUFFICIENT))
+# RUNBOOK observability terms, derived from the trend/aggregate engine.
+TREND_DIMENSIONS = sorted(telemetry_trends.DIMENSION_PATHS)
+TREND_VERDICTS = sorted({
+    telemetry_trends.VERDICT_IMPROVING, telemetry_trends.VERDICT_STABLE,
+    telemetry_trends.VERDICT_REGRESSING, telemetry_trends.VERDICT_INSUFFICIENT,
+    telemetry_trends.VERDICT_UNMEASURED,
+})
+AGGREGATE_FILENAME = telemetry_aggregate.AGGREGATE_TELEMETRY_FILENAME
 HOST_NAMES = ("Claude Code", "Cursor", "Codex", "Antigravity")
 _VERSION_HEADER = re.compile(r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\]", re.MULTILINE)
 # The shields.io badge: label 'version', the (possibly escaped) message, a
@@ -162,6 +172,21 @@ class DocConsistencyTest(unittest.TestCase):
                       "RUNBOOK must name the advisory recommender (recommend_budget)")
         self.assertIn("policy.budgets", text,
                       "RUNBOOK must state policy.budgets as the explicit raise mechanism")
+
+    def test_runbook_observability_terms_match_engine(self):
+        # The RUNBOOK observability section must name every trend dimension and
+        # verdict derived from telemetry_trends, the aggregate artifact filename,
+        # and the unmeasured sentinel, so the operator narrative cannot drift from
+        # the trend/aggregate engine.
+        text = self._read(RUNBOOK)
+        missing_dims = [d for d in TREND_DIMENSIONS if d not in text]
+        self.assertEqual(missing_dims, [], f"RUNBOOK omits trend dimensions: {missing_dims}")
+        missing_verdicts = [v for v in TREND_VERDICTS if v not in text]
+        self.assertEqual(missing_verdicts, [], f"RUNBOOK omits trend verdicts: {missing_verdicts}")
+        self.assertIn(AGGREGATE_FILENAME, text,
+                      "RUNBOOK must name the aggregate telemetry artifact filename")
+        self.assertIn(telemetry_trends.UNMEASURED, text,
+                      "RUNBOOK must document the unmeasured-value distinction")
 
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]
