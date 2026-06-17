@@ -50,12 +50,9 @@ def evidence_path(evidence: str) -> str:
     return text.rsplit(":", 1)[0] if ":" in text else text
 
 
-def is_planning_state_surface(path: str) -> bool:
-    """True when ``path`` is QB/planwright planning state (``.qb/`` or ``.planwright/``)
-    -- not an executable item Surface. Mirrors validate_planwright_plan's exclusion."""
-    np = (path or "").replace("\\", "/")
-    return (np == ".qb" or np.startswith(".qb/")
-            or np == ".planwright" or np.startswith(".planwright/"))
+# Single source shared with the validator (validate_planwright_plan) so the projector
+# and the lint gate can never drift on what counts as non-editable planning state.
+is_planning_state_surface = _vpp.is_planning_state_surface
 
 
 def infer_mode(finding, root: str) -> str:

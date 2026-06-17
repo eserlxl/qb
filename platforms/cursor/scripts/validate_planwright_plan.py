@@ -171,6 +171,26 @@ def unsafe_surface(p, root):
     return None
 
 
+def is_planning_state_surface(p):
+    """True when surface path `p` is QB/planwright planning state (`.qb/` or
+    `.planwright/`), which is never an editable item Surface -- planning state may
+    inform an item only as context/evidence. Single source shared by lint_item and
+    the findings_to_plan projector so the two cannot drift."""
+    np = (p or "").replace("\\", "/")
+    return (np == ".planwright" or np.startswith(".planwright/")
+            or np == ".qb" or np.startswith(".qb/"))
+
+
+def _planning_state_reason(p):
+    """The lint-message tail for a planning-state surface, or None when `p` is editable."""
+    np = (p or "").replace("\\", "/")
+    if np == ".planwright" or np.startswith(".planwright/"):
+        return "tool-owned planwright state (.planwright/), not an editable Surface"
+    if np == ".qb" or np.startswith(".qb/"):
+        return "QB planning state (.qb/), not an executable item Surface"
+    return None
+
+
 def lint_item(item, root):
     """Return a list of hard-violation strings for one pending item."""
     v = []
@@ -241,11 +261,9 @@ def lint_item(item, root):
     if overlap:
         v.append(f"path(s) in both Surfaces and New Surfaces: {', '.join(overlap)}")
     for p in surfaces + new_surfaces:
-        np = p.replace("\\", "/")
-        if np == ".planwright" or np.startswith(".planwright/"):
-            v.append(f"'{p}' is tool-owned planwright state (.planwright/), not an editable Surface")
-        if np == ".qb" or np.startswith(".qb/"):
-            v.append(f"'{p}' is QB planning state (.qb/), not an executable item Surface")
+        reason = _planning_state_reason(p)
+        if reason:
+            v.append(f"'{p}' is {reason}")
     return v
 
 
