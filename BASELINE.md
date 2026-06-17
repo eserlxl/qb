@@ -14,8 +14,8 @@ The gate of record is `make check`, run on a clean working tree.
 |---|---|
 | Command | `make check` |
 | Observed exit status | `0` |
-| Version (`VERSION`) | `0.14.1` |
-| Commit | `5f97f35` |
+| Version (`VERSION`) | `0.15.0` |
+| Commit | `7f4d24b` |
 | Date | 2026-06-17 |
 
 `make check` composes `bash scripts/sync.sh --check`, the four per-host
@@ -34,13 +34,13 @@ python3 -m unittest discover -s tests -v
 
 | Metric | Baseline value |
 |---|---|
-| Test modules (`tests/test_*.py`) | 44 |
-| Test functions | 324 |
+| Test modules (`tests/test_*.py`) | 69 |
+| Test functions | 469 |
 | Failures | 0 |
 | Errors | 0 |
 | Exit status | 0 |
 
-A run reporting fewer than 44 modules or fewer than 324 passing functions, or any
+A run reporting fewer than 69 modules or fewer than 469 passing functions, or any
 failure or error, is a regression against this reference.
 
 ## Baseline preconditions
@@ -71,7 +71,7 @@ localized to one guard.
 | `bash platforms/cursor/scripts/validate.sh` | The Cursor package validates the same per-host contract. |
 | `bash platforms/antigravity/scripts/validate.sh` | The Antigravity (planning-only) package validates its own contract. |
 | `cd platforms/codex && bash scripts/validate.sh` | The Codex package validates the same per-host contract. |
-| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (44 modules / 324 functions) passes. |
+| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (69 modules / 469 functions) passes. |
 
 A red `make check` is diagnosed by re-running the failing sub-step in isolation;
 each command above is self-contained.
@@ -179,7 +179,7 @@ Two intentional baseline states are recorded as known caveats, not silent gaps:
   hosts do. This is an intended asymmetry, not a defect.
   *Addressed in Phase 5 (multi-host parity).*
 
-## Regression reference (v0.14.1)
+## Regression reference (v0.15.0)
 
 The frozen reference any future run is compared against. A single `make baseline`
 re-runs the whole net (fan-out + byte-equality + per-host validation + full test
@@ -187,10 +187,10 @@ discovery).
 
 | Field | Reference value |
 |---|---|
-| Version (`VERSION`) | `0.14.1` |
+| Version (`VERSION`) | `0.15.0` |
 | Expected `make check` exit status | `0` |
-| Expected test modules | 44 |
-| Expected test functions | 324 |
+| Expected test modules | 69 |
+| Expected test functions | 469 |
 | Expected failures / errors | 0 / 0 |
 
 Baseline guard set (each individually runnable — see **Guard-to-test mapping**):
