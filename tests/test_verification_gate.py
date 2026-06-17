@@ -122,6 +122,31 @@ class VerificationGateTests(unittest.TestCase):
             finally:
                 isolation.teardown()
 
+    def test_unavailable_required_control_refuses_to_run_unconfined(self) -> None:
+        # Simulate a host lacking the required control (monkeypatch, so this runs
+        # unconditionally on any host): the default-confined verification path must
+        # refuse to run, surface the documented reason, and never run unconfined.
+        cs = self.gate._cs
+        original = cs.available_confinement_controls
+        cs.available_confinement_controls = lambda: ()
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                repo = Path(d)
+                _init_repo(repo)
+                isolation = self._isolation(repo, "failclosed")
+                try:
+                    record = self.gate.gate_fix(
+                        isolation, _plan(_VERIFY),
+                        apply_fn=lambda iso: iso.write_file("flag.txt", "GOOD\n"),
+                    )
+                    self.assertEqual(record.outcome, "reverted")
+                    self.assertIn("verification confinement unavailable", record.after_output)
+                    self.assertEqual(record.confinement_controls, ())
+                finally:
+                    isolation.teardown()
+        finally:
+            cs.available_confinement_controls = original
+
     def test_failing_fix_is_auto_reverted(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)

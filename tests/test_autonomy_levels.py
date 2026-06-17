@@ -181,6 +181,27 @@ class AutonomyLevelTests(unittest.TestCase):
             self.assertEqual((repo / "style.txt").read_text(), "messy\n")
             self.assertEqual(_git(repo, "branch", "--list", "qb-fix/*").stdout.strip(), "")
 
+    def test_unavailable_sandbox_clamps_autonomy_and_refuses_unconfined_run(self) -> None:
+        # Simulate a host lacking the required confinement control (monkeypatch, so
+        # this runs unconditionally): effective autonomy is clamped below apply (A1)
+        # with a recorded reason, and the repo-supplied verification is refused
+        # rather than run unconfined -- nothing is promoted to the working tree.
+        cs = self.orch._cs
+        original = cs.available_confinement_controls
+        cs.available_confinement_controls = lambda: ()
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                repo = Path(d)
+                _build_fixture(repo)
+                result = self._run("A2", repo, telemetry=self._EARNED_A2)
+                self.assertEqual(result["level"], "A1")                 # clamped below apply
+                self.assertIn("sandbox unavailable", result["clamp_reason"])
+                self.assertEqual(result["outcome"], "blocked")          # repo command refused
+                self.assertEqual(result["promoted"], [])                # nothing applied
+                self.assertEqual((repo / "style.txt").read_text(), "messy\n")  # tree untouched
+        finally:
+            cs.available_confinement_controls = original
+
     def test_promote_applies_delete_rename_and_binary(self) -> None:
         # _promote must mirror the full changeset shape, not just in-place text edits.
         with tempfile.TemporaryDirectory() as d:
