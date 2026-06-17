@@ -91,6 +91,23 @@ explicit, separate opt-in.
   is capped at A1 for that context. Improve precision (tune analyzers, accept
   false positives in the register) before requesting A2.
 
+## Observability
+
+Across runs, QB persists an aggregate telemetry series at
+`QB-Audit/telemetry-aggregate.json` (the fixed run-store layout defined in
+`run_store.py`), appending one entry per run keyed by `run_id`. The trend reader
+(`telemetry_trends`) derives a per-dimension series over the five tracked
+dimensions — `precision`, `fix_safety`, `latency`, `cost`, and `quality` — and a
+direction verdict for each: `improving`, `stable`, or `regressing` over the
+trailing window, or `insufficient-data` / `unmeasured` when the series is too short
+or carries no measured value.
+
+Read the verdicts as the multi-run health signal: `precision` and `fix_safety`
+should hold `stable` or `improving`; a `regressing` verdict on either is the cue to
+pause autonomy and investigate before raising any budget. A genuinely unmeasured
+value stays `unmeasured` and is **never** coerced to a measured `0`, so a sparse
+history never reads as a false improvement.
+
 ## Budget raise paths
 
 Each budget ceiling that can halt a run maps to a deliberate raise-path — the
