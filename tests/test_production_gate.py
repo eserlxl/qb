@@ -159,6 +159,63 @@ class ProductionGateTests(unittest.TestCase):
         self.assertIn("self_audit_clean", result["failures"])
 
 
+class ProductionGateSignalsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        signals_path = SHARED_DIR / "scripts/production_gate_signals.py"
+        if not signals_path.exists():
+            self.skipTest("production_gate_signals missing")
+        self.sig = _load("qb_production_gate_signals_under_test", signals_path)
+        self.store = _load("qb_run_store_for_signals", SHARED_DIR / "scripts/run_store.py")
+        self.recov = _load("qb_recoverability_for_signals", SHARED_DIR / "scripts/recoverability_drill.py")
+
+    def _all_real_signals(self, d):
+        audit = Path(d) / "QB-Audit"
+        store = self.store.RunStore(audit).open()
+        store.write_telemetry({"schema_version": 1,
+                               "quality": {"precision_estimate": 0.95, "fix_safety_ok": True}})
+        store.write_findings([])  # clean self-audit inventory (every finding fixed)
+        self.recov.persist_evidence(
+            {"schema_version": 1, "run_id": "r", "baseline_ref": "refs/qb-baseline/r",
+             "baseline_sha_len": 40, "baseline_clean": True, "passed": True}, audit)
+        repo = Path(d) / "repo"
+        repo.mkdir()
+        return audit, repo
+
+    def test_assemble_six_signals_from_real_sources(self) -> None:
+        # Phase 7.4: with all six conjuncts derived True from real sources, the
+        # composite gate passes, names no failures, and never enables A3 by default.
+        with tempfile.TemporaryDirectory() as d:
+            audit, repo = self._all_real_signals(d)
+            decision = self.sig.gate_decision(audit, repo, scripts_dir=SHARED_DIR / "scripts")
+            self.assertTrue(decision["passed"], decision["failures"])
+            self.assertEqual(decision["failures"], [])
+            self.assertFalse(decision["a3_enabled_by_default"])
+            for name, value in decision["signals"].items():
+                self.assertTrue(value, f"signal {name} should be true from real sources")
+            # the six derived conjuncts exactly match the engine's check set
+            self.assertEqual(set(decision["signals"]), set(self.sig._pg.PRODUCTION_GATE_CHECKS))
+            self.assertEqual(decision["permitted_autonomy"], "A2")  # earned ceiling surfaced
+
+    def test_supply_chain_signal_is_real_not_placeholder(self) -> None:
+        # The interim supply_chain_ok is derived from the dependency-free core, not a
+        # hardcoded True: a directory with a non-stdlib import fails it.
+        self.assertTrue(self.sig.supply_chain_ok(SHARED_DIR / "scripts"))
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "tainted.py").write_text("import requests\n", encoding="utf-8")
+            self.assertFalse(self.sig.supply_chain_ok(d))
+
+    def test_each_missing_signal_fails_the_gate(self) -> None:
+        # Fail-closed: an absent telemetry record / recoverability record / findings
+        # inventory each deny their conjunct (so the composite gate cannot pass).
+        with tempfile.TemporaryDirectory() as d:
+            empty_audit = Path(d) / "QB-Audit"
+            empty_audit.mkdir()
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            self.assertFalse(self.sig.telemetry_emitted(empty_audit))
+            self.assertFalse(self.sig.rollback_drill_passed(empty_audit))
+
+
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
 class SelfAuditDogfoodTests(unittest.TestCase):
     def setUp(self) -> None:

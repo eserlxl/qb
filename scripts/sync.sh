@@ -264,6 +264,11 @@ MAP=(
   "scripts/self_audit_reconcile.py|platforms/claude-code/scripts/self_audit_reconcile.py"
   "scripts/self_audit_reconcile.py|platforms/cursor/scripts/self_audit_reconcile.py"
   "scripts/self_audit_reconcile.py|platforms/codex/plugins/qb/skills/qb/scripts/self_audit_reconcile.py"
+
+  # shared/scripts/production_gate_signals.py
+  "scripts/production_gate_signals.py|platforms/claude-code/scripts/production_gate_signals.py"
+  "scripts/production_gate_signals.py|platforms/cursor/scripts/production_gate_signals.py"
+  "scripts/production_gate_signals.py|platforms/codex/plugins/qb/skills/qb/scripts/production_gate_signals.py"
 )
 
 # Number of distinct shared source files (for the summary line).

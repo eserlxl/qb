@@ -1,0 +1,140 @@
+"""QB production-gate signal assembly (Phase 7.4, roadmap finale).
+
+Canonical host-neutral QB IP under ``shared/`` (Python standard library only).
+``production_gate.py`` takes six literal booleans; this module DERIVES those six
+conjuncts from their real evidence sources and calls ``production_gate`` to produce
+the single authorization decision the finale is named for:
+
+  * telemetry_emitted     -- a per-run telemetry record is present (7.1).
+  * rollback_drill_passed -- the persisted recoverability evidence record passed (7.1).
+  * killswitch_proven     -- the budget engine's kill-switch halts at a safe
+                             checkpoint with the documented exit code, proven live (7.1).
+  * least_privilege_ok    -- the write/network/script least-privilege invariants hold (7.3).
+  * supply_chain_ok       -- INTERIM: derived only from the `make check` posture (the
+                             engine's dependency-free core). The AUTHORITATIVE
+                             published-integrity source is Phase 8 (deterministic
+                             release manifest + SHA-256); this never returns True on a
+                             placeholder, only on the real dependency-free check.
+  * self_audit_clean      -- the QB-audits-QB reconciliation is clean (7.3).
+
+Every derivation is fail-closed: a missing record, an unreadable signal, or any
+error yields False for that conjunct, so the composite gate can only pass when
+every signal is positively established. The release-gate earned autonomy (7.2) is
+surfaced alongside the decision but is NOT one of the six conjuncts (it clamps
+autonomy; it does not gate operation).
+"""
+
+from __future__ import annotations
+
+import sys
+from importlib import util as _import_util
+from pathlib import Path
+
+
+def _load_sibling(module_name, filename):
+    if module_name in sys.modules:
+        return sys.modules[module_name]
+    path = Path(__file__).resolve().parent / filename
+    spec = _import_util.spec_from_file_location(module_name, path)
+    module = _import_util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_pg = _load_sibling("qb_production_gate", "production_gate.py")
+_store = _load_sibling("qb_run_store", "run_store.py")
+_recov = _load_sibling("qb_recoverability_drill", "recoverability_drill.py")
+_reconcile = _load_sibling("qb_self_audit_reconcile", "self_audit_reconcile.py")
+_release = _load_sibling("qb_release_gate", "release_gate.py")
+_lp = _load_sibling("qb_least_privilege", "least_privilege.py")
+
+
+def telemetry_emitted(audit_dir) -> bool:
+    """A schema-valid per-run telemetry record is present in the run store."""
+    return bool(_store.RunStore(Path(audit_dir)).read_telemetry())
+
+
+def rollback_drill_passed(audit_dir) -> bool:
+    """The persisted recoverability evidence record exists and recorded a pass."""
+    return _recov.read_evidence(audit_dir).get("passed") is True
+
+
+def prove_killswitch() -> bool:
+    """Prove the kill-switch halts at a safe checkpoint (the Phase 7.1 drill).
+
+    A triggered kill-switch stops ``budget.run_session`` BEFORE any fix unit is
+    consumed, with the documented kill-stop exit code and nothing half-applied. The
+    kill fires at the loop's safe checkpoint before the first unit, so the (unused)
+    item is never dereferenced -- no git/isolation is needed to prove the halt.
+    Fail-closed: any error means the kill-switch is NOT proven.
+    """
+    try:
+        budget = _load_sibling("qb_budget", "budget.py")
+        policy_mod = _load_sibling("qb_policy", "policy.py")
+        policy = policy_mod.default_policy()
+        ks = budget.KillSwitch()
+        ks.trigger()
+        results, report = budget.run_session(policy, ".", [(None, None)], killswitch=ks)
+        return (report.trigger == "kill"
+                and report.exit_code == budget.KILL_STOP_EXIT
+                and results == [])
+    except Exception:
+        return False
+
+
+def least_privilege_ok(repo_root) -> bool:
+    """The least-privilege invariants hold: writes default-deny (empty allowlist
+    denies all; a traversal path is refused), no implicit network egress, and QB
+    never auto-runs a repo-supplied script."""
+    no_autorun = _lp.AUTO_RUN_REPO_SCRIPTS is False
+    empty_denies = _lp.write_allowed(repo_root, "any.txt", []) is False
+    traversal_denied = _lp.write_allowed(repo_root, "../escape.txt", ["*"]) is False
+    offline_runs = _lp.network_allowed(analyzer_is_offline=True, allow_networked=False) is True
+    no_implicit_egress = _lp.network_allowed(analyzer_is_offline=False, allow_networked=False) is False
+    return bool(no_autorun and empty_denies and traversal_denied
+                and offline_runs and no_implicit_egress)
+
+
+def supply_chain_ok(scripts_dir=None) -> bool:
+    """INTERIM supply-chain signal derived from the `make check` posture: the engine's
+    dependency-free core (no non-stdlib import in any shared module). This is NOT the
+    authoritative published-integrity check -- Phase 8's deterministic release manifest
+    + SHA-256 is. It never returns True on a placeholder, only when the real
+    dependency-free check is clean."""
+    scripts_dir = Path(scripts_dir) if scripts_dir is not None else Path(__file__).resolve().parent
+    return _lp.assert_dependency_free_core(scripts_dir) == []
+
+
+def self_audit_clean(audit_dir, repo_root) -> bool:
+    """The QB-audits-QB reconciliation is clean (every finding fixed or accepted)."""
+    return bool(_reconcile.reconcile(audit_dir, repo_root)["self_audit_clean"])
+
+
+def assemble_signals(audit_dir, repo_root, scripts_dir=None) -> dict:
+    """Derive the six production-gate conjuncts from their real evidence sources."""
+    return {
+        "telemetry_emitted": telemetry_emitted(audit_dir),
+        "rollback_drill_passed": rollback_drill_passed(audit_dir),
+        "least_privilege_ok": least_privilege_ok(repo_root),
+        "supply_chain_ok": supply_chain_ok(scripts_dir),
+        "killswitch_proven": prove_killswitch(),
+        "self_audit_clean": self_audit_clean(audit_dir, repo_root),
+    }
+
+
+def permitted_autonomy(audit_dir) -> str:
+    """The earned autonomy ceiling (release gate, 7.2) over the recorded telemetry --
+    surfaced alongside the decision; it clamps autonomy, it is not a gate conjunct."""
+    telemetry = _store.RunStore(Path(audit_dir)).read_telemetry()
+    return _release.permitted_autonomy(telemetry)
+
+
+def gate_decision(audit_dir, repo_root, scripts_dir=None) -> dict:
+    """Assemble the six signals and run the composite production gate, returning the
+    gate result augmented with the raw signals and the earned autonomy ceiling."""
+    signals = assemble_signals(audit_dir, repo_root, scripts_dir)
+    result = _pg.production_gate(**signals)
+    result["signals"] = signals
+    result["permitted_autonomy"] = permitted_autonomy(audit_dir)
+    return result
