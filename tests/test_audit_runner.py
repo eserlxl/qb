@@ -10,6 +10,7 @@ audited tree.
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
 import subprocess
 import sys
@@ -164,6 +165,32 @@ class AuditRunnerTests(unittest.TestCase):
             findings = self.runner.run_audit(repo, output_dir=out)["findings"]
             keys = [self.runner._sort_key(f) for f in findings]
             self.assertEqual(keys, sorted(keys), "findings must be emitted in total order")
+
+    def test_command_suppression_report_is_written_to_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            (repo / "suppressed.py").write_text(
+                "import os\n"
+                "# qb-ignore: system-shell-call fixture exercises a documented false-positive control\n"
+                "os.system(cmd)\n",
+                encoding="utf-8",
+            )
+            registry = self.runner.AnalyzerRegistry()
+            registry.register(self.runner.CommandInjectionAnalyzer())
+            out = Path(d) / "out" / self.runner.OUTPUT_DIR_NAME
+            result = self.runner.run_audit(repo, registry=registry, output_dir=out)
+
+            expected = [{
+                "id": "command-injection",
+                "rule": "system-shell-call",
+                "evidence": "suppressed.py:3",
+                "reason": "fixture exercises a documented false-positive control",
+            }]
+            self.assertEqual(result["findings"], [])
+            self.assertEqual(result["summary"]["analyzers_suppressed"], expected)
+            summary = json.loads((out / self.runner.SUMMARY_FILENAME).read_text(encoding="utf-8"))
+            self.assertEqual(summary["analyzers_suppressed"], expected)
 
     def test_offline_by_default_skips_networked_analyzer(self) -> None:
         with tempfile.TemporaryDirectory() as d:

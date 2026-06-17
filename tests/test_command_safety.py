@@ -157,6 +157,24 @@ class CommandSafetyTests(unittest.TestCase):
             self.assertEqual(findings, [], f"safe code must not trigger findings: "
                                             f"{[(f.category, f.evidence) for f in findings]}")
 
+    def test_qb_ignore_suppresses_and_records_reason(self) -> None:
+        text = "\n".join([
+            "import os",
+            "# qb-ignore: system-shell-call fixture exercises a documented false-positive control",
+            "os.system(cmd)",
+            "",
+        ])
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "suppressed.py").write_text(text, encoding="utf-8")
+            analyzer = self.cs.CommandInjectionAnalyzer()
+            findings = analyzer.analyze(d, None)
+        self.assertEqual(findings, [])
+        self.assertEqual(analyzer.last_suppression_report, [{
+            "rule": "system-shell-call",
+            "evidence": "suppressed.py:3",
+            "reason": "fixture exercises a documented false-positive control",
+        }])
+
     def test_analyzer_is_read_only(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             (Path(d) / "bad.py").write_text(_UNSAFE, encoding="utf-8")

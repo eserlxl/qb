@@ -73,6 +73,7 @@ AnalyzerDescriptor = _ai.AnalyzerDescriptor
 Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
 iter_repo_files = _core.iter_repo_files
+suppression_reason_for_line = _core.suppression_reason_for_line
 
 
 # --- Structured argv convention -----------------------------------------------
@@ -325,9 +326,13 @@ class CommandInjectionAnalyzer:
         offline=True,
     )
 
+    def __init__(self) -> None:
+        self.last_suppression_report: list[dict[str, str]] = []
+
     def analyze(self, repo_root: str, config) -> list:
         root = Path(repo_root).resolve()
         findings: list = []
+        self.last_suppression_report = []
         for path in iter_repo_files(root):
             try:
                 text = path.read_text(encoding="utf-8")
@@ -336,6 +341,14 @@ class CommandInjectionAnalyzer:
             rel = path.relative_to(root).as_posix()
             for rule_key, category, severity, confidence, line in scan_text_for_command_risks(text):
                 evidence = f"{rel}:{line}"
+                suppressed_reason = suppression_reason_for_line(text, line, rule_key)
+                if suppressed_reason:
+                    self.last_suppression_report.append({
+                        "rule": rule_key,
+                        "evidence": evidence,
+                        "reason": suppressed_reason,
+                    })
+                    continue
                 findings.append(
                     Finding(
                         id=compute_finding_id(category, evidence, rule_key),

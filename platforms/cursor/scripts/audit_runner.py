@@ -128,6 +128,7 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
     findings: list = []
     analyzers_run: list[str] = []
     analyzers_skipped: list[dict] = []
+    analyzers_suppressed: list[dict] = []
 
     # Offline-by-default: networked analyzers present but not enabled are skipped.
     for analyzer in registry.analyzers():
@@ -145,6 +146,10 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
                 {"id": analyzer.descriptor.id, "reason": f"{type(exc).__name__}: {exc}"}
             )
             continue
+        for suppressed in getattr(analyzer, "last_suppression_report", []):
+            record = dict(suppressed)
+            record["id"] = analyzer.descriptor.id
+            analyzers_suppressed.append(record)
         findings.extend(result)
         analyzers_run.append(analyzer.descriptor.id)
 
@@ -167,6 +172,10 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
         "category_counts": category_counts,
         "analyzers_run": sorted(analyzers_run),
         "analyzers_skipped": sorted(analyzers_skipped, key=lambda item: item["id"]),
+        "analyzers_suppressed": sorted(
+            analyzers_suppressed,
+            key=lambda item: (item["id"], item.get("evidence", ""), item.get("rule", "")),
+        ),
         "allow_networked": config.allow_networked,
     }
     (output_dir / SUMMARY_FILENAME).write_text(

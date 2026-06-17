@@ -84,6 +84,25 @@ def confidence_for_rule(analyzer_id: str, rule_kind: str) -> str:
     except KeyError as exc:
         raise KeyError(f"unknown confidence policy: {analyzer_id}:{rule_kind}") from exc
 
+
+_SUPPRESSION_RE = re.compile(r"\bqb-ignore:\s*(?P<rule>[A-Za-z0-9_.:-]+|\*)\s+(?P<reason>.+)")
+
+
+def suppression_reason_for_line(text: str, line_number: int, rule_key: str) -> str | None:
+    """Return the required reason for a matching same-line or prior-line suppression."""
+    lines = text.splitlines()
+    for candidate in (line_number, line_number - 1):
+        if candidate < 1 or candidate > len(lines):
+            continue
+        match = _SUPPRESSION_RE.search(lines[candidate - 1])
+        if not match:
+            continue
+        if match.group("rule") not in (rule_key, "*"):
+            continue
+        reason = match.group("reason").strip(" -:")
+        return reason or None
+    return None
+
 # Directories QB must never audit as repository implementation source.
 _TOOL_OWNED_SCAN_DIRS = frozenset({
     ".git",
