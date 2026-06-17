@@ -1,5 +1,16 @@
 name: validate
 
+# Least-privilege: the validation job only reads the repo and runs `make check`;
+# it never writes contents, packages, or any other scope, and performs no push.
+permissions:
+  contents: read
+
+# Cancel an in-progress validation when a newer commit lands on the same ref, so
+# stale runs do not pile up.
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -8,10 +19,13 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Actions are tag-pinned; a future hardening step may pin to full commit SHAs.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.12"
       - name: Run monorepo validation
         run: make check
