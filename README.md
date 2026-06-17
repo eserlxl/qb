@@ -120,6 +120,10 @@ repository context.
 | A2 | Promote only verified fixes that satisfy policy and rollback requirements. |
 | A3 | A2 plus a reviewable delivery path; commit, push, and PR actions remain opt-in. |
 
+A2/A3 fix verification runs **contained** (see the confinement note below); when
+execution confinement is unavailable the effective level is **capped at A1** and
+the clamp reason is recorded in the run result and telemetry.
+
 Proposed fixes are tried in disposable git **write isolation** (a throwaway
 worktree; the target working tree is never touched until a fix verifies and is
 promoted). Analyzed-code verification additionally runs under **process

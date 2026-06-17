@@ -25,6 +25,14 @@ The maximum level a context may use is earned, not chosen: the release gates
 (`release_gate.permitted_autonomy`) read the run's telemetry and deny auto-apply
 (cap at A1) unless precision ≥ floor **and** every kept fix verified green.
 
+The effective level is also capped by **execution-sandbox availability**. A2/A3
+fix verification runs **contained** under process confinement; when the required
+control cannot be established, autonomy is clamped to A1 (no A2/A3 apply) rather
+than running analyzed-code verification unconfined, and the run records a clamp
+reason (`sandbox unavailable -> autonomy capped to A1`) in the result and
+telemetry. The effective level is the **most restrictive** of the declared level,
+the telemetry-earned ceiling, and this sandbox clamp.
+
 ## Start
 
 - **Headless / CI:** `python3 scripts/qb_headless.py --root <repo> --out QB-Audit`
