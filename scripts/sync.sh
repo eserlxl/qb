@@ -130,6 +130,11 @@ MAP=(
   "scripts/audit_runner.py|platforms/cursor/scripts/audit_runner.py"
   "scripts/audit_runner.py|platforms/codex/plugins/qb/skills/qb/scripts/audit_runner.py"
 
+  # shared/scripts/precision_harness.py
+  "scripts/precision_harness.py|platforms/claude-code/scripts/precision_harness.py"
+  "scripts/precision_harness.py|platforms/cursor/scripts/precision_harness.py"
+  "scripts/precision_harness.py|platforms/codex/plugins/qb/skills/qb/scripts/precision_harness.py"
+
   # shared/scripts/command_safety.py
   "scripts/command_safety.py|platforms/claude-code/scripts/command_safety.py"
   "scripts/command_safety.py|platforms/cursor/scripts/command_safety.py"
