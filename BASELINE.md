@@ -42,3 +42,18 @@ python3 -m unittest discover -s tests -v
 
 A run reporting fewer than 44 modules or fewer than 324 passing functions, or any
 failure or error, is a regression against this reference.
+
+## Baseline preconditions
+
+The baseline reproduces on a stock toolchain so it stays machine-independent:
+
+- **Python 3, standard library only.** The gate of record invokes
+  `python3 -m unittest discover -s tests` plus the bash/coreutils host validators;
+  no third-party Python package is required for a green run.
+- **`pyflakes` and `ruff` are optional and dormant when absent.** They enrich the
+  `correctness` and `quality` analyzers when already installed, but `make check`
+  does not require them and is green without them. Their absence is a coverage
+  caveat (recorded below), not a baseline failure.
+
+Because the gate is stdlib-only, a green `make check` on one machine reproduces on
+another without installing the optional analyzers.
