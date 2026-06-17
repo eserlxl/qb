@@ -1,0 +1,10 @@
+{
+  "fixture": "example-case",
+  "expected_findings": [
+    {
+      "category": "injection",
+      "evidence": "app.py:2",
+      "rule_key": "system-shell-call"
+    }
+  ]
+}
