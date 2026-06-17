@@ -97,8 +97,7 @@ explicit, separate opt-in.
   confidence below floor, path in denylist): the action is blocked, not warned;
   the finding is reported for manual handling.
 - **Release-gate denial** (precision below floor or a fix-safety breach): autonomy
-  is capped at A1 for that context. Improve precision (tune analyzers, accept
-  false positives in the register) before requesting A2.
+  is capped at A1 for that context. The engine reports the gate reasons `precision-below-floor` and `fix-safety-breach` (the verbatim tokens `release_gate.py` returns), so improve precision (tune analyzers, accept false positives in the register) before requesting A2.
 
 ## From findings to a fix plan
 
