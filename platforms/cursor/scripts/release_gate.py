@@ -127,3 +127,17 @@ def permitted_autonomy(telemetry: dict, floor: float = PRECISION_FLOOR) -> str:
     if precision_ok and safety_ok:
         return "A2"
     return "A1"
+
+
+_AUTONOMY_RANK = {"A0": 0, "A1": 1, "A2": 2, "A3": 3}
+
+
+def most_restrictive(*levels) -> str:
+    """The most restrictive (lowest-rank) of the given autonomy levels.
+
+    Composes the independent autonomy sources of truth -- the declared level, the
+    telemetry-earned ceiling (``permitted_autonomy``), and the sandbox-availability
+    clamp -- into one effective level so the lowest always wins and no single source
+    can raise the effective autonomy above another's cap.
+    """
+    return min(levels, key=lambda level: _AUTONOMY_RANK.get(level, 0))

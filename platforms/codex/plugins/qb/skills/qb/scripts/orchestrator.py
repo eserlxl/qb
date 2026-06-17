@@ -146,7 +146,9 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
     # is attempted (a deterministic safe degradation, not attempt-and-revert).
     sandbox_available = "process_group" in _cs.available_confinement_controls()
     sandbox_ceiling = _policy.sandbox_autonomy_ceiling(sandbox_available=sandbox_available)
-    level = _clamp_level(_clamp_level(declared, earned), sandbox_ceiling)
+    # Effective level = the most restrictive of declared, earned ceiling, and the
+    # sandbox-availability clamp (the lowest always wins).
+    level = _release.most_restrictive(declared, earned, sandbox_ceiling)
     finding = fix_plan.finding
     action = ActionDescriptor(
         action_kind="fix",
