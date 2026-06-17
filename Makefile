@@ -1,7 +1,15 @@
-.PHONY: sync check test export-sanitized
+.PHONY: sync check test baseline export-sanitized
 
 sync:
 	bash scripts/sync.sh
+
+# baseline -- the full regression net in one invocation: materialize the shared
+# core into the host packages, then run byte-equality + per-host validation +
+# the full test discovery. Reuses the sync and check recipes (no new behavior).
+# Recorded in BASELINE.md as the low-friction entry point for the gate of record.
+baseline:
+	$(MAKE) sync
+	$(MAKE) check
 
 check:
 	bash scripts/sync.sh --check
