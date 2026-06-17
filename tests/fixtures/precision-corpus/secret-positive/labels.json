@@ -1,0 +1,10 @@
+{
+  "fixture": "secret-positive",
+  "expected_findings": [
+    {
+      "category": "secret",
+      "evidence": "config.py:1",
+      "rule_key": "github_legacy_pat"
+    }
+  ]
+}
