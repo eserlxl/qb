@@ -341,7 +341,9 @@ workflow behind the badge above — is **disabled on the account**, so a passing
 local `make check` / `scripts/validate.sh`, not the cloud badge, is the
 authoritative signal. The committed [BASELINE.md](BASELINE.md) records the
 gate-of-record run (command, exit status, version, and date) so any deviation
-reads as a regression.
+reads as a regression. The operator policy — the one authoritative gate and the
+exact command to satisfy before merge or push — is stated in
+[RUNBOOK.md → Gate of record](RUNBOOK.md#gate-of-record).
 
 ### Documentation consistency
 

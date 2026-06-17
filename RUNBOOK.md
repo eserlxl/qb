@@ -12,6 +12,28 @@ The local gate of record and its recorded verified floor (the `make check` run,
 expected exit status, and test counts) live in the committed
 [BASELINE.md](BASELINE.md); compare against it to recognize a regression.
 
+## Gate of record
+
+QB has **one authoritative quality gate**: a green **local** `make check` on a clean
+working tree. Cloud CI (the GitHub Actions `validate.yml` workflow behind the README
+badge) is **disabled on the account**, so the cloud badge is *not* the gate — the
+local run is.
+
+**Required before every merge or push:** run
+
+```bash
+make check          # for a shared/ change: make sync && make check
+```
+
+and proceed only when it exits `0`. `make check` composes
+`bash scripts/sync.sh --check` (platform copies byte-equal to `shared/`, every
+shared file mapped into the fan-out), the four per-host
+`platforms/<host>/scripts/validate.sh` validators, and
+`python3 -m unittest discover -s tests`. This gate performs **no networked mutation
+and no auto-push** — it only verifies; delivery stays a separate, explicit opt-in
+(see the A3 note above). The recorded verified floor (command, exit status, version,
+date, and per-guard mapping) lives in [BASELINE.md](BASELINE.md).
+
 ## Autonomy levels
 
 | Level | Behavior |
