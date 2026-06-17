@@ -59,6 +59,29 @@ A companion rule governs repo-supplied scripts: `AUTO_RUN_REPO_SCRIPTS` is
 `False`, and `may_run_repo_script(sandboxed_authorization=...)` must permit a
 repo-provided script before it is ever executed.
 
+## Required-vs-optional control matrix
+
+Grounded in `available_confinement_controls()` and the frozen
+`SUPPORTED_CONFINEMENT_CONTROLS` set, the controls divide into one **required**
+floor and one **best-effort** hardening:
+
+| Control | POSIX host | Non-POSIX host | Role |
+|---|---|---|---|
+| `process_group` | **Required** — `available_confinement_controls()` reports it, and it is the default `ConfinementSpec.require` floor | Not establishable (`available_confinement_controls()` returns `()`) | The hard confinement floor: its absence is fail-closed. |
+| `resource_limits` | Best-effort — applied when the `resource` module is present | Not establishable | Conservative hardening (`RLIMIT_CORE = 0`); never the sole requirement. |
+
+Per-host behavior:
+
+- **POSIX** with `process_group` available: confinement is established and the
+  command runs contained.
+- **POSIX** missing a required control, or **non-POSIX** (no controls): the
+  required `process_group` floor cannot be met, so `run_command` raises
+  `ConfinementUnavailable` before spawn. QB then clamps effective autonomy below
+  apply-verified (Phase 1.4) rather than running analyzed code unconfined.
+
+Only controls in `SUPPORTED_CONFINEMENT_CONTROLS` may be required; requesting any
+other control is itself a fail-closed `ConfinementUnavailable`.
+
 ## Status
 
 Confine-by-default at the command layer is enforced through Phase 1.2–1.6: an
