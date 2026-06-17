@@ -15,6 +15,13 @@ Those producers emit findings in the frozen categories from
 `shared/scripts/finding_schema.py`: `secret`, `injection`, `path-traversal`,
 `dependency`, `quality`, `correctness`, `license`, and `config`.
 
+## Precision-to-gate feed
+
+For analyzer coverage evaluation runs, measured precision populates the precision_estimate telemetry field consumed by `release_gate.precision_gate`.
+The value is derived by `telemetry.precision_estimate` as `kept / (kept +
+reverted)` and compared against `release_gate.PRECISION_FLOOR`; when no fixes
+were attempted, the telemetry field remains `None` and the gate fails closed.
+
 ## Current coverage statement
 
 - `SecretHygieneAnalyzer` covers secret-shaped values in the `secret` category.
