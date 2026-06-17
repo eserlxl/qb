@@ -198,3 +198,54 @@ def run_session(policy, repo_root, items, *, killswitch=None, run_id="session",
         cost=telemetry_cost(meter),
     )
     return results, report
+
+
+# --- Phase 4.4: per-ceiling budget raise-path guidance -----------------------
+# Each budget ceiling that can halt a run (a ``StopReport.trigger``) maps to a
+# documented raise-path: the evidence that justifies raising it, a conservative
+# step size, and the guardrail that must hold first. ``completed`` / ``kill`` are
+# not budget ceilings, so they carry no raise-path (``raise_path`` returns None).
+# This mapping is advisory documentation surfaced to operators; applying a raise
+# is done only by editing ``policy.budgets`` -- never automatically (Phase 4.4
+# fail-closed raise discipline).
+RAISE_PATH_FIELDS = ("ceiling", "evidence", "step", "guardrail")
+
+RAISE_PATHS = {
+    "max_findings": {
+        "ceiling": "max_findings",
+        "evidence": "findings_considered reached max_findings with findings still unprocessed",
+        "step": "raise policy.budgets.max_findings by one increment for the next run",
+        "guardrail": "triage P0/P1 first -- a wider finding budget broadens scope, not fix depth",
+    },
+    "max_fixes": {
+        "ceiling": "max_fixes",
+        "evidence": "fixes_applied reached max_fixes while verified fixes remained queued",
+        "step": "raise policy.budgets.max_fixes by one increment for the next run",
+        "guardrail": "only when precision_estimate >= release_gate.PRECISION_FLOOR and fix_safety_ok",
+    },
+    "max_iterations": {
+        "ceiling": "max_iterations",
+        "evidence": "orchestration iterations reached max_iterations before the queue drained",
+        "step": "raise policy.budgets.max_iterations by one increment for the next run",
+        "guardrail": "confirm iterations are productive, not looping on the same finding",
+    },
+    "max_wall_time": {
+        "ceiling": "max_wall_time",
+        "evidence": "the run halted at max_wall_seconds with work still queued",
+        "step": "raise policy.budgets.max_wall_seconds (e.g. +50%) for the next run",
+        "guardrail": "confirm the run was making progress (fixes kept), not spinning",
+    },
+    "max_tokens": {
+        "ceiling": "max_tokens",
+        "evidence": "token spend reached max_tokens before the run completed",
+        "step": "raise policy.budgets.max_tokens for the next run",
+        "guardrail": "confirm token use is proportional to fixes kept, not waste",
+    },
+}
+
+
+def raise_path(trigger: str):
+    """Return the documented raise-path for a budget-ceiling ``StopReport.trigger``,
+    or ``None`` for a non-ceiling trigger (``completed`` / ``kill``). Advisory only --
+    it reads nothing and mutates nothing."""
+    return RAISE_PATHS.get(trigger)
