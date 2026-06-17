@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -78,6 +79,35 @@ class TelemetryAggregateTests(unittest.TestCase):
         self.assertEqual([run["run_id"] for run in updated["runs"]], ["run-1", "run-2"])
         self.assertEqual(updated["runs"][0]["action"]["fixes_reverted"], 1)
         self.assertEqual(updated["runs"][1]["action"]["fixes_kept"], 1)
+
+    def test_append_or_update_redacts_persisted_fields(self) -> None:
+        token = "sk-" + ("B" * 24)
+        record = self._record("run-clean")
+        record["run_id"] = f"run-{token}"
+        record["cost"]["tokens"] = f"tokens-{token}"
+
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / self.aggregate.AGGREGATE_TELEMETRY_FILENAME
+            updated = self.aggregate.append_or_update(path, record)
+            persisted = path.read_text(encoding="utf-8")
+
+        self.assertNotIn(token, persisted)
+        self.assertIn("<redacted>", persisted)
+        self.assertEqual(updated["runs"][0]["run_id"], "run-<redacted>")
+        self.assertEqual(updated["runs"][0]["cost"]["tokens"], "tokens-<redacted>")
+
+    def test_read_aggregate_fails_closed_for_corrupt_or_wrong_version(self) -> None:
+        empty = self.aggregate.build_aggregate([])
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / self.aggregate.AGGREGATE_TELEMETRY_FILENAME
+            path.write_text("{not-json", encoding="utf-8")
+            self.assertEqual(self.aggregate.read_aggregate(path), empty)
+
+            path.write_text(
+                json.dumps({"schema_version": 999, "runs": [self._record("old")]}),
+                encoding="utf-8",
+            )
+            self.assertEqual(self.aggregate.read_aggregate(path), empty)
 
 
 if __name__ == "__main__":
