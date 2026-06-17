@@ -32,7 +32,9 @@ shared file mapped into the fan-out), the four per-host
 `python3 -m unittest discover -s tests`. This gate performs **no networked mutation
 and no auto-push** — it only verifies; delivery stays a separate, explicit opt-in
 (see the A3 note above). The recorded verified floor (command, exit status, version,
-date, and per-guard mapping) lives in [BASELINE.md](BASELINE.md).
+date, and per-guard mapping) lives in [BASELINE.md](BASELINE.md). The contributor
+conventions — the SemVer + Keep-a-Changelog discipline and the sanctioned
+`scripts/bump-version.sh` bump path — live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Optional: enforce the gate locally with a pre-push hook
 
