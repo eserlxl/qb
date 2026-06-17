@@ -163,3 +163,18 @@ misread:
   the README badge) is **disabled on the account**, so a green **local**
   `make check` / `scripts/validate.sh` — not the cloud badge — is the
   authoritative no-regression signal.
+
+## Analyzer-coverage and parity caveats
+
+Two intentional baseline states are recorded as known caveats, not silent gaps:
+
+- **Environment-dependent analyzer coverage.** The `correctness` (`pyflakes`) and
+  `quality` (`ruff`) analyzers are optional and **dormant when their tool is
+  absent**: they enrich coverage where the tool already exists but are not required
+  for a green `make check`. Coverage therefore depends on the local environment.
+  *Addressed in Phase 2 (analyzer coverage).*
+- **Antigravity planning-only parity asymmetry.** The Antigravity package is
+  deliberately planning-only: it ships no audit/harden engine and is **not** a
+  `sync.sh` destination, so it does not carry the engine analyzers the other three
+  hosts do. This is an intended asymmetry, not a defect.
+  *Addressed in Phase 5 (multi-host parity).*
