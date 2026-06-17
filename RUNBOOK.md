@@ -52,6 +52,18 @@ into `.git/hooks/pre-push`, so a red gate blocks the push. Nothing installs it
 automatically, it performs **no network access and no push**, and it writes only
 inside this repo's `.git/hooks/`.
 
+### Verify a sanitized export
+
+`make export-sanitized` writes `QB-sanitized.zip` plus a `QB-sanitized.manifest` — a
+deterministic SHA-256 file list of the tracked tree with the root VERSION. Verify a
+built tree against its manifest with:
+
+```bash
+python3 scripts/release-manifest.py --check --output QB-sanitized.manifest
+```
+
+It exits `0` only when the tree still matches the manifest.
+
 ## Autonomy levels
 
 | Level | Behavior |

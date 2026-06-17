@@ -48,5 +48,11 @@ self-audit:
 release-manifest:
 	python3 scripts/release-manifest.py
 
+# export-sanitized -- ship the git-tracked tree as a zip and generate its
+# release-integrity manifest (SHA-256 file list + VERSION) alongside. Run on a clean
+# tree so HEAD (the archive) equals the worktree the manifest inventories. Verify the
+# built tree with: python3 scripts/release-manifest.py --check --output QB-sanitized.manifest
 export-sanitized:
 	git archive --format=zip --output QB-sanitized.zip HEAD
+	python3 scripts/release-manifest.py --output QB-sanitized.manifest
+	@echo "export-sanitized: wrote QB-sanitized.zip + QB-sanitized.manifest"

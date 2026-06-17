@@ -31,6 +31,7 @@ build/
 dist/
 QB-sanitized.zip
 *-sanitized.zip
+QB-sanitized.manifest
 
 # Editor / OS noise
 .idea/
