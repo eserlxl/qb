@@ -72,6 +72,40 @@ class CommandSafetyTests(unittest.TestCase):
     def test_no_auto_run_repo_scripts_rule(self) -> None:
         self.assertFalse(self.cs.AUTO_RUN_REPO_SCRIPTS)
 
+    # --- confine-by-default -----------------------------------------------
+    def test_run_command_confines_by_default_when_available(self) -> None:
+        # On a host with the required control, an unspecified run_command confines
+        # by default (no caller has to opt in to the safe path).
+        if "process_group" not in self.cs.available_confinement_controls():
+            self.skipTest("process confinement unavailable on this host")
+        completed = self.cs.run_command([sys.executable, "-c", ""])
+        self.assertTrue(completed.qb_confinement["enabled"])
+        self.assertIn("process_group", completed.qb_confinement["controls"])
+        self.assertIsNone(completed.qb_confinement["opt_out_reason"])
+        self.assertEqual(completed.returncode, 0)
+
+    def test_run_command_fails_closed_when_required_control_missing(self) -> None:
+        # Simulate a host lacking the required process_group control: the default
+        # confinement must refuse to run (ConfinementUnavailable) BEFORE any child
+        # spawns, never silently fall back to an unconfined run.
+        original = self.cs.available_confinement_controls
+        self.cs.available_confinement_controls = lambda: ()
+        try:
+            with self.assertRaises(self.cs.ConfinementUnavailable):
+                self.cs.run_command([sys.executable, "-c", "raise SystemExit('should-not-spawn')"])
+        finally:
+            self.cs.available_confinement_controls = original
+
+    def test_explicit_unconfined_opt_out_runs_uncontained_with_reason(self) -> None:
+        completed = self.cs.run_command(
+            [sys.executable, "-c", ""],
+            confinement=self.cs.unconfined("trusted internal command"),
+        )
+        self.assertFalse(completed.qb_confinement["enabled"])
+        self.assertEqual(completed.qb_confinement["controls"], ())
+        self.assertEqual(completed.qb_confinement["opt_out_reason"], "trusted internal command")
+        self.assertEqual(completed.returncode, 0)
+
     # --- path containment -------------------------------------------------
     def test_path_containment_accepts_within_and_rejects_escape(self) -> None:
         with tempfile.TemporaryDirectory() as d:
