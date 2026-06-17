@@ -135,6 +135,40 @@ class BudgetTests(unittest.TestCase):
             # tree consistent: nothing half-applied
             self.assertEqual((repo / "style.txt").read_text(), "messy\n")
 
+    def test_kill_switch_mid_run_never_bisects_a_fix(self) -> None:
+        # Recoverability (Phase 7.1): a kill-switch that fires BETWEEN atomic fix
+        # units stops at the safe checkpoint -- the in-flight unit is processed to a
+        # terminal outcome and the NEXT unit never begins, so no fix is half-applied.
+        class _KillAfter(self.budget.KillSwitch):
+            def __init__(self, after: int) -> None:
+                super().__init__()
+                self._after = after
+                self._polls = 0
+
+            def triggered(self) -> bool:
+                fired = self._polls >= self._after
+                self._polls += 1
+                return fired
+
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _build_fixture(repo)
+            ks = _KillAfter(after=1)  # allow exactly one unit, then stop between units
+            results, report = self.budget.run_session(
+                self._policy({"max_fixes": 10}), repo, self._items(repo, 3), killswitch=ks)
+            self.assertEqual(report.trigger, "kill")
+            self.assertEqual(report.exit_code, self.budget.KILL_STOP_EXIT)
+            # Stopped at the safe checkpoint between units: exactly one unit ran and
+            # the next never started -- the run did not bisect a fix mid-application.
+            self.assertEqual(len(results), 1)
+            self.assertEqual(report.findings_considered, 1)
+            # The one in-flight unit reached a terminal outcome, never a partial state.
+            self.assertIn(results[0]["outcome"], {"kept", "reverted", "blocked", "report-only"})
+            # Tree consistent: at the earned A1 ceiling nothing is promoted, so the
+            # working tree is byte-identical to its verified checkpoint (the fully
+            # reverted branch of the keep/revert boundary) -- no half-applied residue.
+            self.assertEqual((repo / "style.txt").read_text(), "messy\n")
+
     def test_meter_token_ceiling(self) -> None:
         budget = self.budget.Budget(max_tokens=100)
         meter = self.budget.BudgetMeter(budget)
