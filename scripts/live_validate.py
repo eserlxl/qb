@@ -60,6 +60,9 @@ class CampaignRun:
     def promoted(self) -> list:
         return [p for r in self.results for p in r.get("promoted", [])]
 
+    def changesets(self) -> list:
+        return [r["changeset"] for r in self.results if r.get("changeset")]
+
 
 def _quality_finding():
     ev = _FIX_TARGET + ":1"
