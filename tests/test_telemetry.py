@@ -18,6 +18,7 @@ from tests.qb_monorepo import SHARED_DIR
 
 MODULE_PATH = SHARED_DIR / "scripts/telemetry.py"
 STORE_PATH = SHARED_DIR / "scripts/run_store.py"
+GATE_PATH = SHARED_DIR / "scripts/release_gate.py"
 BUDGET_PATH = SHARED_DIR / "scripts/budget.py"
 POLICY_PATH = SHARED_DIR / "scripts/policy.py"
 FIXER_PATH = SHARED_DIR / "scripts/fixer.py"
@@ -160,6 +161,32 @@ class TelemetryTests(unittest.TestCase):
             run_id="r", autonomy_level="A2", findings=[], evidence=[],
             cost={"wall_ms": 1500, "iterations": 5, "tokens": 0})
         self.assertEqual(supplied["cost"]["tokens"], 0)
+
+    def test_release_gate_and_telemetry_authorization_agree(self) -> None:
+        # Phase 7.2: there must be ONE autonomy decision. release_gate.permitted_autonomy
+        # and telemetry.max_permitted_autonomy mirror the same gate logic, so they must
+        # return the identical level on the same record -- proven across the three
+        # classes the gate distinguishes (passing, below-floor, fix-safety breach).
+        rg = _load("qb_release_gate_for_telemetry_test", GATE_PATH)
+        passing = self.t.build_telemetry(
+            run_id="pass", autonomy_level="A2", findings=[],
+            evidence=[{"outcome": "kept", "after_exit": 0}] * 9
+                     + [{"outcome": "reverted", "after_exit": 1}])
+        below = self.t.build_telemetry(
+            run_id="below", autonomy_level="A2", findings=[],
+            evidence=[{"outcome": "kept", "after_exit": 0}]
+                     + [{"outcome": "reverted", "after_exit": 1}] * 9)
+        breach = self.t.build_telemetry(
+            run_id="breach", autonomy_level="A2", findings=[],
+            evidence=[{"outcome": "kept", "after_exit": 0}] * 8
+                     + [{"outcome": "kept", "after_exit": 3}])
+        self.assertEqual(rg.permitted_autonomy(passing), "A2")
+        self.assertEqual(rg.permitted_autonomy(below), "A1")
+        self.assertEqual(rg.permitted_autonomy(breach), "A1")
+        for rec in (passing, below, breach):
+            self.assertEqual(
+                rg.permitted_autonomy(rec), self.t.max_permitted_autonomy(rec),
+                f"release-gate vs telemetry autonomy diverged on {rec['run_id']}")
 
     def test_precision_estimate(self) -> None:
         self.assertEqual(self.t.precision_estimate(3, 1), 0.75)
