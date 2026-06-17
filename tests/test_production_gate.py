@@ -253,6 +253,29 @@ class ProductionGateSignalsTests(unittest.TestCase):
             self.assertFalse(decision["passed"])
             self.assertEqual(decision["failures"], ["supply_chain_ok"])
 
+    def test_gate_re_evaluates_on_signal_regression(self) -> None:
+        # Phase 7.4: the gate re-evaluates CURRENT signals; it is not a one-time
+        # checkbox. The same context that passes once must fail again when a current
+        # signal regresses between evaluations.
+        scripts = SHARED_DIR / "scripts"
+        with tempfile.TemporaryDirectory() as d:
+            audit, repo = self._all_real_signals(d)
+            first = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            self.assertTrue(first["passed"], first["failures"])
+
+            # Regress a current signal: the rollback drill record now records a failure.
+            (audit / "recoverability.json").write_text(
+                '{"schema_version": 1, "run_id": "r", "passed": false}\n', encoding="utf-8")
+            second = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            self.assertFalse(second["passed"])
+            self.assertIn("rollback_drill_passed", second["failures"])
+
+            # And it recovers on re-evaluation once the signal is healthy again.
+            (audit / "recoverability.json").write_text(
+                '{"schema_version": 1, "run_id": "r", "passed": true}\n', encoding="utf-8")
+            third = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            self.assertTrue(third["passed"], third["failures"])
+
 
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0, "git unavailable")
 class SelfAuditDogfoodTests(unittest.TestCase):
