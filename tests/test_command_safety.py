@@ -106,6 +106,17 @@ class CommandSafetyTests(unittest.TestCase):
         self.assertEqual(completed.qb_confinement["opt_out_reason"], "trusted internal command")
         self.assertEqual(completed.returncode, 0)
 
+    def test_default_confinement_establishes_all_available_controls(self) -> None:
+        # The default spec is best-effort beyond the required floor: every available
+        # supported control (process_group AND resource_limits when present) is
+        # established, not only the required process_group.
+        available = self.cs.available_confinement_controls()
+        if "process_group" not in available:
+            self.skipTest("process confinement unavailable on this host")
+        completed = self.cs.run_command([sys.executable, "-c", ""])
+        for control in available:
+            self.assertIn(control, completed.qb_confinement["controls"])
+
     # --- path containment -------------------------------------------------
     def test_path_containment_accepts_within_and_rejects_escape(self) -> None:
         with tempfile.TemporaryDirectory() as d:

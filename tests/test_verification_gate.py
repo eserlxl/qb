@@ -101,6 +101,27 @@ class VerificationGateTests(unittest.TestCase):
             finally:
                 isolation.teardown()
 
+    def test_live_verification_runs_contained_and_records_controls(self) -> None:
+        # Assert (do not skip) on a host with the required control that the live
+        # verification path confines by default and records the established
+        # confinement controls in the evidence record ("ran contained" is auditable).
+        if "process_group" not in self.gate._cs.available_confinement_controls():
+            self.skipTest("process confinement unavailable on this host")
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_repo(repo)
+            isolation = self._isolation(repo, "contained")
+            try:
+                record = self.gate.gate_fix(
+                    isolation, _plan(_VERIFY),
+                    apply_fn=lambda iso: iso.write_file("flag.txt", "GOOD\n"),
+                )
+                self.assertEqual(record.outcome, "kept")
+                self.assertIn("process_group", record.confinement_controls)
+                self.assertIn("process_group", record.to_dict()["confinement_controls"])
+            finally:
+                isolation.teardown()
+
     def test_failing_fix_is_auto_reverted(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
