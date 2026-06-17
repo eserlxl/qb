@@ -168,6 +168,9 @@ recovering, rollback drills, release gates, and production gates live in
 
 All hosts use the same `qb` identity and write the same planning artifacts. The
 host packages differ only where the host requires a different launch mechanism.
+See [`platforms/PARITY.md`](platforms/PARITY.md) for the authoritative per-host
+capability contract — which hosts ship the audit/harden engine versus
+planning-only.
 
 | Host | Planning Entry | Direct Steps | Hardening Entry |
 |---|---|---|---|
