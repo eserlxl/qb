@@ -202,4 +202,9 @@ The composite decision and the earned-autonomy authorization are persisted redac
 under `QB-Audit/production-gate.json` and `QB-Audit/release-authorization.json`. The
 gate **fails closed**: any single conjunct false denies operation, naming that
 conjunct in `failures`. It **re-evaluates current signals each time** and is never a
-one-time checkbox. A3 remains explicit opt-in regardless.
+one-time checkbox.
+
+A **passing gate authorizes operation, never delivery.** A3 (commit / push / PR)
+stays **explicit opt-in** even when the gate passes: `a3_enabled_by_default` is
+`False` regardless of the gate outcome, so authorizing autonomous operation never
+authorizes auto-delivery — that remains a separate, deliberate opt-in.
