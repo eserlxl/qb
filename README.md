@@ -141,9 +141,10 @@ Together they cover the frozen finding categories `secret`, `injection`,
 `path-traversal`, `dependency`, `quality`, `correctness`, `license`, and
 `config`: secret-shaped values, command injection, dynamic eval, path traversal,
 dependency manifests, lockfiles, CI workflow action pinning, repository license
-state, committed dotenv/config hygiene, and local quality tools such as `ruff`.
-The `correctness` category is produced conditionally by the `pyflakes` adapter
-when `pyflakes` already exists. Advisory enrichment is enabled only via the opt-in allow_networked/register_optional contract.
+state, committed dotenv/config hygiene, and local quality/correctness tools.
+`QualityAnalyzer` findings from `ruff` and `pyflakes` are
+environment-conditional: those adapters run only when the tools already exist.
+Advisory enrichment is enabled only via the opt-in allow_networked/register_optional contract.
 
 Each run writes a fixed store:
 
