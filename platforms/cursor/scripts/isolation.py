@@ -60,13 +60,20 @@ _cs = _load_sibling("qb_command_safety", "command_safety.py")
 run_command = _cs.run_command
 resolve_within = _cs.resolve_within
 
+# QB's own git is a trusted internal operation, not analyzed repo code, so it runs
+# under the sanctioned unconfined opt-out. Confine-by-default targets the analyzed
+# code's verification command; QB's git must keep working even where execution
+# confinement is unavailable, so the engine can open isolation and still reach the
+# sandbox-availability autonomy clamp instead of crashing before it.
+_TRUSTED_GIT = _cs.unconfined("QB internal git operation")
+
 
 class IsolationError(Exception):
     """Raised when isolation cannot be established or restored (fail-closed)."""
 
 
 def _git(repo, *args):
-    return run_command(["git", "-C", str(repo), *args])
+    return run_command(["git", "-C", str(repo), *args], confinement=_TRUSTED_GIT)
 
 
 def _is_git_repo(path) -> bool:

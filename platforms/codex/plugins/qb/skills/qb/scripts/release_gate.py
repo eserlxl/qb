@@ -44,8 +44,15 @@ _telemetry = _load_sibling("qb_telemetry", "telemetry.py")
 PRECISION_FLOOR = _telemetry.PRECISION_FLOOR
 
 
+# QB's own git is a trusted internal operation, not analyzed repo code; it runs
+# under the sanctioned unconfined opt-out so baseline/rollback keep working even
+# where execution confinement is unavailable (confine-by-default targets the
+# analyzed code's verification command, not QB's git).
+_TRUSTED_GIT = _cs.unconfined("QB internal git operation")
+
+
 def _git(repo, *args):
-    return _cs.run_command(["git", "-C", str(repo), *args])
+    return _cs.run_command(["git", "-C", str(repo), *args], confinement=_TRUSTED_GIT)
 
 
 class RollbackError(Exception):
