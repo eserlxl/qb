@@ -97,3 +97,12 @@ If `qb` is not listed:
 - reinstall with `--force` if a partial copy already exists.
 
 Step 2, Step 3, and Step 4 are intentionally handed off as text prompts so you can launch long-running planning, audit, or implementation work explicitly. Step 4 may recommend helper agents/tasks when available, but the parent Antigravity task remains responsible for final artifact writes and summaries.
+
+## Verified install & launch path
+
+- **Source:** Antigravity is **planning-only** and ships no marketplace; install by
+  placing the `skills/qb/` folder under one of the documented Antigravity skills
+  directories.
+- **Launch entrypoint:** `skills/qb/SKILL.md`.
+- **Proven by:** `scripts/validate.sh` (run by `make check`), which fails closed if
+  the launch entrypoint or any required reference is missing.

@@ -71,3 +71,15 @@ confirms the four intake fields (`PROJECT_NAME`, `PROJECT_INTENT`,
 `TARGET_END_STATE`, `KNOWN_CONSTRAINTS`) — auto-derived with a single
 consolidated confirmation on a well-structured repo, or asked in turn
 otherwise — before writing `.qb/main-planning.md`.
+
+## Verified install & launch path
+
+- **Source:** published via the
+  [`eserlxl/claude-marketplace`](https://github.com/eserlxl/claude-marketplace)
+  aggregator (a `git-subdir` source pointing at this package's
+  `.claude-plugin/plugin.json`); local development registers the plugin directory
+  directly.
+- **Launch entrypoint:** `skills/qb-planner/SKILL.md` (with `commands/qb-plan.md`)
+  is what `/qb-plan` runs.
+- **Proven by:** `scripts/validate.sh` (run by `make check`), which fails closed if
+  the manifest, the launch entrypoint, or any required component is missing.

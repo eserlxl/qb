@@ -42,3 +42,12 @@ make check
 
 This validates the manifest, required files, frontmatter, and cross-host residue. Expect a
 final `qb_repo_validation=passed` line.
+
+## Verified install & launch path
+
+- **Source:** the repo-root `.cursor-plugin/marketplace.json` registers `qb` with
+  source `./platforms/cursor`; `platforms/cursor/.cursor-plugin/plugin.json` is the
+  per-plugin manifest.
+- **Launch entrypoint:** `skills/qb-planner/SKILL.md` (with `commands/qb-plan.md`).
+- **Proven by:** `scripts/validate.sh` (run by `make check`), which fails closed if
+  the manifest, the launch entrypoint, or any required component is missing.

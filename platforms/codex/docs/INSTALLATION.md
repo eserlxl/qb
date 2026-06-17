@@ -72,3 +72,14 @@ If `$qb` is not recognized:
 - if installed from a private repository, confirm Codex has GitHub access to that repository.
 
 If Step 2, Step 3, or the gated Step 4 implementation handoff does not run automatically, that is expected. QB prints text-only Goal mode prompts so you can explicitly launch long-running decomposition, audit, or implementation runs. Step 1.5 Assessment is local to the initial planning thread and runs only when the repository has meaningful existing-project evidence.
+
+## Verified install & launch path
+
+- **Source:** the standalone package's `.agents/plugins/marketplace.json` registers
+  `qb` with local source `./plugins/qb`; the repo-root `.agents/plugins/marketplace.json`
+  registers the same package for self-hosting.
+- **Launch entrypoint:** `plugins/qb/skills/qb/SKILL.md` (with
+  `plugins/qb/skills/qb/agents/openai.yaml`).
+- **Proven by:** `scripts/validate.sh` (run by `make check`) plus
+  `tests/test_host_install_paths.py`, which resolves the marketplace source to this
+  package and confirms the launch entrypoint is present.
