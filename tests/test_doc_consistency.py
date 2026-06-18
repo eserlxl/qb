@@ -24,6 +24,7 @@ import re
 import sys
 import unittest
 
+from tests import qb_corpus
 from tests.qb_monorepo import REPO_ROOT, SHARED_DIR, ALL_PACKAGES, ANTIGRAVITY
 
 # Load the engine's registry/schema directly so the expected sets are derived,
@@ -36,7 +37,9 @@ import audit_runner  # noqa: E402  (path set above)
 import accepted_findings  # noqa: E402
 import budget  # noqa: E402
 import finding_schema  # noqa: E402
+import precision_harness  # noqa: E402
 import production_gate  # noqa: E402
+import telemetry  # noqa: E402
 import telemetry_aggregate  # noqa: E402
 import telemetry_trends  # noqa: E402
 
@@ -46,6 +49,7 @@ ROOT_VERSION = REPO_ROOT / "VERSION"
 RUNBOOK = REPO_ROOT / "RUNBOOK.md"
 SECURITY = REPO_ROOT / "SECURITY.md"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
+LIVE_VALIDATION_PROTOCOL = REPO_ROOT / "docs/live-validation-protocol.md"
 
 # Derived sources of truth (computed once, not copied into the test).
 PRODUCER_ANALYZERS = sorted(
@@ -66,6 +70,7 @@ TREND_VERDICTS = sorted({
 AGGREGATE_FILENAME = telemetry_aggregate.AGGREGATE_TELEMETRY_FILENAME
 # RUNBOOK production-gate conjuncts, derived from the gate engine (not hardcoded).
 PRODUCTION_GATE_CHECKS = sorted(production_gate.PRODUCTION_GATE_CHECKS)
+PRECISION_REPORT_KEYS = ("schema_version", "fixtures", "totals", "per_analyzer", "per_category")
 HOST_NAMES = ("Claude Code", "Cursor", "Codex", "Antigravity")
 _VERSION_HEADER = re.compile(r"^## \[([0-9]+\.[0-9]+\.[0-9]+)\]", re.MULTILINE)
 # The shields.io badge: label 'version', the (possibly escaped) message, a
@@ -301,6 +306,16 @@ class DocConsistencyTest(unittest.TestCase):
             accepted_findings.parse_accepted_ids(sample),
             {"QBF-VALID-1", "QBF-VALID-2"},
         )
+
+    def test_live_validation_protocol_matches_precision_contract(self):
+        text = self._read(LIVE_VALIDATION_PROTOCOL)
+        floor = f"PRECISION_FLOOR = {telemetry.PRECISION_FLOOR:.2f}"
+        self.assertIn(floor, text)
+        self.assertIn(f"`== {precision_harness.SCHEMA_VERSION}`", text)
+        for key in PRECISION_REPORT_KEYS:
+            self.assertIn(f"`{key}`", text, f"live protocol omits precision report key {key}")
+        for tag in sorted(qb_corpus.TRUST_TAGS):
+            self.assertIn(f"`{tag}`", text, f"live protocol omits trust tag {tag}")
 
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]

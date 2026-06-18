@@ -96,6 +96,13 @@ campaign that cannot pass the rollback drill does not earn A2.
   documented tolerance; a divergence is recorded as a labelled known gap rather
   than passed silently.
 
+The offline detection precision/recall harness
+(`shared/scripts/precision_harness.py`) produces deterministic JSON with
+`schema_version` (`== 1`), `fixtures`, `totals`, `per_analyzer`, and
+`per_category`. Those detection metrics are separate from telemetry
+`precision_estimate`, which measures fix keep-precision as `kept / (kept +
+reverted)`.
+
 `release_gate.permitted_autonomy` composes the precision gate and the fix-safety
 gate, returning `A2` only when both pass and `A1` otherwise (never defaulting
 open).
