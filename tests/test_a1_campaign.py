@@ -38,9 +38,23 @@ def _git_porcelain(repo: Path) -> str:
                           capture_output=True, text=True).stdout.strip()
 
 
+EXPECTED_CORPUS_LABELS = {
+    "injection_pair": {"injection": 2},
+    "traversal": {"path-traversal": 1},
+    "mixed": {"injection": 2, "path-traversal": 1},
+    "clean": {},
+}
+
+
 @unittest.skipIf(subprocess.run(["git", "--version"], capture_output=True).returncode != 0,
                  "git unavailable")
 class A1CampaignTests(unittest.TestCase):
+    def test_campaign_corpus_label_map_is_deterministic(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repos = qb_corpus.build_corpus(Path(d))
+        self.assertEqual({repo.name: repo.labels for repo in repos}, EXPECTED_CORPUS_LABELS)
+        self.assertTrue(any(labels for labels in EXPECTED_CORPUS_LABELS.values()))
+
     def test_a1_run_writes_schema_versioned_quality_telemetry(self) -> None:
         lv = _driver()
         with tempfile.TemporaryDirectory() as d:
