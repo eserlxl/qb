@@ -32,8 +32,9 @@ python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step3 --s
 python3 <plugin-root>/scripts/validate_planner_docs.py --root . --mode step4
 ```
 
-The validator is read-only. It checks required sections and order, phase folders,
-filename conventions, full-path index references, duplicate numbering, numbering gaps,
+The validator is read-only. It checks required sections, duplicate required headings,
+heading order, phase folders, filename conventions, full-path index references,
+duplicate numbering, numbering gaps,
 missing or unindexed files, length-bounded secret patterns, audit status, and audit
 severity counts.
 
