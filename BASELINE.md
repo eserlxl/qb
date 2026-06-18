@@ -3,8 +3,8 @@
 This is the committed gate-of-record baseline for QB. Cloud CI is disabled on the
 account, so a green **local** `make check` is the authoritative no-regression
 signal (see the README "Continuous integration" section). This document records the
-verified floor every forward phase builds on, so any deviation from it reads as a
-regression rather than an unknown.
+verified baseline every forward phase builds on, so any deviation from it reads
+as a regression rather than an unknown.
 
 ## Gate of record
 
@@ -35,12 +35,12 @@ python3 -m unittest discover -s tests -v
 | Metric | Baseline value |
 |---|---|
 | Test modules (`tests/test_*.py`) | 71 |
-| Test functions | 505 |
+| Test functions | 507 |
 | Failures | 0 |
 | Errors | 0 |
 | Exit status | 0 |
 
-A run reporting anything other than 71 modules or 505 passing test cases, or any
+A run reporting anything other than 71 modules or 507 passing test cases, or any
 failure or error, is a regression against this reference.
 
 ## Baseline preconditions
@@ -73,7 +73,7 @@ localized to one guard.
 | `bash platforms/cursor/scripts/validate.sh` | The Cursor package validates the same per-host contract. |
 | `bash platforms/antigravity/scripts/validate.sh` | The Antigravity (planning-only) package validates its own contract. |
 | `cd platforms/codex && bash scripts/validate.sh` | The Codex package validates the same per-host contract. |
-| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (71 modules / 505 functions) passes. |
+| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (71 modules / 507 functions) passes. |
 
 A red `make check` is diagnosed by re-running the failing sub-step in isolation;
 each command above is self-contained.
@@ -192,7 +192,7 @@ discovery).
 | Version (`VERSION`) | `0.15.0` |
 | Expected `make check` exit status | `0` |
 | Expected test modules | 71 |
-| Expected test functions | 505 |
+| Expected test functions | 507 |
 | Expected failures / errors | 0 / 0 |
 
 Baseline guard set (each individually runnable — see **Guard-to-test mapping**):

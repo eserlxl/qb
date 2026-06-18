@@ -8,8 +8,8 @@ event. It is the human-on-the-loop companion to the engine's fail-closed default
 > autonomous *operation*, never auto-delivery. QB never commits, pushes, opens a
 > PR, or deploys unless you explicitly enable it for that run.
 
-The local gate of record and its recorded verified floor (the `make check` run,
-expected exit status, and test counts) live in the committed
+The local gate of record and its recorded baseline (the `make check` run,
+expected exit status, and exact test counts) live in the committed
 [BASELINE.md](BASELINE.md); compare against it to recognize a regression.
 
 ## Gate of record
@@ -31,8 +31,8 @@ shared file mapped into the fan-out), the four per-host
 `platforms/<host>/scripts/validate.sh` validators, and
 `python3 -m unittest discover -s tests`. This gate performs **no networked mutation
 and no auto-push** — it only verifies; delivery stays a separate, explicit opt-in
-(see the A3 note above). The recorded verified floor (command, exit status, version,
-date, and per-guard mapping) lives in [BASELINE.md](BASELINE.md). The contributor
+(see the A3 note above). The recorded baseline (command, exit status, version,
+date, exact test counts, and per-guard mapping) lives in [BASELINE.md](BASELINE.md). The contributor
 conventions — the SemVer + Keep-a-Changelog discipline and the sanctioned
 `scripts/bump-version.sh` bump path — live in [CONTRIBUTING.md](CONTRIBUTING.md).
 

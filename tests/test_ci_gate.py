@@ -15,6 +15,7 @@ from tests.qb_monorepo import REPO_ROOT
 WORKFLOW = REPO_ROOT / ".github/workflows/validate.yml"
 PRE_PUSH_HOOK = REPO_ROOT / "scripts/hooks/pre-push"
 RUNBOOK = REPO_ROOT / "RUNBOOK.md"
+BASELINE = REPO_ROOT / "BASELINE.md"
 
 
 class CiGateTest(unittest.TestCase):
@@ -36,6 +37,13 @@ class CiGateTest(unittest.TestCase):
         self.assertNotIn("contents: write", text,
                          "validate.yml must not grant contents: write")
 
+    def test_workflow_labels_cloud_ci_as_mirror_not_release_confidence(self):
+        text = self._read(WORKFLOW).lower()
+        self.assertIn("local gate of record", text)
+        self.assertIn("cloud ci is disabled", text)
+        self.assertIn("local `make check`", text)
+        self.assertIn("not release confidence by itself", text)
+
     def test_pre_push_hook_runs_make_check(self):
         # The opt-in local gate (the alternate enforcement path) also runs make check.
         text = self._read(PRE_PUSH_HOOK)
@@ -50,6 +58,17 @@ class CiGateTest(unittest.TestCase):
         section = runbook.split("## Gate of record", 1)[1]
         self.assertIn("make check", section,
                       "the Gate of record section must name 'make check'")
+
+    def test_gate_docs_keep_local_gate_authoritative(self):
+        for path in (RUNBOOK, BASELINE):
+            text = self._read(path).lower()
+            with self.subTest(doc=path.name):
+                self.assertIn("cloud ci", text)
+                self.assertIn("disabled", text)
+                self.assertIn("local", text)
+                self.assertIn("make check", text)
+                self.assertIn("authoritative", text)
+                self.assertRegex(text, r"(not the cloud badge|cloud badge is \*?not\*? the gate)")
 
 
 if __name__ == "__main__":

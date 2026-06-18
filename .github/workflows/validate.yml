@@ -1,5 +1,8 @@
 name: validate
 
+# This workflow mirrors the local gate of record documented in RUNBOOK.md and
+# BASELINE.md. While cloud CI is disabled on the account, local `make check`
+# remains authoritative; this workflow is not release confidence by itself.
 # Least-privilege: the validation job only reads the repo and runs `make check`;
 # it never writes contents, packages, or any other scope, and performs no push.
 permissions:
