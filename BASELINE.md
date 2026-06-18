@@ -52,8 +52,10 @@ The baseline reproduces on a stock toolchain so it stays machine-independent:
   no third-party Python package is required for a green run.
 - **`pyflakes` and `ruff` are optional and dormant when absent.** They enrich the
   `correctness` and `quality` analyzers when already installed, but `make check`
-  does not require them and is green without them. Their absence is a coverage
-  caveat (recorded below), not a baseline failure.
+  does not require them and is green without them. Their absence is recorded in
+  the quality analyzer capability report as `tool-unavailable` with the missing
+  executable name. This is a coverage caveat (recorded below), not a baseline
+  failure.
 
 Because the gate is stdlib-only, a green `make check` on one machine reproduces on
 another without installing the optional analyzers.

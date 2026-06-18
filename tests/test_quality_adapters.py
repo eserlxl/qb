@@ -144,6 +144,7 @@ class QualityAdapterTests(unittest.TestCase):
         skipped = analyzer.last_capability_report["skipped"]
         self.assertEqual(len(skipped), 1)
         self.assertEqual(skipped[0]["adapter"], "missing-tool")
+        self.assertEqual(skipped[0]["executable"], "qb-nonexistent-tool-xyz")
         self.assertEqual(skipped[0]["reason"], "tool-unavailable")
 
     def test_mixed_present_and_absent(self) -> None:
@@ -156,6 +157,10 @@ class QualityAdapterTests(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertEqual(analyzer.last_capability_report["ran"], ["present"])
         self.assertEqual([s["adapter"] for s in analyzer.last_capability_report["skipped"]], ["absent"])
+        self.assertEqual(
+            [s["executable"] for s in analyzer.last_capability_report["skipped"]],
+            ["qb-nonexistent-tool-xyz"],
+        )
 
     def test_conforms_to_interface_and_is_offline(self) -> None:
         analyzer = self.qa.QualityAnalyzer([_stub_adapter(self.qa)])

@@ -152,13 +152,21 @@ class QualityAnalyzer:
 
         for adapter in self.adapters:
             if not adapter.available():
-                report["skipped"].append({"adapter": adapter.name, "reason": "tool-unavailable"})
+                report["skipped"].append({
+                    "adapter": adapter.name,
+                    "executable": adapter.executable,
+                    "reason": "tool-unavailable",
+                })
                 continue
             try:
                 completed = run_command(adapter.build_argv(str(root)), cwd=str(root))
                 diagnostics = adapter.parse(completed.stdout, completed.stderr)
             except Exception as exc:  # fail soft to a recorded skip; never crash the audit
-                report["skipped"].append({"adapter": adapter.name, "reason": f"{type(exc).__name__}: {exc}"})
+                report["skipped"].append({
+                    "adapter": adapter.name,
+                    "executable": adapter.executable,
+                    "reason": f"{type(exc).__name__}: {exc}",
+                })
                 continue
             report["ran"].append(adapter.name)
             for diag in diagnostics:
