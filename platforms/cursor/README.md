@@ -36,7 +36,7 @@ QB is a **Cursor plugin** that runs a guided, five-step planning workflow right 
 
 It pauses for your explicit approval at every step. No CLI, no API key, no setup. Just type `/qb-plan`.
 
-QB is the Cursor edition of the QB planning workflow. Sibling editions exist for Claude Code (QB) and Codex (QB); the shared planning specs and read-only validator are common to all three.
+QB is the Cursor edition of the QB planning workflow. QB ships four platform packages: Claude Code, Cursor, and Codex carry the shared planner, validator, and audit/harden engine; Antigravity is a planning-only package.
 
 ---
 
@@ -163,6 +163,7 @@ Every artifact lands under `.qb/` in **your** workspace — never in the plugin 
 | `/qb-assess` | Analyze an existing repository only (Step 1.5). |
 | `/qb-audit` | Re-run the quality audit only (Step 3). |
 | `/qb-implement` | Implement one reviewed slice (Step 4, gated). |
+| `/qb-harden` | Run the audit → harden → report engine over the repo at a chosen autonomy level (default `A0`, report-only). |
 
 ---
 
@@ -185,6 +186,16 @@ make check   # from platforms/cursor: validate this package
 ```
 
 From the QB monorepo root, `make check` first verifies that shared sources are synced into every platform, then runs all four platform validators and the top-level invariant tests.
+
+---
+
+## Hardening
+
+Beyond planning, the Cursor package ships the QB audit → harden engine (`/qb-harden`,
+`scripts/audit_runner.py`). It inspects a repository read-only by default
+(autonomy `A0`) and promotes fixes only when you explicitly raise the level.
+Proposed fixes run in git isolation, and QB never commits, pushes, opens a PR, or
+deploys on its own.
 
 ---
 

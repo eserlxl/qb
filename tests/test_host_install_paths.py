@@ -1,5 +1,4 @@
-"""Phase 5.1 -- the Codex standalone package's marketplace source resolves to a
-real package directory holding the launch entrypoint.
+"""Host package installation docs and standalone marketplace paths.
 
 Scope note (no duplication): the two repo-root marketplace manifests
 (`.agents/plugins/marketplace.json`, `.cursor-plugin/marketplace.json`) already
@@ -21,6 +20,12 @@ from pathlib import Path
 from tests.qb_monorepo import REPO_ROOT
 
 CODEX_MARKETPLACE = REPO_ROOT / "platforms/codex/.agents/plugins/marketplace.json"
+READMES = {
+    "claude-code": REPO_ROOT / "platforms/claude-code/README.md",
+    "cursor": REPO_ROOT / "platforms/cursor/README.md",
+    "codex": REPO_ROOT / "platforms/codex/README.md",
+    "antigravity": REPO_ROOT / "platforms/antigravity/README.md",
+}
 
 
 class CodexStandaloneInstallPathTest(unittest.TestCase):
@@ -46,6 +51,73 @@ class CodexStandaloneInstallPathTest(unittest.TestCase):
         # The resolved package must carry the Codex launch entrypoint.
         self.assertTrue((resolved / "skills/qb/SKILL.md").is_file(),
                         f"launch entrypoint skills/qb/SKILL.md missing under {resolved}")
+
+
+class HostReadmeInstallContractTest(unittest.TestCase):
+    def _read(self, host: str) -> str:
+        path = READMES[host]
+        self.assertTrue(path.is_file(), f"{host} README missing: {path}")
+        return path.read_text(encoding="utf-8")
+
+    def test_readmes_name_install_paths_that_exist(self):
+        expected = {
+            "claude-code": [
+                "platforms/claude-code",
+                "/plugin marketplace add eserlxl/qb",
+                "/plugin install qb@eserlxl",
+            ],
+            "cursor": [
+                "qb/platforms/cursor",
+                "~/.cursor/plugins/local/qb",
+            ],
+            "codex": [
+                "codex plugin marketplace add eserlxl/qb --ref main",
+                "cd /absolute/path/to/qb/platforms/codex",
+                "codex plugin marketplace add .",
+            ],
+            "antigravity": [
+                "cd platforms/antigravity",
+                "scripts/install.sh --scope app-global --force",
+                "scripts/install.sh --scope ide-project --target /path/to/project",
+                "scripts/install.sh --scope cli-global",
+            ],
+        }
+        for host, fragments in expected.items():
+            text = self._read(host)
+            with self.subTest(host=host):
+                for fragment in fragments:
+                    self.assertIn(fragment, text, f"{host} README omits install fragment: {fragment}")
+
+        self.assertTrue((REPO_ROOT / "platforms/claude-code").is_dir())
+        self.assertTrue((REPO_ROOT / "platforms/cursor").is_dir())
+        self.assertTrue((REPO_ROOT / "platforms/codex").is_dir())
+        self.assertTrue((REPO_ROOT / "platforms/antigravity/scripts/install.sh").is_file())
+
+    def test_readmes_name_correct_runtime_entrypoints(self):
+        expectations = {
+            "claude-code": ("/qb-plan", "/qb-harden"),
+            "cursor": ("/qb-plan", "/qb-harden"),
+            "codex": ("Use $qb to inspect this repo and plan this project.",
+                      "Use $qb. Run the audit and harden engine over this repository."),
+            "antigravity": ("/qb-plan", "/qb-plan auto"),
+        }
+        for host, fragments in expectations.items():
+            text = self._read(host)
+            with self.subTest(host=host):
+                for fragment in fragments:
+                    self.assertIn(fragment, text, f"{host} README omits runtime entrypoint: {fragment}")
+
+        self.assertTrue((REPO_ROOT / "platforms/claude-code/commands/qb-harden.md").is_file())
+        self.assertTrue((REPO_ROOT / "platforms/cursor/commands/qb-harden.md").is_file())
+        self.assertTrue((REPO_ROOT / "platforms/codex/plugins/qb/skills/qb/scripts/qb_headless.py").is_file())
+        self.assertTrue((REPO_ROOT / "platforms/antigravity/skills/qb/SKILL.md").is_file())
+
+    def test_antigravity_readme_does_not_overclaim_engine_support(self):
+        text = self._read("antigravity")
+        self.assertIn("planning-only", text.lower())
+        self.assertIn("not the audit/harden engine", text)
+        self.assertNotIn("/qb-harden", text)
+        self.assertNotIn("$qb", text)
 
 
 if __name__ == "__main__":

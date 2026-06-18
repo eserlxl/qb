@@ -67,6 +67,25 @@ QB asks intake questions in the user's language when practical. Generated .qb ar
 
 For existing repositories, the questions include repo-derived suggestions. For empty or minimal repositories, QB falls back to concise generic questions and marks repository evidence as limited.
 
+## Audit and Harden
+
+The same `$qb` skill also launches the audit -> harden -> report engine when you
+ask it to audit or harden a repository:
+
+```text
+Use $qb. Run the audit and harden engine over this repository.
+```
+
+For a direct non-interactive run from the Codex package root, use the bundled
+headless entry point:
+
+```bash
+python3 plugins/qb/skills/qb/scripts/qb_headless.py --root . --out .qb/audit
+```
+
+The default autonomy level is `A0` (report-only). Raise autonomy only by explicit
+request; QB never commits, pushes, opens a PR, or deploys on its own.
+
 ## Generated Artifacts
 
 QB writes planning artifacts under the target project's `.qb/` directory:
