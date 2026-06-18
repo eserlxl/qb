@@ -282,7 +282,11 @@ class AuditRunnerTests(unittest.TestCase):
         self.assertEqual(optional_findings, [])
         self.assertEqual(optional_analyzer.last_capability_report["ran"], [])
         self.assertEqual(optional_analyzer.last_capability_report["skipped"], [
-            {"adapter": "missing-pyflakes", "reason": "tool-unavailable"}
+            {
+                "adapter": "missing-pyflakes",
+                "executable": "qb-nonexistent-pyflakes",
+                "reason": "tool-unavailable",
+            }
         ])
 
         with tempfile.TemporaryDirectory() as d:
