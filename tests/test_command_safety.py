@@ -96,6 +96,14 @@ class CommandSafetyTests(unittest.TestCase):
         finally:
             self.cs.available_confinement_controls = original
 
+    def test_run_command_fails_closed_when_required_control_unsupported(self) -> None:
+        with self.assertRaises(self.cs.ConfinementUnavailable) as cm:
+            self.cs.run_command(
+                [sys.executable, "-c", "raise SystemExit('should-not-spawn')"],
+                confinement={"require": ("process_group", "filesystem_namespace")},
+            )
+        self.assertIn("unsupported confinement control", str(cm.exception))
+
     def test_explicit_unconfined_opt_out_runs_uncontained_with_reason(self) -> None:
         completed = self.cs.run_command(
             [sys.executable, "-c", ""],
