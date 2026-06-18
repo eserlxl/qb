@@ -17,6 +17,11 @@ from tempfile import TemporaryDirectory
 from tests.qb_monorepo import REPO_ROOT, SHARED_DIR
 
 SYNC_SCRIPT = REPO_ROOT / "scripts/sync.sh"
+ENGINE_DEST_PREFIXES = (
+    "platforms/claude-code/",
+    "platforms/cursor/",
+    "platforms/codex/",
+)
 
 
 def _run(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -50,6 +55,26 @@ class SyncMapCompletenessTests(unittest.TestCase):
         check = _run(self.repo, "--check")
         self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
         self.assertIn("in sync", check.stdout)
+
+    def test_each_shared_source_fans_out_to_every_engine_host(self) -> None:
+        by_source: dict[str, list[str]] = {}
+        for raw in (self.repo / "scripts/sync.sh").read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not (line.startswith('"') and line.endswith('"') and "|" in line):
+                continue
+            source, destination = line.strip('"').split("|", 1)
+            by_source.setdefault(source, []).append(destination)
+
+        self.assertTrue(by_source, "sync MAP parser found no entries")
+        for source, destinations in sorted(by_source.items()):
+            with self.subTest(source=source):
+                self.assertEqual(len(destinations), len(ENGINE_DEST_PREFIXES))
+                for prefix in ENGINE_DEST_PREFIXES:
+                    matches = [dst for dst in destinations if dst.startswith(prefix)]
+                    self.assertEqual(
+                        len(matches), 1,
+                        f"{source} does not have exactly one {prefix} destination",
+                    )
 
     def test_unmapped_shared_file_is_detected(self) -> None:
         (self.repo / "shared/planners/extra-planner.md").write_text(
