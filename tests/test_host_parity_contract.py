@@ -32,12 +32,61 @@ ENGINE_HOST_SCRIPT_DIRS = {
 ANTIGRAVITY_ROOT = REPO_ROOT / "platforms/antigravity"
 SYNC_SH = REPO_ROOT / "scripts/sync.sh"
 PARITY_DOC = REPO_ROOT / "platforms/PARITY.md"
+EXPECTED_PARITY_MATRIX = {
+    "Claude Code": {
+        "Planning workflow": "yes",
+        "Audit/harden engine": "yes",
+    },
+    "Cursor": {
+        "Planning workflow": "yes",
+        "Audit/harden engine": "yes",
+    },
+    "Codex": {
+        "Planning workflow": "yes",
+        "Audit/harden engine": "yes",
+    },
+    "Antigravity": {
+        "Planning workflow": "yes",
+        "Audit/harden engine": "no (planning-only)",
+    },
+}
 
 
 def _has_engine(script_dir: Path) -> bool:
     """The contract's predicate: a directory is engine-bearing iff it holds every
     engine module."""
     return all((script_dir / module).is_file() for module in ENGINE_MODULES)
+
+
+def _parity_matrix() -> dict[str, dict[str, str]]:
+    lines = PARITY_DOC.read_text(encoding="utf-8").splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() == "## Capability matrix":
+            table_lines = [
+                row.strip()
+                for row in lines[i + 1:]
+                if row.strip().startswith("|")
+            ]
+            break
+    else:
+        raise AssertionError("PARITY.md omits the Capability matrix section")
+
+    rows = [
+        [cell.strip() for cell in row.strip("|").split("|")]
+        for row in table_lines
+        if not set(row.replace("|", "").strip()) <= {"-", ":"}
+    ]
+    if not rows:
+        raise AssertionError("PARITY.md capability matrix has no rows")
+
+    header = rows[0]
+    if header != ["Host", "Planning workflow", "Audit/harden engine"]:
+        raise AssertionError(f"unexpected PARITY.md matrix header: {header}")
+
+    return {
+        row[0]: dict(zip(header[1:], row[1:]))
+        for row in rows[1:]
+    }
 
 
 class HostParityContractTest(unittest.TestCase):
@@ -72,13 +121,35 @@ class HostParityContractTest(unittest.TestCase):
 
     def test_contract_doc_matches_reality(self):
         self.assertTrue(PARITY_DOC.is_file(), "platforms/PARITY.md missing")
-        text = PARITY_DOC.read_text(encoding="utf-8")
-        for host in ("Claude Code", "Cursor", "Codex", "Antigravity"):
-            self.assertIn(host, text, f"PARITY.md omits host: {host}")
-        self.assertIn("planning-only", text, "PARITY.md must mark Antigravity planning-only")
+        matrix = _parity_matrix()
         # The doc's engine-bearing claim must hold on disk.
+        self.assertEqual(matrix["Claude Code"]["Audit/harden engine"], "yes")
+        self.assertEqual(matrix["Cursor"]["Audit/harden engine"], "yes")
+        self.assertEqual(matrix["Codex"]["Audit/harden engine"], "yes")
         self.assertTrue(all(_has_engine(d) for d in ENGINE_HOST_SCRIPT_DIRS.values()))
+        self.assertEqual(
+            matrix["Antigravity"]["Audit/harden engine"],
+            "no (planning-only)",
+        )
         self.assertFalse(_has_engine(ANTIGRAVITY_ROOT / "skills/qb/scripts"))
+
+    def test_capability_matrix_pins_host_decision_points(self):
+        matrix = _parity_matrix()
+        self.assertEqual(matrix, EXPECTED_PARITY_MATRIX)
+        self.assertTrue(
+            all(row["Planning workflow"] == "yes" for row in matrix.values()),
+            "all four hosts must ship the planning workflow",
+        )
+        engine_hosts = sorted(
+            host for host, row in matrix.items()
+            if row["Audit/harden engine"] == "yes"
+        )
+        self.assertEqual(engine_hosts, ["Claude Code", "Codex", "Cursor"])
+        planning_only_hosts = [
+            host for host, row in matrix.items()
+            if row["Audit/harden engine"] == "no (planning-only)"
+        ]
+        self.assertEqual(planning_only_hosts, ["Antigravity"])
 
     def test_parity_predicate_is_fail_closed(self):
         # The predicate must discriminate: True for an engine host, False for the
