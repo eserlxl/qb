@@ -9,6 +9,10 @@ assignees: ""
 ## Summary
 
 <!-- A clear, concise description of the bug. -->
+<!-- Public issue: do not include secrets, credentials, private keys, customer data,
+sensitive exploit payloads, or step-by-step exploit details. Redact values and use
+synthetic examples. If details cannot be safely shared in public, summarize the
+impact and affected surface and ask for maintainer coordination. -->
 
 ## Environment
 
@@ -28,7 +32,7 @@ assignees: ""
 
 ## Actual behavior
 
-<!-- What actually happened, including any error output. Do NOT paste secrets. -->
+<!-- What actually happened, including redacted error output if useful. Do NOT paste secrets. -->
 
 ## Gate of record
 

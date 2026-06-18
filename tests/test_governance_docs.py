@@ -37,6 +37,16 @@ class GovernanceDocsTest(unittest.TestCase):
         self.assertIn("trusted code", text.lower(),
                       "SECURITY.md must state the trusted-code precondition for A2/A3")
 
+    def test_public_security_reporting_boundary_is_explicit(self):
+        text = self._read(SECURITY).lower()
+        self.assertIn("public", text)
+        self.assertIn("do **not** paste", text)
+        self.assertIn("secret values", text)
+        self.assertIn("sensitive exploit payloads", text)
+        self.assertIn("redact", text)
+        self.assertIn("synthetic examples", text)
+        self.assertIn("trusted code", text)
+
     def test_required_governance_docs_exist(self):
         # The governance contract fails if ANY required doc/file is missing.
         for path in (SECURITY, CONTRIBUTING, CODEOWNERS, ISSUE_TEMPLATE, PR_TEMPLATE):
@@ -65,6 +75,15 @@ class GovernanceDocsTest(unittest.TestCase):
         self.assertTrue(ISSUE_TEMPLATE.is_file(), f"missing issue template: {ISSUE_TEMPLATE}")
         pr = self._read(PR_TEMPLATE)
         self.assertIn("make check", pr, "PR template must reference the gate of record")
+
+    def test_issue_template_warns_against_public_sensitive_details(self):
+        text = self._read(ISSUE_TEMPLATE).lower()
+        self.assertIn("public issue", text)
+        self.assertIn("do not include secrets", text)
+        self.assertIn("sensitive exploit payloads", text)
+        self.assertIn("step-by-step exploit details", text)
+        self.assertIn("redact", text)
+        self.assertIn("synthetic examples", text)
 
     def test_security_policy_has_no_secret_like_string(self):
         text = self._read(SECURITY)

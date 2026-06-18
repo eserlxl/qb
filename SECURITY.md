@@ -19,10 +19,13 @@ vulnerability through the **public** issue tracker:
 
 - Open an issue at <https://github.com/eserlxl/qb/issues>
 
-Because the channel is public, do **not** paste exploit details or any secret value
-into the report — describe the impact and the affected surface, and a maintainer will
-follow up to coordinate a fix. Please allow a reasonable window for a fix to ship
-before disclosing further details publicly.
+Because the channel is public, do **not** paste secret values, credentials,
+private keys, customer data, sensitive exploit payloads, or step-by-step exploit
+details into the report. Redact values, use synthetic examples, and describe the
+impact plus affected surface. If a useful report cannot be shared safely in public,
+open a minimal issue naming the affected surface and ask a maintainer to coordinate
+before sharing sensitive material. Please allow a reasonable window for a fix to
+ship before disclosing further details publicly.
 
 ## Trusted-code precondition
 
