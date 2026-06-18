@@ -2,18 +2,15 @@
 
 BASELINE.md is the committed gate-of-record reference, but nothing derived its
 stated version or test-suite counts from the source of truth, so it silently
-drifted (it advertised v0.14.1 / 44 modules / 324 functions long after the tree
-moved to 0.15.0 / 69 / 469). This guard pins it the same way
+drifted after the tree moved forward. This guard pins it the same way
 ``tests/test_doc_consistency.py`` pins the README: every value BASELINE asserts
 is re-derived from the live tree and compared.
 
-Semantics, matching BASELINE's own wording ("a run reporting *fewer than* N
-modules ... is a regression"):
+Semantics:
 
 * the stated **version** must equal the root ``VERSION`` file exactly, and
-* the live module / function counts must be **at least** every floor BASELINE
-  states (so adding tests never fails this guard, but dropping below the
-  recorded floor — or letting VERSION and BASELINE diverge — does).
+* the live module / test-case counts must equal every count BASELINE states, so
+  adding or removing tests requires updating the committed baseline reference.
 
 Standard library only, like the rest of the suite.
 """
@@ -31,19 +28,19 @@ VERSION_FILE = REPO_ROOT / "VERSION"
 TESTS_DIR = REPO_ROOT / "tests"
 
 _STATED_VERSION = re.compile(r"Version \(`VERSION`\)\s*\|\s*`(\d+\.\d+\.\d+)`")
-# Every place BASELINE states a module-count floor.
-_MODULE_FLOORS = (
+# Every place BASELINE states a module count.
+_MODULE_COUNTS = (
     re.compile(r"Test modules \(`tests/test_\*\.py`\)\s*\|\s*(\d+)"),
     re.compile(r"Expected test modules\s*\|\s*(\d+)"),
     re.compile(r"\((\d+) modules / \d+ functions\)"),
-    re.compile(r"fewer than (\d+) modules"),
+    re.compile(r"other than (\d+) modules"),
 )
-# Every place BASELINE states a function-count floor.
-_FUNCTION_FLOORS = (
+# Every place BASELINE states a function/test-case count.
+_FUNCTION_COUNTS = (
     re.compile(r"^\| Test functions\s*\|\s*(\d+)", re.MULTILINE),
     re.compile(r"Expected test functions\s*\|\s*(\d+)"),
     re.compile(r"\(\d+ modules / (\d+) functions\)"),
-    re.compile(r"fewer than \d+ modules or fewer than (\d+) passing functions"),
+    re.compile(r"other than \d+ modules or (\d+) passing test cases"),
 )
 
 
@@ -52,16 +49,13 @@ def _live_modules() -> int:
 
 
 def _live_functions() -> int:
-    # Substring count of test-method definitions: matches `unittest discover`'s
-    # reported count for this suite, catches `async def test_*` too, and can only
-    # over-count (the safe direction for a `live >= floor` assertion).
-    total = 0
-    for path in TESTS_DIR.glob("test_*.py"):
-        total += path.read_text(encoding="utf-8").count("def test_")
-    return total
+    # Match the command BASELINE names instead of counting text. Several tests
+    # carry fixture strings containing "def test_*"; discovery's count is the
+    # operator-visible number.
+    return unittest.TestLoader().discover(str(TESTS_DIR)).countTestCases()
 
 
-def _floors(text: str, patterns) -> list[int]:
+def _counts(text: str, patterns) -> list[int]:
     found: list[int] = []
     for rx in patterns:
         found.extend(int(m) for m in rx.findall(text))
@@ -86,22 +80,22 @@ class BaselineConsistencyTests(unittest.TestCase):
                 f"BASELINE version {value!r} != VERSION file {self.live_version!r}",
             )
 
-    def test_module_count_floor_met(self) -> None:
-        floors = _floors(self.text, _MODULE_FLOORS)
-        self.assertTrue(floors, "BASELINE.md states no module-count floor")
+    def test_module_count_matches_live_suite(self) -> None:
+        counts = _counts(self.text, _MODULE_COUNTS)
+        self.assertTrue(counts, "BASELINE.md states no module count")
         live = _live_modules()
-        for floor in floors:
-            self.assertGreaterEqual(
-                live, floor, f"only {live} test modules, below BASELINE floor {floor}"
+        for count in counts:
+            self.assertEqual(
+                live, count, f"BASELINE module count {count} != live test modules {live}"
             )
 
-    def test_function_count_floor_met(self) -> None:
-        floors = _floors(self.text, _FUNCTION_FLOORS)
-        self.assertTrue(floors, "BASELINE.md states no function-count floor")
+    def test_function_count_matches_live_discovery(self) -> None:
+        counts = _counts(self.text, _FUNCTION_COUNTS)
+        self.assertTrue(counts, "BASELINE.md states no function/test-case count")
         live = _live_functions()
-        for floor in floors:
-            self.assertGreaterEqual(
-                live, floor, f"only {live} test functions, below BASELINE floor {floor}"
+        for count in counts:
+            self.assertEqual(
+                live, count, f"BASELINE test count {count} != live unittest count {live}"
             )
 
 
