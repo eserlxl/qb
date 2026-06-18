@@ -135,6 +135,21 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertFalse(self.rg.baseline_clean(repo, handle))  # fail-closed on HEAD drift
             self.rg.release_baseline(repo, handle)
 
+    def test_mutation_exception_rolls_back_and_fails_drill(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_repo(repo)
+
+            def mutate(r):
+                (Path(r) / "a.txt").write_text("CHANGED\n", encoding="utf-8")
+                (Path(r) / "b.txt").write_text("new file\n", encoding="utf-8")
+                raise RuntimeError("fixture failure")
+
+            self.assertFalse(self.rg.run_rollback_drill(repo, "raises", mutate))
+            self.assertEqual((repo / "a.txt").read_text(), "original\n")
+            self.assertFalse((repo / "b.txt").exists())
+            self.assertEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")
+
     def test_authorize_release_gate_on_recorded_telemetry(self) -> None:
         # Phase 7.2: authorize the earned-autonomy ceiling against a RECORDED
         # telemetry.json (persisted to the run store and read back), not just an

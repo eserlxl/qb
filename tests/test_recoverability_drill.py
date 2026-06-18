@@ -80,6 +80,25 @@ class RecoverabilityDrillTest(unittest.TestCase):
             self.assertFalse((repo / "new.txt").exists())
             self.assertEqual((repo / "a.txt").read_text(encoding="utf-8"), "baseline\n")
 
+    def test_mutation_exception_is_failed_but_rolled_back(self):
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            _init_repo(repo)
+
+            def mutate(root):
+                (Path(root) / "new.txt").write_text("x\n", encoding="utf-8")
+                (Path(root) / "a.txt").write_text("changed\n", encoding="utf-8")
+                raise RuntimeError("fixture failure")
+
+            record = drill.run_drill(str(repo), "drill-raises", mutate_fn=mutate)
+            self.assertFalse(record["passed"])
+            self.assertTrue(record["baseline_clean"])
+            self.assertEqual(record["mutation_error"], "RuntimeError")
+            self.assertFalse((repo / "new.txt").exists())
+            self.assertEqual((repo / "a.txt").read_text(encoding="utf-8"), "baseline\n")
+            self.assertEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")
+
 
 if __name__ == "__main__":
     unittest.main()

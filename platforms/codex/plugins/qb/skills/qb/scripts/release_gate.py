@@ -94,7 +94,11 @@ def run_rollback_drill(repo_root, run_id, mutate_fn) -> bool:
     """Capture -> mutate -> undo -> assert clean at baseline. Returns True on pass."""
     handle = capture_baseline(repo_root, run_id)
     try:
-        mutate_fn(repo_root)
+        try:
+            mutate_fn(repo_root)
+        except Exception:
+            rollback_run(repo_root, handle)
+            return False
         rollback_run(repo_root, handle)
         return baseline_clean(repo_root, handle)
     finally:

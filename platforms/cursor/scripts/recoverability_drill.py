@@ -50,8 +50,13 @@ def run_drill(repo_root, run_id, mutate_fn=None) -> dict:
     value (only its length, as ref shape). ``passed`` is the drill verdict."""
     mutate = mutate_fn or _default_mutate
     handle = _rg.capture_baseline(repo_root, run_id)
+    mutation_error = None
+    clean = False
     try:
-        mutate(repo_root)
+        try:
+            mutate(repo_root)
+        except Exception as exc:
+            mutation_error = type(exc).__name__
         _rg.rollback_run(repo_root, handle)
         clean = _rg.baseline_clean(repo_root, handle)
     finally:
@@ -62,7 +67,8 @@ def run_drill(repo_root, run_id, mutate_fn=None) -> dict:
         "baseline_ref": handle["ref"],
         "baseline_sha_len": len(handle["sha"]),
         "baseline_clean": bool(clean),
-        "passed": bool(clean),
+        "mutation_error": mutation_error,
+        "passed": bool(clean and mutation_error is None),
     }
 
 
