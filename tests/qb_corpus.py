@@ -69,6 +69,18 @@ class CorpusRepo:
         return sum(self.labels.values())
 
 
+def validate_trusted_precondition(repo: CorpusRepo) -> None:
+    """Reject corpus targets that are not safe for campaign execution."""
+    if repo.trust not in TRUST_TAGS:
+        raise ValueError(f"corpus repo {repo.name!r} lacks a valid trusted-code precondition")
+    if not repo.precondition:
+        raise ValueError(f"corpus repo {repo.name!r} lacks a trusted-code precondition reason")
+    if repo.trust == "neutralized-noop" and list(repo.verify_command) != NEUTRAL_VERIFY:
+        raise ValueError(
+            f"corpus repo {repo.name!r} is neutralized-noop but has a non-neutral verification command"
+        )
+
+
 def _git(repo: Path, *args) -> None:
     subprocess.run(["git", "-C", str(repo), *args], check=True,
                    capture_output=True, text=True)
@@ -105,7 +117,6 @@ def build_corpus(base_dir) -> list:
         )
         # Fail closed: a corpus target must carry a sanctioned trusted-code
         # precondition, never an untrusted self-executing one.
-        if repo.trust not in TRUST_TAGS or not repo.precondition:
-            raise ValueError(f"corpus repo {name!r} lacks a valid trusted-code precondition")
+        validate_trusted_precondition(repo)
         repos.append(repo)
     return repos

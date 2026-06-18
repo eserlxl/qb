@@ -60,6 +60,29 @@ class LiveCorpusTests(unittest.TestCase):
             second = qb_corpus.build_corpus(Path(d2))
             self.assertEqual(fingerprint(first), fingerprint(second))
 
+    def test_invalid_trusted_code_preconditions_fail_closed(self) -> None:
+        base = Path("unused")
+        invalid = [
+            qb_corpus.CorpusRepo(
+                name="bad-trust", path=base, trust="untrusted",
+                precondition=qb_corpus.NEUTRAL_PRECONDITION,
+                verify_command=list(qb_corpus.NEUTRAL_VERIFY), labels={},
+            ),
+            qb_corpus.CorpusRepo(
+                name="missing-precondition", path=base, trust="neutralized-noop",
+                precondition="", verify_command=list(qb_corpus.NEUTRAL_VERIFY), labels={},
+            ),
+            qb_corpus.CorpusRepo(
+                name="self-executing-neutralized", path=base, trust="neutralized-noop",
+                precondition=qb_corpus.NEUTRAL_PRECONDITION,
+                verify_command=["make", "test"], labels={},
+            ),
+        ]
+        for repo in invalid:
+            with self.subTest(repo=repo.name):
+                with self.assertRaises(ValueError):
+                    qb_corpus.validate_trusted_precondition(repo)
+
     def test_qb_headless_runs_over_corpus_and_telemetry_reads_back(self) -> None:
         lv = _load_driver()
         with tempfile.TemporaryDirectory() as d:
