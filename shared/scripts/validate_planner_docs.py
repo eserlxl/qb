@@ -200,12 +200,24 @@ def read_text(path: Path, state: ValidationState) -> str | None:
 
 
 def validate_heading_order(text: str, headings: list[str], path: Path, state: ValidationState) -> None:
+    target_headings = set(headings)
+    heading_positions: dict[str, list[int]] = {heading: [] for heading in target_headings}
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        stripped = line.strip()
+        if stripped in heading_positions:
+            heading_positions[stripped].append(offset + line.find(stripped))
+        offset += len(line)
+
     last_pos = -1
     for heading in headings:
-        pos = text.find(heading)
-        if pos == -1:
+        positions = heading_positions[heading]
+        if not positions:
             state.error(f"missing_heading={state.rel(path)}::{heading}")
             continue
+        if len(positions) > 1:
+            state.error(f"duplicate_heading={state.rel(path)}::{heading}::{len(positions)}")
+        pos = positions[0]
         if pos < last_pos:
             state.error(f"heading_out_of_order={state.rel(path)}::{heading}")
         last_pos = pos
@@ -385,11 +397,7 @@ def validate_subplan_structure(
 
     validate_heading_order(text, SUBPLAN_HEADINGS, path, state)
 
-    headings = SECTION_RE.findall(text)
     for required in SUBPLAN_HEADINGS:
-        count = headings.count(required)
-        if count > 1:
-            state.error(f"duplicate_heading={state.rel(path)}::{required}::{count}")
         body = section_body(text, required)
         if required in text and len(body) < 20:
             state.error(f"empty_or_too_short_section={state.rel(path)}::{required}")

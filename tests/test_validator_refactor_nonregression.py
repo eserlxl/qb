@@ -183,6 +183,28 @@ class ValidatorRefactorNonRegressionTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("missing_file=.qb/sub-planning-index.md", result.stdout)
 
+    def test_step1_rejects_duplicate_required_heading(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            _build_valid_planner_tree(root, self.validator)
+            main_plan = root / ".qb/main-planning.md"
+            main_plan.write_text(
+                main_plan.read_text(encoding="utf-8")
+                + "\n## 1. Executive Summary\n\nDuplicate summaries must fail validation.\n",
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                ["python3", str(VALIDATOR_PATH), "--root", str(root), "--mode", "step1"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            "duplicate_heading=.qb/main-planning.md::## 1. Executive Summary::2",
+            result.stdout,
+        )
+
     # --- secret scan exposed as a Phase-1.2 analyzer ----------------------
     def test_secret_hygiene_analyzer_conforms_and_redacts(self) -> None:
         analyzer = self.core.SecretHygieneAnalyzer()
