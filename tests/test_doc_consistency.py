@@ -33,6 +33,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 import audit_runner  # noqa: E402  (path set above)
+import accepted_findings  # noqa: E402
 import budget  # noqa: E402
 import finding_schema  # noqa: E402
 import production_gate  # noqa: E402
@@ -282,6 +283,24 @@ class DocConsistencyTest(unittest.TestCase):
                       "CONTRIBUTING.md must carry the No secrets section")
         self.assertIn("test_no_committed_secrets", contributing,
                       "CONTRIBUTING.md no-secrets rule must name the enforcing guard")
+
+    def test_accepted_findings_register_requires_explicit_records(self):
+        sample = (
+            "# Accepted findings register\n\n"
+            "## Accepted\n"
+            "- `QBF-VALID-1` -- reviewed false positive (reviewer: maintainer)\n"
+            "- `QBF-VALID-2` \u2014 reviewed false positive (reviewer: maintainer)\n"
+            "- `QBF-NO-REVIEWER` -- rationale only\n"
+            "- `QBF-NO-RATIONALE` (reviewer: maintainer)\n"
+            "- `   ` -- blank id (reviewer: maintainer)\n"
+            "Prose mentioning `QBF-PROSE` should not count.\n\n"
+            "## Other\n"
+            "- `QBF-OTHER` -- different section (reviewer: maintainer)\n"
+        )
+        self.assertEqual(
+            accepted_findings.parse_accepted_ids(sample),
+            {"QBF-VALID-1", "QBF-VALID-2"},
+        )
 
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]

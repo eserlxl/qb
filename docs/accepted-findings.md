@@ -18,8 +18,10 @@ the form:
 
     - `<finding-id>` — <rationale> (reviewer: <marker>)
 
-The loader reads only the backtick-wrapped leading id of each such list item, so
-rationale prose and other sections never leak in. Record **no secret value** here.
+The loader reads only well-formed list items with a backtick-wrapped leading id,
+rationale, and reviewer marker, so rationale prose and other sections never leak
+in. Entries missing the rationale or reviewer marker are ignored. Record **no
+secret value** here.
 
 Example (illustrative only; it lives outside the `## Accepted` section and is not
 parsed):
