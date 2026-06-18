@@ -27,8 +27,8 @@ See also the [RUNBOOK](RUNBOOK.md) gate-of-record and release-integrity sections
    This updates `VERSION`, the three plugin manifests, every SKILL.md frontmatter, the
    README version badge, the gate-of-record version in `BASELINE.md`, and prepends a
    changelog entry to all four platform changelogs — in lockstep. (`BASELINE.md`'s
-   test-suite counts are a floor and are not auto-bumped; refresh them with a
-   `make baseline` run when they move materially.)
+   test-suite counts are exact and are not auto-bumped; refresh them after a
+   `make baseline` run whenever test discovery count changes.)
 
 4. **Review the diff** of the version + changelog changes:
 
@@ -50,6 +50,9 @@ See also the [RUNBOOK](RUNBOOK.md) gate-of-record and release-integrity sections
    ```
 
    The `--check` must exit `0` (the built tree matches its manifest).
+   This is deterministic integrity verification only: the manifest is not
+   cryptographic signing, includes no GPG/sigstore signature, and does not prove
+   artifact origin or authenticity.
 
 7. **Tag the release — operator-only, manual.** The operator creates the annotated
    tag deliberately (for example `git tag -a v<version> -m "<version>"`, a *local*

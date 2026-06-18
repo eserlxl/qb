@@ -14,6 +14,7 @@ import unittest
 from tests.qb_monorepo import REPO_ROOT
 
 RELEASING = REPO_ROOT / "RELEASING.md"
+RUNBOOK = REPO_ROOT / "RUNBOOK.md"
 MAKEFILE = REPO_ROOT / "Makefile"
 BUMP = REPO_ROOT / "scripts/bump-version.sh"
 
@@ -53,6 +54,21 @@ class ReleaseDocsTest(unittest.TestCase):
         self.assertIn("scripts/bump-version.sh", self._read(RELEASING),
                       "RELEASING.md must name the sanctioned bump path")
         self.assertTrue(BUMP.is_file(), "scripts/bump-version.sh missing")
+
+    def test_release_docs_state_manifest_integrity_not_authenticity(self):
+        releasing = re.sub(r"\s+", " ", self._read(RELEASING).lower())
+        runbook = re.sub(r"\s+", " ", self._read(RUNBOOK).lower())
+        for text, name in ((releasing, "RELEASING.md"), (runbook, "RUNBOOK.md")):
+            with self.subTest(doc=name):
+                self.assertIn("integrity", text)
+                self.assertIn("authenticity", text)
+                self.assertRegex(text, r"\b(no|not) cryptographic signing\b")
+                self.assertIn("gpg/sigstore", text)
+
+    def test_releasing_doc_keeps_baseline_counts_exact(self):
+        text = self._read(RELEASING)
+        self.assertIn("test-suite counts are exact", text)
+        self.assertNotIn("test-suite counts are a floor", text)
 
 
 if __name__ == "__main__":

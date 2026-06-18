@@ -9,6 +9,9 @@ gitignored working trees (.qb/, .planwright/) are excluded.
 from __future__ import annotations
 
 import subprocess
+import re
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 from tests.qb_monorepo import REPO_ROOT
@@ -49,6 +52,52 @@ class ReleaseIntegrityTest(unittest.TestCase):
                                  capture_output=True, text=True, check=True).stdout
             self.assertIn(f"version: {declared}", out,
                           "release manifest version must equal root VERSION")
+
+    def test_release_manifest_is_deterministic_inventory_only(self):
+        self.assertTrue(MANIFEST.is_file(), "release manifest script missing")
+        first = subprocess.run(["python3", str(MANIFEST), "--root", str(REPO_ROOT)],
+                               capture_output=True, text=True, check=True).stdout
+        second = subprocess.run(["python3", str(MANIFEST), "--root", str(REPO_ROOT)],
+                                capture_output=True, text=True, check=True).stdout
+        self.assertEqual(first, second, "release manifest must be deterministic")
+
+        lines = first.splitlines()
+        self.assertEqual(lines[0], "# QB release manifest v1")
+        self.assertRegex(lines[1], r"^version: \d+\.\d+\.\d+$")
+        self.assertRegex(lines[2], r"^files: \d+$")
+        self.assertTrue(lines[3:], "manifest must contain file hash entries")
+        paths = [line.split("  ", 1)[1] for line in lines[3:]]
+        self.assertEqual(paths, sorted(paths), "manifest entries must be sorted by path")
+        self.assertTrue(
+            all(re.match(r"^[0-9a-f]{64}  .+", line) for line in lines[3:]),
+            "manifest entries must be SHA-256 inventory rows",
+        )
+        self.assertNotIn("signature", first.lower(),
+                         "manifest is integrity inventory, not a signing artifact")
+
+    def test_release_manifest_check_detects_stored_manifest_drift(self):
+        self.assertTrue(MANIFEST.is_file(), "release manifest script missing")
+        with TemporaryDirectory() as d:
+            stored = Path(d) / "QB-sanitized.manifest"
+            write = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(REPO_ROOT), "--output", str(stored)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(write.returncode, 0, write.stderr)
+
+            ok = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(REPO_ROOT), "--check", "--output", str(stored)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+
+            stored.write_text(stored.read_text(encoding="utf-8") + "# drift\n", encoding="utf-8")
+            bad = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(REPO_ROOT), "--check", "--output", str(stored)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(bad.returncode, 1, "drifted stored manifest must fail --check")
+            self.assertIn("tree drifted", bad.stderr)
 
     def test_export_excludes_tool_state_trees(self):
         # The sanitized export = git-tracked files; the gitignored working trees must
