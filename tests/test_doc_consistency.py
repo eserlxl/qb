@@ -40,6 +40,7 @@ import telemetry_aggregate  # noqa: E402
 import telemetry_trends  # noqa: E402
 
 ROOT_README = REPO_ROOT / "README.md"
+ANALYZER_COVERAGE_DOC = REPO_ROOT / "docs/analyzer-coverage.md"
 ROOT_VERSION = REPO_ROOT / "VERSION"
 RUNBOOK = REPO_ROOT / "RUNBOOK.md"
 SECURITY = REPO_ROOT / "SECURITY.md"
@@ -76,6 +77,14 @@ _COVERAGE_ANALYZERS = re.compile(
 )
 _COVERAGE_CATEGORIES = re.compile(
     r"Together they cover the frozen finding categories (?P<body>.*?):",
+    re.DOTALL,
+)
+_ANALYZER_DOC_REGISTRY = re.compile(
+    r"It currently registers:\n\n(?P<body>(?:- `[^`]+`\n)+)",
+    re.MULTILINE,
+)
+_ANALYZER_DOC_CATEGORIES = re.compile(
+    r"frozen categories from\n`shared/scripts/finding_schema\.py`: (?P<body>.*?)\.",
     re.DOTALL,
 )
 # The "## Production gate" section (to the next "## " heading or end of file), and
@@ -125,6 +134,20 @@ class DocConsistencyTest(unittest.TestCase):
         text = self._read(ROOT_README)
         match = _COVERAGE_CATEGORIES.search(text)
         self.assertIsNotNone(match, "root README has no finding-category coverage sentence")
+        declared = _backtick_values(match.group("body"))
+        self.assertEqual(declared, FINDING_CATEGORIES)
+
+    def test_analyzer_coverage_doc_registry_matches_engine(self):
+        text = self._read(ANALYZER_COVERAGE_DOC)
+        match = _ANALYZER_DOC_REGISTRY.search(text)
+        self.assertIsNotNone(match, "analyzer coverage doc has no registry list")
+        declared = _backtick_values(match.group("body"))
+        self.assertEqual(declared, PRODUCER_ANALYZERS)
+
+    def test_analyzer_coverage_doc_categories_match_schema(self):
+        text = self._read(ANALYZER_COVERAGE_DOC)
+        match = _ANALYZER_DOC_CATEGORIES.search(text)
+        self.assertIsNotNone(match, "analyzer coverage doc has no category list")
         declared = _backtick_values(match.group("body"))
         self.assertEqual(declared, FINDING_CATEGORIES)
 
