@@ -45,10 +45,19 @@ Finding = _fs.Finding
 DEFECT_STRATEGIES = frozenset({"autofix", "propose", "manual"})
 
 
+def normalize_surface_path(path: str) -> str:
+    """Normalize a finding locator path into the repo-relative Surface spelling."""
+    normalized = (path or "").strip().replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized
+
+
 def evidence_path(evidence: str) -> str:
     """The repo-relative path of a ``path:line`` / ``path:start-end`` locator."""
     text = (evidence or "").strip()
-    return text.rsplit(":", 1)[0] if ":" in text else text
+    path = text.rsplit(":", 1)[0] if ":" in text else text
+    return normalize_surface_path(path)
 
 
 # Single source shared with the validator (validate_planwright_plan) so the projector

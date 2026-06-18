@@ -79,7 +79,9 @@ Hard rules the generated .qb/plan.md MUST satisfy (a downstream linter enforces 
   repo-relative paths that DO NOT yet exist. No path may appear in both.
 - Surfaces and New Surfaces must never be under `.qb/` or `.planwright/`. `.qb/` is local
   planning state and may appear as context/evidence only; it is not an executable item
-  surface. If a work-breakdown entry would only edit `.qb/`, skip it.
+  surface. Normalize an optional leading `./` before classifying paths, so `./.qb/...`
+  and `./.planwright/...` are planning-state paths too. If a work-breakdown entry would
+  only edit `.qb/`, skip it.
 - Evidence must never cite graph memory or tool state (e.g. graph.json, digest.md). Cite
   source files, the sub-plan's "Current Repository Evidence", or an objective gap.
 - Verification must be a single runnable command (e.g. `make check`, `bash tests/run.sh

@@ -86,6 +86,15 @@ class FindingsToPlanConformanceTest(unittest.TestCase):
         self.assertIn("Surfaces: src/app.py", text)     # anchored file is the Surface
         self.assertEqual(self._errors(text), [])
 
+    def test_dot_prefixed_repo_surface_projects_lint_clean(self):
+        f = _finding(fix_strategy="manual", evidence="./src/app.py:3")
+        text = ftp.project_finding(f, str(self.root))
+        self.assertIsNotNone(text)
+        self.assertIn("Mode: repair", text)
+        self.assertIn("Evidence: ./src/app.py:3", text)
+        self.assertIn("Surfaces: src/app.py", text)
+        self.assertEqual(self._errors(text), [])
+
     def test_unresolvable_anchor_falls_back_to_improve(self):
         # A defect strategy whose anchor does not resolve to an existing file is not
         # projectable as a Surface, so it is skipped (no invalid item is emitted).
@@ -97,6 +106,17 @@ class FindingsToPlanConformanceTest(unittest.TestCase):
             with self.subTest(evidence=ev):
                 f = _finding(category="config", evidence=ev)
                 self.assertIsNone(ftp.project_finding(f, str(self.root)))
+
+    def test_dot_prefixed_planning_state_findings_are_not_emitted(self):
+        (self.root / ".qb").mkdir()
+        (self.root / ".qb/main-planning.md").write_text("plan\n", encoding="utf-8")
+        (self.root / ".planwright").mkdir()
+        (self.root / ".planwright/plan.md").write_text("plan\n", encoding="utf-8")
+        for ev in ("./.qb/main-planning.md:1", "./.planwright/plan.md:1"):
+            with self.subTest(evidence=ev):
+                f = _finding(category="config", evidence=ev)
+                self.assertIsNone(ftp.project_finding(f, str(self.root)))
+                self.assertIn("planning state", ftp.skip_reason(f, str(self.root)))
 
     def test_batch_projection_has_no_planning_state_surface_and_is_clean(self):
         findings = [_finding(category=c) for c in sorted(fs.CATEGORIES)]
