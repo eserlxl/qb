@@ -12,9 +12,12 @@ from tests.qb_monorepo import (
     CLAUDE_CODE,
     CODEX,
     CURSOR,
+    REPO_ROOT,
     frontmatter_name,
     load_manifest,
 )
+
+VERSION_FILE = REPO_ROOT / "VERSION"
 
 
 class ManifestIdTests(unittest.TestCase):
@@ -59,10 +62,36 @@ class ManifestIdTests(unittest.TestCase):
                     f"license != MIT in {platform['manifest']}",
                 )
 
+    def test_each_manifest_version_matches_root_version(self) -> None:
+        declared = VERSION_FILE.read_text(encoding="utf-8").strip()
+        for platform in ALL_PLATFORMS:
+            with self.subTest(platform=platform["id"]):
+                if not platform["manifest"].exists():
+                    self.skipTest(f"platform not built yet: {platform['manifest']}")
+                data = load_manifest(platform)
+                self.assertEqual(
+                    data.get("version"),
+                    declared,
+                    f"manifest version in {platform['manifest']} != root VERSION {declared}",
+                )
+
     def test_codex_manifest_is_read_from_the_nested_codex_plugin_dir(self) -> None:
         # The Codex package nests its manifest under plugins/qb/.codex-plugin/.
         expected = CODEX["root"] / "plugins/qb/.codex-plugin/plugin.json"
         self.assertEqual(CODEX["manifest"], expected)
+
+    def test_codex_manifest_advertises_engine_entrypoint(self) -> None:
+        data = load_manifest(CODEX)
+        text_fields = " ".join([
+            data.get("description", ""),
+            data.get("interface", {}).get("shortDescription", ""),
+            data.get("interface", {}).get("longDescription", ""),
+        ])
+        self.assertIn("audit/harden", text_fields)
+        self.assertIn(
+            "Use $qb. Run the audit and harden engine over this repository.",
+            data.get("interface", {}).get("defaultPrompt", []),
+        )
 
 
 class FrontmatterNameTests(unittest.TestCase):

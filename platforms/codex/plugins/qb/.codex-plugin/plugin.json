@@ -1,7 +1,7 @@
 {
   "name": "qb",
   "version": "0.15.0",
-  "description": "QB packages a repo-aware Codex planning workflow with an existing-project assessment and gated implementation handoff prompt.",
+  "description": "QB packages a repo-aware Codex planning workflow with an existing-project assessment, gated implementation handoff prompt, and audit/harden engine.",
   "author": {
     "name": "Eser KUBALI",
     "email": "eserlxl@gmail.com",
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "QB",
-    "shortDescription": "Run repo-aware planning, assessment, audit, and handoff.",
-    "longDescription": "QB helps Codex inspect a repository, ask repo-aware intake questions, create a master project plan, assessment existing project state, decompose the plan into phase-level sub-plans, audit the resulting planning package for coverage, ordering, readiness, and governance, then print a gated Goal-mode implementation handoff when the audit allows it.",
+    "shortDescription": "Run repo-aware planning, assessment, audit, handoff, and audit/harden.",
+    "longDescription": "QB helps Codex inspect a repository, ask repo-aware intake questions, create a master project plan, assess existing project state, decompose the plan into phase-level sub-plans, audit the resulting planning package for coverage, ordering, readiness, and governance, then print a gated Goal-mode implementation handoff when the audit allows it. It can also run the audit/harden engine over a repository when explicitly asked.",
     "developerName": "Eser KUBALI",
     "category": "Productivity",
     "capabilities": [
@@ -32,7 +32,8 @@
     "defaultPrompt": [
       "Use $qb to inspect this repo and plan this project.",
       "Use $qb to assess this existing project and create phase sub-plans.",
-      "Use $qb to audit the planning docs and prepare the implementation handoff."
+      "Use $qb to audit the planning docs and prepare the implementation handoff.",
+      "Use $qb. Run the audit and harden engine over this repository."
     ],
     "brandColor": "#2563EB"
   }

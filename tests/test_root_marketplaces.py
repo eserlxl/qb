@@ -77,6 +77,38 @@ class RootMarketplaceTests(unittest.TestCase):
                     (src_dir / plugin_manifest_rel).is_file(),
                     f"{src}/{plugin_manifest_rel} not found (referenced by {manifest_rel})",
                 )
+                plugin_manifest = json.loads(
+                    (src_dir / plugin_manifest_rel).read_text(encoding="utf-8")
+                )
+                self.assertEqual(
+                    plugin_manifest.get("name"),
+                    plugin["name"],
+                    f"marketplace plugin name must match referenced manifest in {manifest_rel}",
+                )
+
+    def test_root_marketplaces_keep_user_facing_identity_metadata(self) -> None:
+        codex = json.loads(
+            (REPO_ROOT / ".agents/plugins/marketplace.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(codex["interface"]["displayName"], "QB")
+        codex_plugin = codex["plugins"][0]
+        self.assertEqual(codex_plugin["category"], "Productivity")
+        self.assertEqual(codex_plugin["source"], {
+            "source": "local",
+            "path": "./platforms/codex/plugins/qb",
+        })
+        self.assertEqual(codex_plugin["policy"], {
+            "installation": "AVAILABLE",
+            "authentication": "ON_INSTALL",
+        })
+
+        cursor = json.loads(
+            (REPO_ROOT / ".cursor-plugin/marketplace.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cursor["owner"]["name"], "Eser KUBALI")
+        cursor_plugin = cursor["plugins"][0]
+        self.assertIn("repo-aware", cursor_plugin["description"])
+        self.assertIn(".qb/", cursor_plugin["description"])
 
     def test_claude_code_package_is_plugin_only(self) -> None:
         # The Claude Code package ships NO marketplace manifest; it is distributed
