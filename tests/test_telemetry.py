@@ -145,6 +145,29 @@ class TelemetryTests(unittest.TestCase):
         self.assertEqual(rec["action"]["fixes_reverted"], 1)
         self.assertEqual(rec["cost"]["tokens"], self.t.UNMEASURED)
 
+    def test_record_schema_keys_are_stable(self) -> None:
+        rec = self.t.build_telemetry(run_id="r1", autonomy_level="A2", findings=[], evidence=[])
+        self.assertEqual(
+            set(rec),
+            {
+                "schema_version", "run_id", "autonomy_level", "clamp_reason",
+                "detection", "action", "cost", "quality",
+            },
+        )
+        self.assertEqual(
+            set(rec["detection"]),
+            {"findings_total", "by_severity", "by_category", "confidence_histogram"},
+        )
+        self.assertEqual(
+            set(rec["action"]),
+            {"fixes_attempted", "fixes_kept", "fixes_reverted", "fixes_blocked"},
+        )
+        self.assertEqual(set(rec["cost"]), {"wall_ms", "iterations", "tokens"})
+        self.assertEqual(
+            set(rec["quality"]),
+            {"precision_estimate", "false_positive_signals", "fix_safety_ok"},
+        )
+
     def test_unset_tokens_stays_unmeasured_with_real_other_cost(self) -> None:
         # Real wall_ms/iterations are supplied but tokens is omitted: tokens must
         # remain UNMEASURED (never coerced to a measured 0) while the supplied cost

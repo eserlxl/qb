@@ -147,6 +147,20 @@ class TelemetryTrendTests(unittest.TestCase):
             self.assertEqual(json_path.read_text(encoding="utf-8"), rendered["json"])
             self.assertEqual(summary_path.read_text(encoding="utf-8"), rendered["summary"])
 
+    def test_trend_report_covers_every_declared_dimension(self) -> None:
+        report = self.trends.build_trend_report(self._series(), window=2)
+        self.assertEqual(report["schema_version"], self.trends.TREND_REPORT_SCHEMA_VERSION)
+        self.assertEqual(sorted(report["series"]), sorted(self.trends.DIMENSION_PATHS))
+        self.assertEqual(sorted(report["verdicts"]), sorted(self.trends.DIMENSION_PATHS))
+        valid_verdicts = {
+            self.trends.VERDICT_IMPROVING,
+            self.trends.VERDICT_STABLE,
+            self.trends.VERDICT_REGRESSING,
+            self.trends.VERDICT_INSUFFICIENT,
+            self.trends.VERDICT_UNMEASURED,
+        }
+        self.assertTrue(set(report["verdicts"].values()) <= valid_verdicts)
+
 
 if __name__ == "__main__":
     unittest.main()
