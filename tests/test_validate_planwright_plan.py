@@ -144,6 +144,11 @@ class ValidatePlanwrightPlanTests(unittest.TestCase):
         errors = self._errors(render(Surfaces="src/ghost.py"))
         self.assertTrue(any("does not exist under root" in e for e in errors), errors)
 
+    def test_directory_surface_fails(self) -> None:
+        errors = self._errors(render(Surfaces="src"))
+        self.assertTrue(any("is a directory; name the specific file(s) that change" in e
+                            for e in errors), errors)
+
     def test_absolute_surface_fails(self) -> None:
         errors = self._errors(render(Surfaces="/etc/hosts"))
         self.assertTrue(any("not a safe repo-relative path" in e for e in errors), errors)
