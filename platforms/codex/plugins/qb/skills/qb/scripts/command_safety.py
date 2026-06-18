@@ -74,6 +74,7 @@ Finding = _ai.Finding
 compute_finding_id = _ai.compute_finding_id
 iter_repo_files = _core.iter_repo_files
 suppression_reason_for_line = _core.suppression_reason_for_line
+confidence_for_rule = _core.confidence_for_rule
 
 
 # --- Structured argv convention -----------------------------------------------
@@ -286,18 +287,18 @@ def is_within(root, candidate) -> bool:
 
 
 # --- Static detection rules ---------------------------------------------------
-# (rule_key, category, severity, confidence, compiled pattern)
+# (rule_key, category, severity, compiled pattern)
 # Patterns recognize the documented sinks; safe argv/exec-file forms are not matched.
 _RULES = [
-    ("shell-string-subprocess", "injection", "P1", "high",
+    ("shell-string-subprocess", "injection", "P1",
      re.compile(r"subprocess\.(?:run|call|check_call|check_output|Popen)\s*\([^\n]*shell\s*=\s*True")),
-    ("system-shell-call", "injection", "P1", "high", re.compile(r"\bos\.system\s*\(")),
-    ("system-pipe-call", "injection", "P2", "medium", re.compile(r"\bos\.popen\s*\(")),
-    ("subprocess-getoutput", "injection", "P2", "medium", re.compile(r"\bsubprocess\.getoutput\s*\(")),
-    ("node-shell-exec", "injection", "P1", "high", re.compile(r"child_process\.exec\s*\(")),
-    ("dynamic-eval", "injection", "P2", "medium", re.compile(r"\beval\s*\(")),
-    ("dynamic-exec", "injection", "P2", "medium", re.compile(r"\bexec\s*\(")),
-    ("path-traversal-sink", "path-traversal", "P2", "medium",
+    ("system-shell-call", "injection", "P1", re.compile(r"\bos\.system\s*\(")),
+    ("system-pipe-call", "injection", "P2", re.compile(r"\bos\.popen\s*\(")),
+    ("subprocess-getoutput", "injection", "P2", re.compile(r"\bsubprocess\.getoutput\s*\(")),
+    ("node-shell-exec", "injection", "P1", re.compile(r"child_process\.exec\s*\(")),
+    ("dynamic-eval", "injection", "P2", re.compile(r"\beval\s*\(")),
+    ("dynamic-exec", "injection", "P2", re.compile(r"\bexec\s*\(")),
+    ("path-traversal-sink", "path-traversal", "P2",
      re.compile(r"(?:open|os\.path\.join|Path)\s*\([^)]*\.\.[\\/]")),
 ]
 
@@ -310,9 +311,10 @@ def scan_text_for_command_risks(text: str):
     # Precompute newline offsets once and bisect per match (O(n + m log L) vs the
     # old O(n*m) per-match prefix count); byte-identical results, same order.
     newline_offsets = [index for index, char in enumerate(text) if char == "\n"]
-    for rule_key, category, severity, confidence, pattern in _RULES:
+    for rule_key, category, severity, pattern in _RULES:
         for match in pattern.finditer(text):
             line = bisect.bisect_left(newline_offsets, match.start()) + 1
+            confidence = confidence_for_rule("command-injection", rule_key)
             results.append((rule_key, category, severity, confidence, line))
     return results
 

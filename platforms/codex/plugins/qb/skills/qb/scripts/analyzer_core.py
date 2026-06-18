@@ -57,6 +57,16 @@ CONFIDENCE_POLICY: dict[str, dict[str, str]] = {
     "secret-hygiene": {
         "secret-pattern": "high",
     },
+    "command-injection": {
+        "shell-string-subprocess": "high",
+        "system-shell-call": "high",
+        "system-pipe-call": "medium",
+        "subprocess-getoutput": "medium",
+        "node-shell-exec": "high",
+        "dynamic-eval": "medium",
+        "dynamic-exec": "medium",
+        "path-traversal-sink": "medium",
+    },
     "quality-correctness": {
         "tool-diagnostic": "medium",
     },

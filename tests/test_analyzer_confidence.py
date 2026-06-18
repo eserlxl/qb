@@ -32,7 +32,9 @@ def _write(root: Path, rel: str, text: str) -> None:
 class AnalyzerConfidencePolicyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.ai = _load("qb_analyzer_interface", SCRIPTS_DIR / "analyzer_interface.py")
+        self.schema = _load("qb_finding_schema", SCRIPTS_DIR / "finding_schema.py")
         self.core = _load("qb_analyzer_core", SCRIPTS_DIR / "analyzer_core.py")
+        self.runner = _load("qb_audit_runner_confidence", SCRIPTS_DIR / "audit_runner.py")
         self.quality = _load("qb_analyzer_quality_confidence", SCRIPTS_DIR / "analyzer_quality.py")
         self.dependency = _load("qb_analyzer_dependency_confidence", SCRIPTS_DIR / "analyzer_dependency.py")
         self.license = _load("qb_analyzer_license_confidence", SCRIPTS_DIR / "analyzer_license.py")
@@ -40,9 +42,30 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
         self.breadth = _load("qb_analyzer_breadth_confidence", SCRIPTS_DIR / "analyzer_breadth.py")
         self.cfg = self.ai.AnalyzerConfig()
 
+    def test_confidence_policy_covers_default_registry(self) -> None:
+        registered = sorted(
+            analyzer.descriptor.id for analyzer in self.runner.build_default_registry().analyzers()
+        )
+        self.assertEqual(sorted(self.core.CONFIDENCE_POLICY), registered)
+        for analyzer_id, rules in self.core.CONFIDENCE_POLICY.items():
+            with self.subTest(analyzer=analyzer_id):
+                self.assertTrue(rules, f"{analyzer_id} has no confidence rules")
+                invalid = sorted(
+                    band for band in rules.values() if band not in self.schema.CONFIDENCE_BANDS
+                )
+                self.assertEqual(invalid, [])
+
     def test_policy_declares_current_producer_rule_bands(self) -> None:
         expected = {
             ("secret-hygiene", "secret-pattern"): "high",
+            ("command-injection", "shell-string-subprocess"): "high",
+            ("command-injection", "system-shell-call"): "high",
+            ("command-injection", "system-pipe-call"): "medium",
+            ("command-injection", "subprocess-getoutput"): "medium",
+            ("command-injection", "node-shell-exec"): "high",
+            ("command-injection", "dynamic-eval"): "medium",
+            ("command-injection", "dynamic-exec"): "medium",
+            ("command-injection", "path-traversal-sink"): "medium",
             ("quality-correctness", "tool-diagnostic"): "medium",
             ("dependency-audit", "manifest-hygiene"): "medium",
             ("dependency-audit", "network-advisory"): "high",
