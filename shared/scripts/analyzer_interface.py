@@ -101,6 +101,9 @@ class AnalyzerDescriptor:
 class AnalyzerConfig:
     """Read-only configuration an analyzer may consult."""
 
+    # fnmatch globs over each repo-relative posix path, honored by
+    # analyzer_core.iter_repo_files: a file is walked when it matches some
+    # ``include`` glob and no ``exclude`` glob. The defaults select everything.
     include: tuple[str, ...] = ("**",)
     exclude: tuple[str, ...] = ()
     allow_networked: bool = False

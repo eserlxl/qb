@@ -19,6 +19,7 @@ secret/severity logic) without duplicating it.
 from __future__ import annotations
 
 import bisect
+import fnmatch
 import importlib.util
 import os
 import re
@@ -167,14 +168,35 @@ def _is_safe_file(root: Path, candidate: Path) -> bool:
     return candidate.is_file()
 
 
-def iter_repo_files(repo_root: str | Path):
+def _path_selected(rel: str, include, exclude) -> bool:
+    """True when the repo-relative posix path passes AnalyzerConfig include/exclude.
+
+    fnmatch (case-sensitive) globs; a file is kept when it matches some include
+    glob and no exclude glob. The defaults (``include=("**",)``, ``exclude=()``)
+    select everything, so an analyzer that does not scope walks the whole tree --
+    the filters change the walk only when a caller sets them.
+    """
+    if include and not any(fnmatch.fnmatchcase(rel, pat) for pat in include):
+        return False
+    if exclude and any(fnmatch.fnmatchcase(rel, pat) for pat in exclude):
+        return False
+    return True
+
+
+def iter_repo_files(repo_root: str | Path, config=None):
     """Yield files QB may scan, excluding git-ignored/tool-owned paths.
 
     In git worktrees this follows git's own view of source files: tracked files
     plus untracked files that are not ignored by .gitignore or other standard
     ignore mechanisms. That keeps generated local planning state such as .qb/
     out of audits. Outside git, fall back to deterministic os.walk pruning.
+
+    ``config`` is the optional AnalyzerConfig: its ``include``/``exclude`` globs
+    (fnmatch over the repo-relative posix path) narrow the walk. The defaults --
+    and ``config=None`` -- select everything, so unscoped callers are unaffected.
     """
+    include = getattr(config, "include", ("**",))
+    exclude = getattr(config, "exclude", ())
     root = Path(repo_root).resolve()
     if not root.is_dir():
         return
@@ -187,6 +209,8 @@ def iter_repo_files(repo_root: str | Path):
             if rel in seen or _has_skipped_part(rel_path, _TOOL_OWNED_SCAN_DIRS):
                 continue
             seen.add(rel)
+            if not _path_selected(rel, include, exclude):
+                continue
             candidate = root / rel_path
             if _is_safe_file(root, candidate):
                 yield candidate
@@ -201,6 +225,8 @@ def iter_repo_files(repo_root: str | Path):
         dirnames[:] = sorted(name for name in dirnames if name not in _FALLBACK_SKIP_SCAN_DIRS)
         for filename in sorted(filenames):
             candidate = current / filename
+            if not _path_selected(candidate.relative_to(root).as_posix(), include, exclude):
+                continue
             if _is_safe_file(root, candidate):
                 yield candidate
 
@@ -278,7 +304,7 @@ class SecretHygieneAnalyzer:
     def analyze(self, repo_root: str, config) -> list:
         root = Path(repo_root).resolve()
         findings: list = []
-        for path in iter_repo_files(root):
+        for path in iter_repo_files(root, config):
             try:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):

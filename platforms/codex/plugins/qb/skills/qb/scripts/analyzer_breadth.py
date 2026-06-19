@@ -95,7 +95,7 @@ class WorkflowActionAnalyzer:
     def analyze(self, repo_root: str, config) -> list:
         root = Path(repo_root).resolve()
         findings: list = []
-        for path in iter_repo_files(root):
+        for path in iter_repo_files(root, config):
             if not _is_workflow_file(root, path):
                 continue
             try:

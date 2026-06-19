@@ -97,7 +97,7 @@ class ConfigHygieneAnalyzer:
         findings: list = []
         if not root.is_dir():
             return findings
-        for path in iter_repo_files(root):
+        for path in iter_repo_files(root, config):
             rel_path = path.relative_to(root)
             if not _is_committed_env(path):
                 continue
@@ -127,7 +127,7 @@ class ConfigHygieneAnalyzer:
                 continue
             findings.append(finding)
 
-        for path in iter_repo_files(root):
+        for path in iter_repo_files(root, config):
             rel_path = path.relative_to(root)
             if path.name != ".npmrc" or _is_template_name(path):
                 continue

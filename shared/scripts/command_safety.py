@@ -396,7 +396,7 @@ class CommandInjectionAnalyzer:
         root = Path(repo_root).resolve()
         findings: list = []
         self.last_suppression_report = []
-        for path in iter_repo_files(root):
+        for path in iter_repo_files(root, config):
             try:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
