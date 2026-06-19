@@ -279,6 +279,52 @@ def write_report(report: dict, path) -> None:
     Path(path).write_text(render_report(report), encoding="utf-8")
 
 
+def evaluate_thresholds(report: dict, *, min_precision=None, min_recall=None,
+                        per_analyzer=None, per_category=None) -> dict:
+    """Evaluate a built report against minimum precision/recall bars.
+
+    ``min_precision`` / ``min_recall`` are the overall (``totals``) bars;
+    ``per_analyzer`` / ``per_category`` map an id to ``{"min_precision": x,
+    "min_recall": y}`` for scoped bars. A metric of ``None`` means **not
+    measured** -- there were no labelled-and-emitted cases for that scope (for
+    example an analyzer whose optional tool was absent, so it produced nothing) --
+    and is **never** scored as a failure, so the gate distinguishes below-threshold
+    from not-run (capability-aware).
+
+    Returns ``{"passed": bool, "failures": [{"scope", "metric", "threshold",
+    "actual"}, ...]}`` with a deterministic, sorted failures list.
+    """
+    failures: list[dict] = []
+
+    def _check(scope: str, metrics: dict, bar_precision, bar_recall) -> None:
+        for metric, bar in (("precision", bar_precision), ("recall", bar_recall)):
+            if bar is None:
+                continue
+            actual = metrics.get(metric)
+            if actual is not None and actual < bar:
+                failures.append({
+                    "scope": scope,
+                    "metric": metric,
+                    "threshold": bar,
+                    "actual": actual,
+                })
+
+    _check("totals", report.get("totals", {}), min_precision, min_recall)
+    for analyzer_id, bars in sorted((per_analyzer or {}).items()):
+        metrics = report.get("per_analyzer", {}).get(analyzer_id)
+        if metrics is not None:
+            _check(f"per_analyzer:{analyzer_id}", metrics,
+                   bars.get("min_precision"), bars.get("min_recall"))
+    for category, bars in sorted((per_category or {}).items()):
+        metrics = report.get("per_category", {}).get(category)
+        if metrics is not None:
+            _check(f"per_category:{category}", metrics,
+                   bars.get("min_precision"), bars.get("min_recall"))
+
+    failures.sort(key=lambda item: (item["scope"], item["metric"]))
+    return {"passed": not failures, "failures": failures}
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Run the QB precision/recall harness.")
     parser.add_argument(
