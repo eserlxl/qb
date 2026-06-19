@@ -135,7 +135,7 @@ This is the authoritative "before" state every forward phase closes against.
 
 - Repo-aware staged planning (`.qb/` artifacts) with read-only, dependency-free
   validators at every step and a planwright export path.
-- A dependency-free audit engine, A0 report-only by default, with the six producer
+- A dependency-free audit engine, A0 report-only by default, with the seven producer
   analyzers and frozen finding categories named in the README.
 - Disposable git **write isolation** for proposed fixes — a throwaway worktree; the
   target working tree is untouched until a fix verifies and is promoted.
