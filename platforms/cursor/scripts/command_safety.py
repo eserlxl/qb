@@ -35,6 +35,7 @@ import bisect
 import importlib.util
 import os
 import re
+import signal
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -261,23 +262,51 @@ def run_command(argv, cwd=None, timeout=None, env=None, confinement=None):
     args = assert_argv(argv)
     spec = _normalize_confinement(confinement)
     controls, preexec_fn, start_new_session = _establish_confinement(spec)
-    completed = subprocess.run(  # noqa: S603 -- argv form, no shell; this is the safe primitive
+    # Popen rather than subprocess.run so a timeout reaps the WHOLE process group:
+    # the child leads its own session/group (start_new_session), so a plain
+    # SIGKILL to the direct child would orphan any grandchildren the timed-out
+    # command spawned. We mirror subprocess.run's contract (CompletedProcess on
+    # success, TimeoutExpired with captured output on timeout).
+    proc = subprocess.Popen(  # noqa: S603 -- argv form, no shell; this is the safe primitive
         args,
         cwd=cwd,
-        timeout=timeout,
         env=env,
         shell=False,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
         preexec_fn=preexec_fn,
         start_new_session=start_new_session,
     )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill_process_group(proc, start_new_session)
+        stdout, stderr = proc.communicate()
+        raise subprocess.TimeoutExpired(args, timeout, output=stdout, stderr=stderr)
+    completed = subprocess.CompletedProcess(args, proc.returncode, stdout, stderr)
     completed.qb_confinement = {
         "enabled": spec.enabled,
         "controls": controls,
         "opt_out_reason": spec.opt_out_reason,
     }
     return completed
+
+
+def _kill_process_group(proc, in_own_group) -> None:
+    """SIGKILL the timed-out child's whole process group, reaping grandchildren.
+
+    When the child leads its own session/group (``start_new_session``), kill the
+    group so descendants it spawned are not orphaned. Fall back to killing just
+    the child if the group is already gone or cannot be signalled.
+    """
+    if in_own_group and os.name == "posix":
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            return
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+    proc.kill()
 
 
 def minimal_env(base=None) -> dict:
