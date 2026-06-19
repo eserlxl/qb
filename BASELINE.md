@@ -141,25 +141,27 @@ This is the authoritative "before" state every forward phase closes against.
 
 | Gap | Status today | Closing phase |
 |---|---|---|
-| Execution sandboxing of analyzed code | QB confines *writes*, not arbitrary code execution — "not yet shipped" (README) | Phase 1 hardens confine-by-default / sandboxed authorization; full execution sandboxing of analyzed code remains a boundary item per the README |
+| Full execution sandboxing of analyzed code | QB ships disposable write isolation plus command-level process confinement, but not filesystem, network, syscall, or container isolation for arbitrary analyzed code | Phase 1 hardens confine-by-default / sandboxed authorization; full execution sandboxing of analyzed code remains a boundary item per the README |
 | Live A2/A3 autonomy proofs | Gates exist; end-to-end campaign evidence over a labelled corpus is pending | Phase 3 (corpus campaigns / autonomy proofs) |
 | Disabled cloud CI | Local `make check` is the gate of record | Phase 0 (this baseline + regression net compensate) |
 | Analyzer breadth / environment-dependence | `pyflakes`/`ruff` optional and dormant when absent | Phase 2 (analyzer coverage) |
 | Antigravity parity | Planning-only; not a `sync.sh` destination; ships no audit engine | Phase 5 (multi-host parity) |
 
-These statements mirror the existing README and RUNBOOK claims (notably the
-sandbox "not yet shipped" caveat and the planning-only Antigravity model) and do
-not supersede them.
+These statements mirror the existing README and RUNBOOK claims (notably the full
+execution sandboxing "not yet shipped" caveat and the planning-only Antigravity
+model) and do not supersede them.
 
 ## A2/A3 trusted-code precondition and gate of record
 
 Two operator-facing preconditions are part of the baseline so safety is not
 misread:
 
-- **Trusted-code precondition.** Because execution sandboxing of analyzed code is
-  not yet shipped, QB confines *writes* (throwaway worktree) but does **not**
-  contain arbitrary code execution. A2 (apply-verified) and A3 (deliver) are safe
-  only against **trusted code** until the sandbox ships; do not rely on QB to
+- **Trusted-code precondition.** Because full execution sandboxing of analyzed
+  code is not yet shipped, QB provides disposable write isolation (throwaway
+  worktree) plus command-level process confinement, but does **not** contain
+  arbitrary code execution with filesystem, network, syscall, or container
+  isolation. A2 (apply-verified) and A3 (deliver) are safe only against
+  **trusted code** until full execution sandboxing ships; do not rely on QB to
   contain untrusted code. This mirrors the README caveat and does not remove it.
 - **Gate of record.** Cloud CI (the GitHub Actions `validate.yml` workflow behind
   the README badge) is **disabled on the account**, so a green **local**

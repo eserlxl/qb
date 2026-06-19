@@ -29,9 +29,11 @@ ship before disclosing further details publicly.
 
 ## Trusted-code precondition
 
-Execution sandboxing of analyzed code is **not yet shipped** (a roadmap item). QB
-confines *writes* (a throwaway git worktree) but does **not** contain arbitrary code
-execution, so the apply-verified (A2) and deliver (A3) autonomy levels are safe only
-against **trusted code** until the execution sandbox lands. Do not rely on QB to
-contain untrusted code. This mirrors the README and BASELINE caveats and does not
-remove them.
+Full execution sandboxing of analyzed code is **not yet shipped** (a roadmap
+item). QB currently provides disposable **write isolation** (a throwaway git
+worktree) and command-level **process confinement** for verification, but it does
+**not** provide filesystem, network, syscall, or container isolation for
+arbitrary analyzed code. The apply-verified (A2) and deliver (A3) autonomy levels
+are safe only against **trusted code** until full execution sandboxing lands. Do
+not rely on QB to contain untrusted code. This mirrors the README and BASELINE
+caveats and does not remove them.

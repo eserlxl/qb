@@ -109,13 +109,14 @@ The maximum level a context may use is earned, not chosen: the release gates
 (`release_gate.permitted_autonomy`) read the run's telemetry and deny auto-apply
 (cap at A1) unless precision ≥ floor **and** every kept fix verified green.
 
-The effective level is also capped by **execution-sandbox availability**. A2/A3
-fix verification runs **contained** under process confinement; when the required
-control cannot be established, autonomy is clamped to A1 (no A2/A3 apply) rather
-than running analyzed-code verification unconfined, and the run records a clamp
-reason (`sandbox unavailable -> autonomy capped to A1`) in the result and
-telemetry. The effective level is the **most restrictive** of the declared level,
-the telemetry-earned ceiling, and this sandbox clamp.
+The effective level is also capped by **process-confinement availability**. A2/A3
+fix verification runs under process confinement; when the required control cannot
+be established, autonomy is clamped to A1 (no A2/A3 apply) rather than running
+analyzed-code verification unconfined, and the run records a clamp reason
+(`sandbox unavailable -> autonomy capped to A1`) in the result and telemetry.
+This is not full execution sandboxing for arbitrary untrusted code. The effective
+level is the **most restrictive** of the declared level, the telemetry-earned
+ceiling, and this confinement clamp.
 
 ## Start
 
@@ -166,11 +167,11 @@ the A1 → A2 → A3 progression and pass conditions, the per-run telemetry fiel
 (`telemetry.build_telemetry`), the rollback drill
 (`release_gate.run_rollback_drill`), and the precision/fix-safety judging anchored
 to `PRECISION_FLOOR = 0.80`. The protocol runs over a trusted/neutralized corpus;
-untrusted, self-executing targets are gated on the execution sandbox. It also
-records the **reviewable-changeset contract**: A3 assembles a changeset whose
-`commit_permitted` only reflects `policy.allow_commit`, and QB executes no
-commit/push/PR in that seam (`HEAD` is left unchanged) — delivery stays an
-explicit, separate opt-in.
+untrusted, self-executing targets require full execution sandboxing, which is not
+yet shipped. It also records the **reviewable-changeset contract**: A3 assembles
+a changeset whose `commit_permitted` only reflects `policy.allow_commit`, and QB
+executes no commit/push/PR in that seam (`HEAD` is left unchanged) — delivery
+stays an explicit, separate opt-in.
 
 ## Trip responses
 
@@ -241,21 +242,22 @@ ceiling is `constraining` (legitimately limiting useful work — consider a rais
 is **output-only**: it returns advice and never mutates a budget, so widening a
 ceiling always remains a deliberate `policy.budgets` edit.
 
-## Execution sandbox contract
+## Process confinement contract
 
 QB confines every external command it runs on the analyzed repository's behalf —
 in particular each fix's verification command — under **process confinement**
 established before the child spawns. This is process confinement (a new
-session/process group plus conservative POSIX resource limits), **not** a
-filesystem/network namespace or container sandbox.
+session/process group plus conservative POSIX resource limits), **not** full
+execution sandboxing, a filesystem/network namespace, or a container sandbox.
 
 The rule is **fail-closed**: when a required control cannot be established
 (`command_safety.ConfinementUnavailable`), the command is refused, never run
 unconfined, and the verification seam records `verification confinement
 unavailable` as non-green so an unconfined run is never kept. Repo-supplied
 scripts never execute unless `least_privilege.may_run_repo_script` authorizes
-them (`AUTO_RUN_REPO_SCRIPTS` is `False`). The full contract — guarantee,
-non-guarantee, supported controls, and governing symbols — lives in
+them (`AUTO_RUN_REPO_SCRIPTS` is `False`); that sandboxed authorization is a
+policy gate, not a full-containment claim. The full contract — vocabulary,
+guarantee, non-guarantee, supported controls, and governing symbols — lives in
 [docs/execution-sandbox.md](docs/execution-sandbox.md).
 
 ## Production gate

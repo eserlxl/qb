@@ -120,9 +120,10 @@ repository context.
 | A2 | Promote only verified fixes that satisfy policy and rollback requirements. |
 | A3 | A2 plus a reviewable delivery path; commit, push, and PR actions remain opt-in. |
 
-A2/A3 fix verification runs **contained** (see the confinement note below); when
-execution confinement is unavailable the effective level is **capped at A1** and
-the clamp reason is recorded in the run result and telemetry.
+A2/A3 fix verification runs under command-level **process confinement** (see the
+confinement note below); when that confinement is unavailable the effective level
+is **capped at A1** and the clamp reason is recorded in the run result and
+telemetry.
 
 Proposed fixes are tried in disposable git **write isolation** (a throwaway
 worktree; the target working tree is never touched until a fix verifies and is
@@ -132,7 +133,9 @@ limits, established before the command spawns. When the required control cannot 
 established QB **fails closed and caps autonomy** below apply-verified rather than
 running unconfined (see [docs/execution-sandbox.md](docs/execution-sandbox.md)).
 This is process confinement, not a filesystem or network namespace, so it is not a
-full container sandbox for fully untrusted code.
+full execution sandbox for fully untrusted code. The repo-script
+`sandboxed_authorization` gate is an explicit authorization requirement, not a
+full-containment claim.
 
 The built-in producer analyzers are `SecretHygieneAnalyzer`,
 `CommandInjectionAnalyzer`, `QualityAnalyzer`, `DependencyAnalyzer`,
@@ -391,6 +394,8 @@ QB's governance contract is discoverable in one place:
 
 QB's vulnerability-reporting policy, supported-versions statement, and the
 trusted-code precondition for A2/A3 autonomy live in [SECURITY.md](SECURITY.md).
+In short: QB ships disposable write isolation and process confinement today, but
+full execution sandboxing for arbitrary untrusted code is not yet shipped.
 
 ## Attribution
 

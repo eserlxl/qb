@@ -1,11 +1,27 @@
-# Execution Sandbox Contract
+# External Command Confinement Contract
 
-The single authoritative contract for how QB confines the external commands it
-executes. The engine's confinement primitives live in
+The single authoritative contract for how QB process-confines the external
+commands it executes. The engine's confinement primitives live in
 `shared/scripts/command_safety.py` (and the verification seam in
 `shared/scripts/verification_gate.py`); this document is the one place that states
 the guarantee, the non-guarantee, the supported controls, and the fail-closed rule
 that Phase 1.2–1.6 implement and test against.
+
+## Vocabulary
+
+QB uses four distinct safety terms:
+
+- **Process confinement** is the shipped command boundary: a new
+  session/process group plus conservative POSIX resource limits.
+- **Disposable write isolation** is the shipped promotion boundary: proposed
+  fixes are tried in a throwaway git worktree before any verified change reaches
+  the target working tree.
+- **Sandboxed authorization** is the explicit policy signal required before QB
+  may execute a repo-supplied script; it is an authorization gate, not a claim of
+  full containment.
+- **Full execution sandboxing** would mean filesystem, network, syscall, or
+  container-style isolation for arbitrary analyzed code. That boundary is not
+  shipped.
 
 ## Guarantee
 
@@ -17,11 +33,11 @@ spawned, never after.
 
 ## Non-guarantee
 
-This is **process confinement, not a filesystem or network namespace and not a
-container sandbox**. QB establishes a new session/process group and conservative
-POSIX resource limits; it does **not** isolate the filesystem, the network, or
-syscalls. Until that boundary is complete, A2/A3 remain safe only against trusted
-code (see `BASELINE.md` and `RUNBOOK.md`).
+This is **process confinement, not full execution sandboxing**. QB establishes a
+new session/process group and conservative POSIX resource limits; it does **not**
+isolate the filesystem, the network, or syscalls. Until full execution
+sandboxing is complete, A2/A3 remain safe only against trusted code (see
+`BASELINE.md` and `RUNBOOK.md`).
 
 ## Supported controls
 
