@@ -263,6 +263,13 @@ SECRET_PATTERNS = [
     # Azure storage account key: 64 bytes base64 (86 chars + "==") preceded by the
     # AccountKey= context, so the anchor bounds false positives on bare base64 blobs.
     ("azure_storage_key", re.compile(r"AccountKey=[A-Za-z0-9+/]{86}==")),
+    # GitHub OAuth / app / refresh tokens share ghp_'s structure but a different
+    # prefix letter: gho_ (OAuth), ghu_ (user-to-server), ghs_ (server-to-server),
+    # ghr_ (refresh). ghp_ (classic PAT) stays its own github_legacy_pat entry.
+    ("github_app_token", re.compile(r"\bgh[orsu]_[A-Za-z0-9]{20,}\b")),
+    # Google API key: the distinctive "AIza" prefix plus a fixed 35-char body
+    # bounds false positives on bare base64-ish strings.
+    ("google_api_key", re.compile(r"\bAIza[0-9A-Za-z_\-]{35}\b")),
 ]
 
 

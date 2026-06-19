@@ -88,6 +88,21 @@ class NoCommittedSecretsTest(unittest.TestCase):
         self.assertTrue(by_name["stripe_secret_key"].search("sk_live_" + "a" * 24))
         self.assertTrue(by_name["stripe_secret_key"].search("sk_test_" + "b" * 24))
 
+    def test_patterns_detect_github_app_and_google_keys(self) -> None:
+        # Positive coverage for the GitHub OAuth/app/refresh prefixes and Google API
+        # keys. Tokens are built by concatenation so this source carries no literal
+        # credential to trip the repo-wide scan above.
+        by_name = dict(SECRET_PATTERNS)
+        for prefix in ("gho_", "ghu_", "ghs_", "ghr_"):
+            self.assertTrue(
+                by_name["github_app_token"].search(prefix + "A" * 36),
+                f"{prefix} GitHub token not detected",
+            )
+        # ghp_ (classic PAT) stays the legacy class, not github_app_token.
+        self.assertIsNone(by_name["github_app_token"].search("ghp_" + "A" * 36))
+        self.assertTrue(by_name["github_legacy_pat"].search("ghp_" + "A" * 36))
+        self.assertTrue(by_name["google_api_key"].search("AIza" + "b" * 35))
+
 
 if __name__ == "__main__":
     unittest.main()
