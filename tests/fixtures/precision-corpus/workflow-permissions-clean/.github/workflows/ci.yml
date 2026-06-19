@@ -1,0 +1,7 @@
+name: ci
+permissions:
+  contents: read
+jobs:
+  test:
+    steps:
+      - uses: actions/checkout@v4.2.2
