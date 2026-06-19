@@ -75,19 +75,25 @@ def _validate_label(raw: dict, fixture: str, index: int) -> dict:
     category = raw.get("category")
     evidence = raw.get("evidence")
     rule_key = raw.get("rule_key")
+    analyzer_id = raw.get("analyzer_id")
     if not isinstance(category, str) or category not in CATEGORIES:
         raise ValueError(f"{fixture}: expected_findings[{index}].category is invalid")
     if not isinstance(evidence, str) or ":" not in evidence:
         raise ValueError(f"{fixture}: expected_findings[{index}].evidence is invalid")
     if not isinstance(rule_key, str) or not rule_key.strip():
         raise ValueError(f"{fixture}: expected_findings[{index}].rule_key is invalid")
+    if analyzer_id is not None and (not isinstance(analyzer_id, str) or not analyzer_id.strip()):
+        raise ValueError(f"{fixture}: expected_findings[{index}].analyzer_id is invalid")
     finding_id = compute_finding_id(category, evidence, rule_key)
-    return {
+    label = {
         "category": category,
         "evidence": evidence,
         "rule_key": rule_key,
         "id": finding_id,
     }
+    if analyzer_id is not None:
+        label["analyzer_id"] = analyzer_id
+    return label
 
 
 def load_labels(fixture_dir) -> dict:
@@ -163,6 +169,20 @@ def _labels_for_categories(labels: list[dict], categories: set[str]) -> list[dic
     return [label for label in labels if label["category"] in categories]
 
 
+def _labels_for_analyzer(labels: list[dict], descriptor) -> list[dict]:
+    scoped: list[dict] = []
+    categories = set(descriptor.categories)
+    for label in labels:
+        owner = label.get("analyzer_id")
+        if owner is not None:
+            if owner == descriptor.id:
+                scoped.append(label)
+            continue
+        if label["category"] in categories:
+            scoped.append(label)
+    return scoped
+
+
 def _findings_for_category(findings: list, category: str) -> list:
     return [finding for finding in findings if finding.category == category]
 
@@ -219,7 +239,7 @@ def build_report(corpus_root, audit_output_root=None) -> dict:
                     registry,
                     _audit_output_dir(audit_root, fixture_name, descriptor.id),
                 )
-                analyzer_labels = _labels_for_categories(labels, set(descriptor.categories))
+                analyzer_labels = _labels_for_analyzer(labels, descriptor)
                 analyzer_counts = _compare(analyzer_labels, analyzer_result["findings"])
                 _add_counts(per_analyzer[descriptor.id], analyzer_counts)
                 analyzer_rows[descriptor.id] = _finalize_counts(analyzer_counts)

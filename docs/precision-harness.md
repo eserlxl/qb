@@ -19,6 +19,7 @@ without guessing:
   "fixture": "example-case",
   "expected_findings": [
     {
+      "analyzer_id": "command-injection",
       "category": "injection",
       "evidence": "app.py:2",
       "rule_key": "system-shell-call"
@@ -34,7 +35,14 @@ Field rules:
   the `evidence` string an analyzer emits.
 - **`rule_key`** — the analyzer rule that should fire (e.g. `system-shell-call`,
   `shell-string-subprocess`, `path-traversal-sink`).
+- **`analyzer_id`** — optional owner for categories emitted by multiple
+  analyzers. When present, per-analyzer metrics count the label only for that
+  analyzer; aggregate and per-category metrics still use the normal join key.
 - A fixture with **no** issues has `"expected_findings": []` (a known-clean case).
+
+The `example-case` fixture demonstrates a mixed positive/clean dependency
+manifest: an unpinned `express` range is labelled as a dependency finding while
+an exact-pinned `lodash` entry and committed `package-lock.json` remain clean.
 
 **No secret values** appear in any fixture or manifest — true-positive secret
 cases use placeholder/synthetic tokens only.

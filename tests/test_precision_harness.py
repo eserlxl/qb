@@ -34,6 +34,7 @@ class PrecisionHarnessTests(unittest.TestCase):
     def _deterministic_registry(self):
         registry = self.harness.AnalyzerRegistry()
         registry.register(self.harness._runner.CommandInjectionAnalyzer())
+        registry.register(self.harness._runner.DependencyAnalyzer())
         registry.register(self.harness._runner.SecretHygieneAnalyzer())
         registry.register(self.harness._runner.WorkflowActionAnalyzer())
         return registry
@@ -54,7 +55,7 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(
             first["totals"],
             {
-                "true_positive": 3,
+                "true_positive": 4,
                 "false_positive": 0,
                 "false_negative": 0,
                 "precision": 1.0,
@@ -65,6 +66,7 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(first["per_category"]["secret"]["recall"], 1.0)
         self.assertEqual(first["per_category"]["dependency"]["precision"], 1.0)
         self.assertEqual(first["per_analyzer"]["command-injection"]["precision"], 1.0)
+        self.assertEqual(first["per_analyzer"]["dependency-audit"]["recall"], 1.0)
         self.assertEqual(first["per_analyzer"]["secret-hygiene"]["recall"], 1.0)
         self.assertEqual(first["per_analyzer"]["workflow-actions"]["recall"], 1.0)
 
@@ -77,10 +79,10 @@ class PrecisionHarnessTests(unittest.TestCase):
 
             report = self._build_report(corpus)
 
-        self.assertEqual(report["totals"]["true_positive"], 3)
+        self.assertEqual(report["totals"]["true_positive"], 4)
         self.assertEqual(report["totals"]["false_positive"], 1)
         self.assertEqual(report["totals"]["false_negative"], 0)
-        self.assertEqual(report["totals"]["precision"], 3 / 4)
+        self.assertEqual(report["totals"]["precision"], 4 / 5)
         self.assertEqual(report["per_analyzer"]["command-injection"]["precision"], 0.5)
 
 

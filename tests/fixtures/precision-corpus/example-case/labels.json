@@ -5,6 +5,12 @@
       "category": "injection",
       "evidence": "app.py:2",
       "rule_key": "system-shell-call"
+    },
+    {
+      "analyzer_id": "dependency-audit",
+      "category": "dependency",
+      "evidence": "package.json:3",
+      "rule_key": "unpinned-package-json:dependencies:express"
     }
   ]
 }
