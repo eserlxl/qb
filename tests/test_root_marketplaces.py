@@ -101,6 +101,12 @@ class RootMarketplaceTests(unittest.TestCase):
             "installation": "AVAILABLE",
             "authentication": "ON_INSTALL",
         })
+        codex_manifest = json.loads(
+            (REPO_ROOT / "platforms/codex/plugins/qb/.codex-plugin/plugin.json")
+            .read_text(encoding="utf-8")
+        )
+        self.assertEqual(codex_manifest["interface"]["displayName"], codex["interface"]["displayName"])
+        self.assertEqual(codex_manifest["interface"]["category"], codex_plugin["category"])
 
         cursor = json.loads(
             (REPO_ROOT / ".cursor-plugin/marketplace.json").read_text(encoding="utf-8")
@@ -109,6 +115,15 @@ class RootMarketplaceTests(unittest.TestCase):
         cursor_plugin = cursor["plugins"][0]
         self.assertIn("repo-aware", cursor_plugin["description"])
         self.assertIn(".qb/", cursor_plugin["description"])
+        cursor_manifest = json.loads(
+            (REPO_ROOT / "platforms/cursor/.cursor-plugin/plugin.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cursor_manifest["displayName"], "QB")
+        self.assertEqual(cursor_manifest["name"], cursor_plugin["name"])
+        parity = (REPO_ROOT / "platforms/PARITY.md").read_text(encoding="utf-8")
+        self.assertIn("| Cursor | yes | yes |", parity)
+        self.assertIn("| Codex | yes | yes |", parity)
+        self.assertIn("| Antigravity | yes | no (planning-only) |", parity)
 
     def test_claude_code_package_is_plugin_only(self) -> None:
         # The Claude Code package ships NO marketplace manifest; it is distributed

@@ -39,6 +39,11 @@ class ManifestIdTests(unittest.TestCase):
                     f"manifest name {data.get('name')!r} != expected id {platform['id']!r} "
                     f"in {platform['manifest']}",
                 )
+                display_name = data.get("displayName") or data.get("interface", {}).get("displayName")
+                self.assertEqual(display_name, "QB", f"displayName drift in {platform['manifest']}")
+                for url in (data.get("homepage"), data.get("repository")):
+                    if url:
+                        self.assertIn("github.com/eserlxl/qb", url)
 
     def test_each_manifest_declares_semver_version_and_mit_license(self) -> None:
         semver = re.compile(r"^\d+\.\d+\.\d+$")
