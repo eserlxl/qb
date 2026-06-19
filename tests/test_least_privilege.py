@@ -9,8 +9,10 @@ every shared engine module imports only the standard library.
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 
@@ -28,6 +30,32 @@ def _load(name: str, path: Path):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _git(repo: Path, *args: str) -> None:
+    subprocess.run(
+        ["git", "-C", str(repo), *args],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+
+
+def _init_repo(repo: Path) -> None:
+    subprocess.run(
+        ["git", "init", "-q", str(repo)],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    _git(repo, "config", "user.email", "t@example.com")
+    _git(repo, "config", "user.name", "QB Test")
+    _git(repo, "config", "commit.gpgsign", "false")
+    (repo / "file.txt").write_text("old\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "init")
 
 
 class LeastPrivilegeTests(unittest.TestCase):
@@ -73,6 +101,60 @@ class LeastPrivilegeTests(unittest.TestCase):
             self.assertTrue(self.lp.repo_script_authorized())        # control present -> authorized
         finally:
             cs.available_confinement_controls = original
+
+        if subprocess.run(["git", "--version"], capture_output=True).returncode != 0:
+            self.skipTest("git unavailable")
+        orch = _load(
+            "qb_orchestrator_for_least_privilege_test",
+            SHARED_SCRIPTS / "orchestrator.py",
+        )
+        original_auth = orch._lp.repo_script_authorized
+        original_controls = orch._cs.available_confinement_controls
+        original_permitted = orch._release.permitted_autonomy
+        orch._lp.repo_script_authorized = lambda: False
+        orch._cs.available_confinement_controls = lambda: ("process_group",)
+        orch._release.permitted_autonomy = lambda _telemetry: orch.A2
+        try:
+            policy = orch._policy.Policy(
+                autonomy_level=orch.A2,
+                auto_fixable_categories=frozenset({"quality"}),
+                default_min_confidence="low",
+                write_allowlist=("**",),
+            )
+            finding = types.SimpleNamespace(
+                id="QBF-REPO-SCRIPT",
+                category="quality",
+                severity="P2",
+                confidence="high",
+                evidence="file.txt:1",
+            )
+            plan = types.SimpleNamespace(
+                finding=finding,
+                verify_command=[sys.executable, "-c", ""],
+            )
+            applied = {"called": False}
+            with tempfile.TemporaryDirectory() as d:
+                repo = Path(d)
+                _init_repo(repo)
+                result = orch.run_finding(
+                    policy,
+                    repo,
+                    plan,
+                    lambda _iso: applied.__setitem__("called", True),
+                )
+            self.assertEqual(result["outcome"], "blocked")
+            self.assertEqual(
+                result["reason"],
+                "repo-script-unauthorized: sandbox unavailable",
+            )
+            self.assertFalse(
+                applied["called"],
+                "unauthorized repo script must block before apply",
+            )
+        finally:
+            orch._lp.repo_script_authorized = original_auth
+            orch._cs.available_confinement_controls = original_controls
+            orch._release.permitted_autonomy = original_permitted
 
     def test_engine_core_is_dependency_free(self) -> None:
         violations = self.lp.assert_dependency_free_core(SHARED_SCRIPTS)
