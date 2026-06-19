@@ -169,6 +169,25 @@ class CommandSafetyTests(unittest.TestCase):
         self.assertEqual(shorthand.qb_confinement["controls"], ())
         self.assertEqual(shorthand.qb_confinement["opt_out_reason"], "explicit unconfined opt-out")
 
+    def test_true_and_explicit_spec_confine_like_default(self) -> None:
+        # confinement=True and an explicit default ConfinementSpec must behave
+        # identically to the unspecified default: confine before spawn and attach
+        # the qb_confinement record on a supported host (no input variant is a
+        # silent unconfined fallback).
+        if "process_group" not in self.cs.available_confinement_controls():
+            self.skipTest("process confinement unavailable on this host")
+        for confinement in (True, self.cs.ConfinementSpec()):
+            completed = self.cs.run_command(
+                [sys.executable, "-c", ""], confinement=confinement
+            )
+            self.assertTrue(
+                completed.qb_confinement["enabled"],
+                f"confinement={confinement!r} must confine before spawn",
+            )
+            self.assertIn("process_group", completed.qb_confinement["controls"])
+            self.assertIsNone(completed.qb_confinement["opt_out_reason"])
+            self.assertEqual(completed.returncode, 0)
+
     def test_default_confinement_establishes_all_available_controls(self) -> None:
         # The default spec is best-effort beyond the required floor: every available
         # supported control (process_group AND resource_limits when present) is
