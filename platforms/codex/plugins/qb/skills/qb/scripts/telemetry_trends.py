@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import sys
@@ -152,3 +153,49 @@ def emit_trend_artifacts(source, json_path, summary_path, window: int = 3) -> di
     Path(json_path).write_text(json_text, encoding="utf-8")
     Path(summary_path).write_text(summary_text, encoding="utf-8")
     return {"json": json_text, "summary": summary_text}
+
+
+# The aggregate's default home, mirroring run_store.OUTPUT_DIR_NAME (".qb/audit");
+# the run path persists telemetry-aggregate.json there once per run.
+_DEFAULT_AGGREGATE_SUBPATH = Path(".qb") / "audit" / _aggregate.AGGREGATE_TELEMETRY_FILENAME
+NO_SERIES_MESSAGE = "no telemetry series yet"
+
+
+def main(argv=None) -> int:
+    """CLI: render the multi-run telemetry trend report from an aggregate series.
+
+    Reads the store-local ``telemetry-aggregate.json`` (populated once per run by
+    the audit path) and prints a per-dimension improving/regressing/flat summary,
+    or the structured JSON report under ``--json``. An absent or empty series is a
+    documented, non-error outcome (exit 0 with a clear message on stderr): a cold
+    start has nothing to trend yet, which must never read as a failure.
+    """
+    parser = argparse.ArgumentParser(
+        description="Render the multi-run telemetry trend report from an aggregate series.")
+    parser.add_argument("--aggregate", default=None,
+                        help="Path to telemetry-aggregate.json. "
+                             "Default: <root>/.qb/audit/telemetry-aggregate.json.")
+    parser.add_argument("--root", default=".",
+                        help="Repository root used to locate the default aggregate. Default: cwd.")
+    parser.add_argument("--window", type=int, default=3,
+                        help="Trailing runs per dimension to classify (>= 2). Default: 3.")
+    parser.add_argument("--json", action="store_true", dest="as_json",
+                        help="Emit the structured JSON trend report instead of the text summary.")
+    args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+
+    if args.window < 2:
+        parser.error("--window must be at least 2")
+
+    path = (Path(args.aggregate) if args.aggregate is not None
+            else Path(args.root) / _DEFAULT_AGGREGATE_SUBPATH)
+    aggregate = _aggregate.read_aggregate(path)
+    if not aggregate.get("runs"):
+        sys.stderr.write(f"{NO_SERIES_MESSAGE} ({path})\n")
+        return 0
+    sys.stdout.write(render_trend_json(aggregate, args.window) if args.as_json
+                     else render_trend_summary(aggregate, args.window))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

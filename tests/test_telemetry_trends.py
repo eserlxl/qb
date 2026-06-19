@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
+import json
 import sys
 import tempfile
 import unittest
@@ -146,6 +149,37 @@ class TelemetryTrendTests(unittest.TestCase):
             rendered = self.trends.emit_trend_artifacts(series, json_path, summary_path, window=2)
             self.assertEqual(json_path.read_text(encoding="utf-8"), rendered["json"])
             self.assertEqual(summary_path.read_text(encoding="utf-8"), rendered["summary"])
+
+    def test_cli_renders_summary_and_handles_empty_series(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            agg_path = Path(d) / self.aggregate.AGGREGATE_TELEMETRY_FILENAME
+            # An absent/empty series is a documented no-op: exit 0, a clear message on
+            # stderr, and nothing on stdout (a cold start must never read as failure).
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = self.trends.main(["--aggregate", str(agg_path)])
+            self.assertEqual(code, 0)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn(self.trends.NO_SERIES_MESSAGE, err.getvalue())
+
+            # A populated series prints a per-dimension verdict summary on stdout.
+            agg_path.write_text(json.dumps(self._series()) + "\n", encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = self.trends.main(["--aggregate", str(agg_path), "--window", "2"])
+            self.assertEqual(code, 0)
+            summary = out.getvalue()
+            self.assertIn("trend_window=2", summary)
+            for dimension in self.trends.DIMENSION_PATHS:
+                self.assertIn(f"{dimension}: verdict=", summary)
+
+            # --json emits the structured, schema-versioned report.
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(self.trends.main(["--aggregate", str(agg_path), "--json"]), 0)
+            payload = json.loads(out.getvalue())
+            self.assertEqual(payload["schema_version"], self.trends.TREND_REPORT_SCHEMA_VERSION)
+            self.assertEqual(sorted(payload["verdicts"]), sorted(self.trends.DIMENSION_PATHS))
 
     def test_trend_report_covers_every_declared_dimension(self) -> None:
         report = self.trends.build_trend_report(self._series(), window=2)

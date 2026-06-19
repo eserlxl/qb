@@ -1,4 +1,4 @@
-.PHONY: sync check test baseline self-audit install-hooks release-manifest export-sanitized precision
+.PHONY: sync check test baseline self-audit install-hooks release-manifest export-sanitized precision trends
 
 sync:
 	bash scripts/sync.sh
@@ -31,6 +31,14 @@ precision:
 	python3 shared/scripts/precision_harness.py \
 	  --corpus tests/fixtures/precision-corpus \
 	  --thresholds tests/fixtures/precision-thresholds.json
+
+# trends -- render the multi-run telemetry trend report from the store-local
+# aggregate series (.qb/audit/telemetry-aggregate.json, persisted once per run).
+# Prints a per-dimension improving/regressing/stable summary; an absent or empty
+# series is a documented no-op (exit 0). Pass --json for the structured report or
+# --window N to set the trailing run count. See docs/telemetry-trends.md.
+trends:
+	python3 shared/scripts/telemetry_trends.py --root .
 
 # self-audit -- "QB audits QB": run the headless engine over this repository at the
 # conservative A0 (report-only) default, writing the findings inventory + reports to
