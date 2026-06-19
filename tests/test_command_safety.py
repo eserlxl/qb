@@ -209,6 +209,17 @@ class CommandSafetyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.cs.resolve_within(root, "../../etc/passwd")
             self.assertEqual(self.cs.resolve_within(root, "sub/ok.txt"), (root / "sub/ok.txt").resolve())
+            # An absolute out-of-repo path escapes the root and is refused.
+            with self.assertRaises(ValueError):
+                self.cs.resolve_within(root, "/etc/passwd")
+            self.assertFalse(self.cs.is_within(root, "/etc/passwd"))
+            # A symlink whose target is outside the root is resolved (symlinks
+            # followed) and refused -- a fix cannot escape isolation via a link.
+            with tempfile.TemporaryDirectory() as outside_d:
+                (root / "link").symlink_to(outside_d)
+                with self.assertRaises(ValueError):
+                    self.cs.resolve_within(root, "link/secret.txt")
+                self.assertFalse(self.cs.is_within(root, "link/secret.txt"))
 
     # --- analyzer ---------------------------------------------------------
     def test_analyzer_conforms_and_is_offline(self) -> None:
