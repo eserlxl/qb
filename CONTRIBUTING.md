@@ -58,16 +58,16 @@ platform changelogs share the same latest version header
 
 ## Test-suite count baseline
 
-`BASELINE.md` freezes the gate-of-record test inventory (**71 modules / 510 test
+`BASELINE.md` freezes the gate-of-record test inventory (**72 modules / 515 test
 cases**). **Adding or removing a test module or test case must update the
-`BASELINE.md` 71/510 reference in the same change.** `make check` runs
+`BASELINE.md` recorded counts in the same change.** `make check` runs
 `tests/test_baseline_consistency.py`, which re-derives the live module and case
 counts from the tree and fails if they drift from the recorded reference, so a
 test add/remove that skips the baseline update turns the next `make check` red.
 
 Diagnose a count failure by the **Guard-to-test mapping** in `BASELINE.md`:
 re-run the single named per-module guard to localize the regression. A green
-`make check` must report the recorded 71/510 counts unchanged.
+`make check` must report the recorded counts unchanged.
 
 ## No secrets
 

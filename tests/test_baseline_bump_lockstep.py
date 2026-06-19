@@ -56,7 +56,11 @@ class BaselineBumpLockstepTests(unittest.TestCase):
         text = BASELINE.read_text(encoding="utf-8")
         self.assertIn(f"## Regression reference (v{current})", text)
         self.assertIn(f"| Version (`VERSION`) | `{current}` |", text)
-        self.assertRegex(text, r"Expected test functions\s*\|\s*510\b")
+        # Assert the field exists with a numeric value, not a hardcoded count:
+        # tests/test_baseline_consistency.py already pins the exact value against
+        # live discovery, so duplicating the literal here only forces a needless
+        # edit on every test add/remove.
+        self.assertRegex(text, r"Expected test functions\s*\|\s*\d+\b")
         self.assertIn("Any deviation from the version, exit status, counts, or guard set above", text)
         out = self._dry_run("minor")
         self.assertIn(
