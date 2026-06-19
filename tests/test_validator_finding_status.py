@@ -93,6 +93,16 @@ class FindingStatusGateTests(unittest.TestCase):
         findings = self.v.parse_audit_findings(_audit("- AUDIT-FIX-01 | P0 | fix the resolved-state bug"))
         self.assertEqual(findings[0][2], "open")
 
+    def test_three_field_row_title_equal_to_status_keyword_still_gates(self) -> None:
+        # Regression: a legacy 3-field row "id | severity | title" whose title happens
+        # to equal a status keyword has no trailing title field, so it must be read as a
+        # title (status -> open), never as a status that would silently un-block a P0.
+        self.assertEqual(self.v._normalize_finding_status(" | resolved"), "open")
+        self.assertEqual(self.v._normalize_finding_status(" | accepted"), "open")
+        findings = self.v.parse_audit_findings(_audit("- AUDIT-FIX-01 | P0 | resolved"))
+        self.assertEqual(findings, [("AUDIT-FIX-01", "P0", "open")])
+        self.assertEqual(self._blocking(_audit("- AUDIT-FIX-01 | P0 | resolved"))["P0"], 1)
+
     def test_fenced_heading_is_not_a_duplicate(self) -> None:
         text = "\n".join(self.v.STEP1_HEADINGS) + "\n\n```\n## 1. Executive Summary\n```\n"
         state = self.v.ValidationState(root=Path("/tmp"), mode="step1", strict=False)

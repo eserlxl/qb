@@ -571,14 +571,21 @@ def _normalize_finding_status(row_remainder: str) -> str:
     """Read the lifecycle status from the field right after a fix-list row's severity.
 
     The status, when present, is the pipe-delimited field immediately following the
-    severity ("... | PX | <status> | <title>"). Only that one field is consulted, so a
-    status word appearing later inside the free-text title never reclassifies a
-    finding. Absent or unrecognized -> 'open' (legacy status-unaware behavior).
+    severity ("... | PX | <status> | <title>"). It is read as a status only when a
+    title field follows it: a legacy 3-field row ("... | PX | <title>") has no trailing
+    field, so its single field is the title -- a title that happens to equal a status
+    keyword must not silently un-block a real finding (the Step 4 gate must never fail
+    open). A status word appearing later inside the free-text title never reclassifies a
+    finding either. Absent or unrecognized -> 'open' (legacy status-unaware behavior).
     """
     rest = row_remainder.lstrip()
     if not rest.startswith("|"):
         return "open"
-    field = rest[1:].split("|", 1)[0].strip().lower().replace(" ", "_")
+    parts = rest[1:].split("|")
+    if len(parts) < 2:
+        # Only a single field after the severity: it is the title, not a status.
+        return "open"
+    field = parts[0].strip().lower().replace(" ", "_")
     if field in FINDING_STATUSES:
         return field
     if field in ("n/a", "na"):
