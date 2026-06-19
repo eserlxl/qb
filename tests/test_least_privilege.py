@@ -156,6 +156,38 @@ class LeastPrivilegeTests(unittest.TestCase):
             orch._cs.available_confinement_controls = original_controls
             orch._release.permitted_autonomy = original_permitted
 
+    def test_write_allowed_honors_policy_declared_allowlist(self) -> None:
+        # The enforced write_allowed and the declared policy.write_allowlist must
+        # not diverge: feed the policy's own allowlist into write_allowed so a
+        # glob-format mismatch between declaration (policy.py) and enforcement
+        # (least_privilege.py) is caught. The default (A0) policy declares an empty
+        # allowlist -> deny-all; a parsed policy's globs are honored verbatim.
+        # (Missing/malformed -> deny-all is covered by test_policy_engine's
+        # test_load_missing_or_malformed_fails_closed_to_default.)
+        policy = _load("qb_policy_for_least_privilege_test", SHARED_SCRIPTS / "policy.py")
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            default_allowlist = policy.default_policy().write_allowlist
+            self.assertEqual(default_allowlist, (), "A0 default declares deny-all")
+            self.assertFalse(
+                self.lp.write_allowed(repo, "src/x.py", default_allowlist),
+                "the declared deny-all allowlist must deny every write through write_allowed",
+            )
+            declared = policy.parse_policy({
+                "autonomy_level": "A2",
+                "auto_fixable_categories": ["quality"],
+                "default_min_confidence": "low",
+                "write_allowlist": ["src/*"],
+            }).write_allowlist
+            self.assertTrue(
+                self.lp.write_allowed(repo, "src/x.py", declared),
+                "a path matching the declared policy allowlist must be permitted",
+            )
+            self.assertFalse(
+                self.lp.write_allowed(repo, "etc/x.py", declared),
+                "a path outside the declared policy allowlist must be denied",
+            )
+
     def test_engine_core_is_dependency_free(self) -> None:
         violations = self.lp.assert_dependency_free_core(SHARED_SCRIPTS)
         self.assertEqual(violations, [], f"non-stdlib imports in engine core: {violations}")
