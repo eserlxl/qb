@@ -24,7 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # Actions are tag-pinned; a future hardening step may pin to full commit SHAs.
+    # Pinning policy: major-version tags are broad refs that the offline analyzer
+    # reports; full semver tags and immutable commit SHAs are the clean states.
+    # This disabled mirror workflow keeps local `make check` authoritative until
+    # these actions are intentionally advanced to stricter pins.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -50,13 +50,23 @@ class BreadthAnalyzerTests(unittest.TestCase):
                 "  test:\n"
                 "    steps:\n"
                 "      - uses: actions/checkout@v4\n"
+                "      - uses: docker/login-action@main\n"
+                "      - uses: owner/action\n"
             )
         })
-        self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].category, "dependency")
-        self.assertEqual(findings[0].evidence, ".github/workflows/ci.yml:5")
-        self.assertEqual(findings[0].fix_strategy, "manual")
-        self.assertEqual(self.ai.validate_finding(findings[0]), [])
+        self.assertEqual(len(findings), 3)
+        self.assertEqual(
+            [f.evidence for f in findings],
+            [
+                ".github/workflows/ci.yml:5",
+                ".github/workflows/ci.yml:6",
+                ".github/workflows/ci.yml:7",
+            ],
+        )
+        for finding in findings:
+            self.assertEqual(finding.category, "dependency")
+            self.assertEqual(finding.fix_strategy, "manual")
+            self.assertEqual(self.ai.validate_finding(finding), [])
 
     def test_full_semver_and_sha_refs_are_clean(self) -> None:
         findings = self._analyze({

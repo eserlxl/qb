@@ -31,8 +31,9 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   unpinned `pyproject.toml` project/Poetry dependencies, unpinned
   `package.json` `dependencies` / `devDependencies` / `optionalDependencies`,
   and missing npm lockfiles in the `dependency` category.
-- `WorkflowActionAnalyzer` covers broad GitHub Actions `uses:` refs in workflow
-  files in the `dependency` category.
+- `WorkflowActionAnalyzer` covers missing, branch, and broad major-version
+  GitHub Actions `uses:` refs in workflow files in the `dependency` category;
+  explicit full semver tags and 40-character commit SHAs are treated as clean.
 - `LicenseAnalyzer` covers missing or placeholder repository-root license files
   in the `license` category.
 - `ConfigHygieneAnalyzer` covers committed dotenv files and credential-bearing
