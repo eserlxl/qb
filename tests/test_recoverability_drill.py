@@ -100,6 +100,15 @@ class RecoverabilityDrillTest(unittest.TestCase):
             self.assertNotIn(secret, raw)
             self.assertIn("<redacted>", raw)
 
+    def test_read_evidence_degrades_on_malformed_record(self):
+        # A corrupt/partial recoverability record must read back as {} (the same
+        # default as an absent file), never raise JSONDecodeError to the caller.
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            (out / drill.RECOVERABILITY_EVIDENCE_FILENAME).write_text(
+                "{truncated", encoding="utf-8")
+            self.assertEqual(drill.read_evidence(out), {})
+
     def test_custom_mutation_is_fully_reverted(self):
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d) / "repo"

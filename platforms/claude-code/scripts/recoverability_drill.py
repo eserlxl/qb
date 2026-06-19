@@ -85,11 +85,16 @@ def persist_evidence(record, output_dir) -> Path:
 
 
 def read_evidence(output_dir) -> dict:
-    """Read back the recoverability evidence record, or {} when absent."""
+    """Read back the recoverability evidence record, or {} when absent or malformed."""
     path = Path(output_dir) / RECOVERABILITY_EVIDENCE_FILENAME
     if not path.is_file():
         return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        # A corrupt/partial record degrades to "no record" -- the same empty
+        # default as an absent file, matching the run_store/release_gate readers.
+        return {}
 
 
 def run_and_persist(repo_root, run_id, output_dir, mutate_fn=None) -> dict:
