@@ -80,17 +80,9 @@ FINDINGS_FILENAME = "findings.jsonl"
 SUMMARY_FILENAME = "summary.json"
 OUTPUT_FILENAMES = (FINDINGS_FILENAME, SUMMARY_FILENAME)
 
-_SEV_RANK = {sev: index for index, sev in enumerate(SEVERITIES)}
-
-
-def _sort_key(finding):
-    """Total ordering independent of analyzer discovery / filesystem timing."""
-    return (
-        _SEV_RANK.get(finding.severity, len(SEVERITIES)),
-        finding.category,
-        finding.evidence,
-        finding.id,
-    )
+# The canonical total order is the single source in finding_schema, so every
+# persistence path (this runner and qb_headless via RunStore) sorts identically.
+_sort_key = _fs.finding_sort_key
 
 
 def build_default_registry():

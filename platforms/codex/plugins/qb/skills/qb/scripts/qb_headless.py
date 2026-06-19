@@ -110,7 +110,9 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
                         (dict(entry) for entry in cap.get("skipped", [])),
                         key=lambda entry: entry.get("adapter", "")),
                 }
-        findings.sort(key=lambda f: f.id)
+        # Canonical total order shared with audit_runner.run_audit (single source
+        # in finding_schema) so both entry points emit byte-identical findings.jsonl.
+        findings.sort(key=_audit._sort_key)
         store.write_findings(findings)
         store.append_log({"event": "audit-complete", "findings": len(findings)})
 

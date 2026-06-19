@@ -132,8 +132,12 @@ class RunStoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)
             store.write_findings([self._finding("b"), self._finding("a")])
-            ids = [f["id"] for f in store.read_findings()]
-            self.assertEqual(ids, sorted(ids))
+            # Findings come back in the canonical total order (severity, category,
+            # evidence, id) -- the single source shared with audit_runner so the
+            # store is byte-identical across entry points. Same severity/category
+            # here, so the order is by evidence.
+            evidence = [f["evidence"] for f in store.read_findings()]
+            self.assertEqual(evidence, sorted(evidence))
 
     def test_evidence_redaction_and_handle_rule(self) -> None:
         with tempfile.TemporaryDirectory() as d:

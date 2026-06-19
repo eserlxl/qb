@@ -116,7 +116,9 @@ class RunStore:
         # record_evidence / append_log / write_summary writers. A finding's rationale
         # or suggested_fix can quote secret-shaped material, so the findings file is
         # not exempt from the no-secret-value invariant.
-        ordered = sorted(findings, key=lambda f: f.id)
+        # Canonical total order (single source in finding_schema), so a store
+        # written here is byte-identical to one written by audit_runner.run_audit.
+        ordered = sorted(findings, key=_fs.finding_sort_key)
         text = "".join(serialize_finding(redact(f.to_dict())) + "\n" for f in ordered)
         (self.root / FINDINGS_FILENAME).write_text(text, encoding="utf-8")
 

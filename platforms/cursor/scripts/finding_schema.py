@@ -94,6 +94,23 @@ from dataclasses import dataclass, fields
 
 # --- Closed vocabularies -------------------------------------------------------
 SEVERITIES: tuple[str, ...] = ("P0", "P1", "P2", "P3")
+_SEV_RANK = {sev: index for index, sev in enumerate(SEVERITIES)}
+
+
+def finding_sort_key(finding):
+    """The one canonical total ordering on findings (severity, category, evidence,
+    id), independent of analyzer discovery / filesystem timing. The single source
+    every persistence path sorts by, so findings.jsonl is byte-identical no matter
+    which entry point (audit_runner, qb_headless via RunStore) wrote it.
+    """
+    return (
+        _SEV_RANK.get(finding.severity, len(SEVERITIES)),
+        finding.category,
+        finding.evidence,
+        finding.id,
+    )
+
+
 CONFIDENCE_BANDS: frozenset[str] = frozenset({"high", "medium", "low"})
 CATEGORIES: frozenset[str] = frozenset({
     "secret",
