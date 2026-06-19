@@ -15,6 +15,7 @@ always-true predicate cannot make invariant (2) pass vacuously.
 
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
@@ -132,6 +133,19 @@ class HostParityContractTest(unittest.TestCase):
             "no (planning-only)",
         )
         self.assertFalse(_has_engine(ANTIGRAVITY_ROOT / "skills/qb/scripts"))
+
+        # The engine-module roster the _has_engine predicate checks must match the
+        # modules PARITY.md names, so a rename in either place fails here rather than
+        # silently desyncing the predicate from the contract.
+        doc_text = PARITY_DOC.read_text(encoding="utf-8")
+        named = re.search(r"contains the engine modules \(([^)]*)\)", doc_text, re.DOTALL)
+        self.assertIsNotNone(named, "PARITY.md does not enumerate the engine modules")
+        named_modules = set(re.findall(r"`([A-Za-z0-9_]+\.py)`", named.group(1)))
+        self.assertEqual(
+            named_modules, set(ENGINE_MODULES),
+            f"PARITY.md engine modules {sorted(named_modules)} != predicate roster "
+            f"{sorted(ENGINE_MODULES)}",
+        )
 
     def test_capability_matrix_pins_host_decision_points(self):
         matrix = _parity_matrix()
