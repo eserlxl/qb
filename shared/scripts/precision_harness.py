@@ -338,6 +338,13 @@ def main(argv=None) -> int:
         default=None,
         help="Optional directory for per-fixture .qb/audit outputs; defaults to a temporary directory.",
     )
+    parser.add_argument("--min-precision", type=float, default=None,
+                        help="Minimum overall (totals) precision; the gate fails below it.")
+    parser.add_argument("--min-recall", type=float, default=None,
+                        help="Minimum overall (totals) recall; the gate fails below it.")
+    parser.add_argument("--thresholds", default=None,
+                        help="JSON file of bars: {min_precision, min_recall, "
+                             "per_analyzer:{id:{min_precision,min_recall}}, per_category:{...}}.")
     args = parser.parse_args(argv)
 
     report = build_report(args.corpus, audit_output_root=args.audit_out)
@@ -346,7 +353,31 @@ def main(argv=None) -> int:
         Path(args.out).write_text(text, encoding="utf-8")
     else:
         sys.stdout.write(text)
-    return 0
+
+    # Fail-closed threshold gate (opt-in): only gate when a bar was requested.
+    thresholds = {}
+    if args.thresholds:
+        thresholds = json.loads(Path(args.thresholds).read_text(encoding="utf-8"))
+    overall_precision = args.min_precision if args.min_precision is not None else thresholds.get("min_precision")
+    overall_recall = args.min_recall if args.min_recall is not None else thresholds.get("min_recall")
+    per_analyzer = thresholds.get("per_analyzer")
+    per_category = thresholds.get("per_category")
+    if (overall_precision is None and overall_recall is None
+            and not per_analyzer and not per_category):
+        return 0
+
+    gate = evaluate_thresholds(
+        report,
+        min_precision=overall_precision,
+        min_recall=overall_recall,
+        per_analyzer=per_analyzer,
+        per_category=per_category,
+    )
+    sys.stderr.write(json.dumps(
+        {"gate": "PASS" if gate["passed"] else "FAIL", "failures": gate["failures"]},
+        sort_keys=True,
+    ) + "\n")
+    return 0 if gate["passed"] else 1
 
 
 if __name__ == "__main__":
