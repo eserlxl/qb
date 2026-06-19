@@ -91,20 +91,44 @@ class CommandSafetyTests(unittest.TestCase):
         original = self.cs.available_confinement_controls
         self.cs.available_confinement_controls = lambda: ()
         try:
-            with self.assertRaises(self.cs.ConfinementUnavailable):
-                self.cs.run_command([sys.executable, "-c", "raise SystemExit('should-not-spawn')"])
+            with tempfile.TemporaryDirectory() as d:
+                marker = Path(d) / "spawned.txt"
+                cmd = [
+                    sys.executable,
+                    "-c",
+                    f"import pathlib; pathlib.Path({str(marker)!r}).write_text('spawned')",
+                ]
+                with self.assertRaises(self.cs.ConfinementUnavailable):
+                    self.cs.run_command(cmd)
+                self.assertFalse(
+                    marker.exists(),
+                    "missing required controls must fail before spawn",
+                )
         finally:
             self.cs.available_confinement_controls = original
 
     def test_run_command_fails_closed_when_required_control_unsupported(self) -> None:
-        with self.assertRaises(self.cs.ConfinementUnavailable) as cm:
-            self.cs.run_command(
-                [sys.executable, "-c", "raise SystemExit('should-not-spawn')"],
-                confinement={"require": ("process_group", "filesystem_namespace")},
+        with tempfile.TemporaryDirectory() as d:
+            marker = Path(d) / "spawned.txt"
+            cmd = [
+                sys.executable,
+                "-c",
+                f"import pathlib; pathlib.Path({str(marker)!r}).write_text('spawned')",
+            ]
+            with self.assertRaises(self.cs.ConfinementUnavailable) as cm:
+                self.cs.run_command(
+                    cmd,
+                    confinement={"require": ("process_group", "filesystem_namespace")},
+                )
+            self.assertFalse(
+                marker.exists(),
+                "unsupported required controls must fail before spawn",
             )
         self.assertIn("unsupported confinement control", str(cm.exception))
 
     def test_explicit_unconfined_opt_out_runs_uncontained_with_reason(self) -> None:
+        with self.assertRaises(ValueError):
+            self.cs.unconfined(" ")
         completed = self.cs.run_command(
             [sys.executable, "-c", ""],
             confinement=self.cs.unconfined("trusted internal command"),
@@ -113,6 +137,10 @@ class CommandSafetyTests(unittest.TestCase):
         self.assertEqual(completed.qb_confinement["controls"], ())
         self.assertEqual(completed.qb_confinement["opt_out_reason"], "trusted internal command")
         self.assertEqual(completed.returncode, 0)
+        shorthand = self.cs.run_command([sys.executable, "-c", ""], confinement=False)
+        self.assertFalse(shorthand.qb_confinement["enabled"])
+        self.assertEqual(shorthand.qb_confinement["controls"], ())
+        self.assertEqual(shorthand.qb_confinement["opt_out_reason"], "explicit unconfined opt-out")
 
     def test_default_confinement_establishes_all_available_controls(self) -> None:
         # The default spec is best-effort beyond the required floor: every available

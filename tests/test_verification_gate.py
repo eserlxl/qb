@@ -118,7 +118,17 @@ class VerificationGateTests(unittest.TestCase):
                 )
                 self.assertEqual(record.outcome, "kept")
                 self.assertIn("process_group", record.confinement_controls)
-                self.assertIn("process_group", record.to_dict()["confinement_controls"])
+                evidence = record.to_dict()
+                self.assertIn("process_group", evidence["confinement_controls"])
+                self.assertEqual(evidence["confinement_controls"], list(record.confinement_controls))
+                self.assertTrue(
+                    all(
+                        isinstance(control, str)
+                        and control in self.gate._cs.SUPPORTED_CONFINEMENT_CONTROLS
+                        for control in evidence["confinement_controls"]
+                    ),
+                    f"evidence must record confinement control names only: {evidence}",
+                )
             finally:
                 isolation.teardown()
 
