@@ -63,11 +63,12 @@ def _parity_matrix() -> dict[str, dict[str, str]]:
     lines = PARITY_DOC.read_text(encoding="utf-8").splitlines()
     for i, line in enumerate(lines):
         if line.strip() == "## Capability matrix":
-            table_lines = [
-                row.strip()
-                for row in lines[i + 1:]
-                if row.strip().startswith("|")
-            ]
+            table_lines = []
+            for row in lines[i + 1:]:
+                if row.strip().startswith("## "):
+                    break  # stop at the next section so other tables are not parsed
+                if row.strip().startswith("|"):
+                    table_lines.append(row.strip())
             break
     else:
         raise AssertionError("PARITY.md omits the Capability matrix section")
