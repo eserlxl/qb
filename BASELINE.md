@@ -43,6 +43,12 @@ python3 -m unittest discover -s tests -v
 A run reporting anything other than 71 modules or 510 passing test cases, or any
 failure or error, is a regression against this reference.
 
+**Same-change update rule:** adding or removing a test module or test case must
+update the 71/510 counts above in the **same change**. `tests/test_baseline_consistency.py`
+re-derives the live counts and fails if they drift, so a test add/remove that skips
+the baseline update turns the next `make check` red; diagnose by the per-guard
+**Guard-to-test mapping** below.
+
 ## Baseline preconditions
 
 The baseline reproduces on a stock toolchain so it stays machine-independent:
