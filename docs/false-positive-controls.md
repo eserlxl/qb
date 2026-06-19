@@ -14,8 +14,8 @@ os.system(cmd)
 
 The marker applies only to the same line or the immediately following line. It
 must name either the exact rule key or `*`, and it must include a human-readable
-reason. A marker without a matching rule key or without a reason is ignored, so
-the analyzer emits the finding normally.
+reason. A marker without a matching rule key or without a reason is ignored, not
+recorded as a suppression, so the analyzer emits the finding normally.
 
 When a marker suppresses a finding, `CommandInjectionAnalyzer` records a
 suppression entry with the rule, evidence location, and reason in

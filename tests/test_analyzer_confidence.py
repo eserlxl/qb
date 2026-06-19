@@ -80,6 +80,27 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.core.confidence_for_rule("dependency-audit", "new-unreviewed-rule")
 
+        text = "\n".join([
+            "# qb-ignore: system-shell-call reviewed false positive",
+            "os.system(cmd)",
+            "# qb-ignore: dynamic-eval wrong rule",
+            "os.system(cmd)",
+            "# qb-ignore: system-shell-call",
+            "os.system(cmd)",
+            "os.system(cmd)  # qb-ignore: * inline accepted fixture",
+            "",
+        ])
+        self.assertEqual(
+            self.core.suppression_reason_for_line(text, 2, "system-shell-call"),
+            "reviewed false positive",
+        )
+        self.assertIsNone(self.core.suppression_reason_for_line(text, 4, "system-shell-call"))
+        self.assertIsNone(self.core.suppression_reason_for_line(text, 6, "system-shell-call"))
+        self.assertEqual(
+            self.core.suppression_reason_for_line(text, 7, "system-shell-call"),
+            "inline accepted fixture",
+        )
+
     def test_secret_findings_use_high_confidence_policy(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
