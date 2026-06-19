@@ -1,0 +1,10 @@
+{
+  "_comment": "Project precision/recall bars for `make precision`. Totals precision is intentionally not gated: the full default registry emits unlabelled findings over the corpus (e.g. missing-license on LICENSE-less fixtures), so only totals RECALL (every labelled defect must be found) and per-analyzer precision+recall for the fully-labelled deterministic analyzers are meaningful bars. The gate is capability-aware: an analyzer whose optional tool is absent is not scored.",
+  "min_recall": 1.0,
+  "per_analyzer": {
+    "command-injection": {"min_precision": 1.0, "min_recall": 1.0},
+    "dependency-audit": {"min_precision": 1.0, "min_recall": 1.0},
+    "secret-hygiene": {"min_precision": 1.0, "min_recall": 1.0},
+    "workflow-actions": {"min_precision": 1.0, "min_recall": 1.0}
+  }
+}

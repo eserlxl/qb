@@ -83,3 +83,33 @@ tests/fixtures/precision-corpus/
 
 Each case is either a **positive** case (≥1 expected finding) or a **known-clean**
 case (`expected_findings: []`), so both precision and recall are measurable.
+
+## The precision gate (`make precision`)
+
+`make precision` runs the harness over the corpus and evaluates the built report
+against the project's threshold bars, exiting **non-zero if any bar is unmet** and
+**0 when all are met** (fail-closed). The JSON report is written to stdout and a
+deterministic `{"gate": "PASS"|"FAIL", "failures": [...]}` summary to stderr,
+naming each failing `scope`/`metric`/`threshold`/`actual`.
+
+**Bars** live in [`tests/fixtures/precision-thresholds.json`](../tests/fixtures/precision-thresholds.json):
+
+- **`min_recall: 1.0`** (overall) — every labelled defect must be found.
+- **Per-analyzer `min_precision: 1.0` + `min_recall: 1.0`** for the four
+  fully-labelled deterministic analyzers (`command-injection`, `dependency-audit`,
+  `secret-hygiene`, `workflow-actions`).
+
+**Why totals precision is not gated.** The full default registry also runs the
+`license`/`config` analyzers, which emit findings (e.g. `missing-license` on the
+LICENSE-less fixtures) that the corpus does not label — so the overall *precision*
+number is not a meaningful bar. Recall (all labelled defects found) and the
+per-analyzer precision/recall of the labelled analyzers are.
+
+**Capability-aware.** An analyzer whose only adapters are absent optional tools
+(e.g. `ruff`/`pyflakes` not installed) is recorded as `capability_skipped` and is
+**not scored** — a not-run analyzer never fails the gate, distinct from a
+below-threshold one.
+
+The raw routine is also callable directly:
+`python3 shared/scripts/precision_harness.py --corpus <dir> --thresholds <file>`,
+or with the `--min-precision` / `--min-recall` overall flags.

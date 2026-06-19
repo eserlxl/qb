@@ -1,4 +1,4 @@
-.PHONY: sync check test baseline self-audit install-hooks release-manifest export-sanitized
+.PHONY: sync check test baseline self-audit install-hooks release-manifest export-sanitized precision
 
 sync:
 	bash scripts/sync.sh
@@ -21,6 +21,16 @@ check:
 
 test:
 	python3 -m unittest discover -s tests -v
+
+# precision -- run the labelled-corpus precision/recall gate at the project's
+# threshold bars (tests/fixtures/precision-thresholds.json). Exits non-zero if any
+# bar is unmet; prints the JSON report on stdout and a PASS/FAIL summary on stderr.
+# Capability-aware: an analyzer whose optional tool is absent is not scored. See
+# docs/precision-harness.md.
+precision:
+	python3 shared/scripts/precision_harness.py \
+	  --corpus tests/fixtures/precision-corpus \
+	  --thresholds tests/fixtures/precision-thresholds.json
 
 # self-audit -- "QB audits QB": run the headless engine over this repository at the
 # conservative A0 (report-only) default, writing the findings inventory + reports to
