@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-06-19
+
+### Changed
+- Telemetry trends CLI (make trends) over the multi-run aggregate series, headless telemetry.json emission, a fail-closed precision/recall threshold gate (make precision), and a governed Antigravity reference inventory
+
 ## [0.15.0] - 2026-06-17
 
 ### Changed
