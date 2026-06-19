@@ -47,6 +47,33 @@ This is a recorded maintainer decision, not a tested property; its
 **machine-checkable** consequences (engine absent under Antigravity; Antigravity
 absent from the sync map) are enumerated below and enforced separately.
 
+## Decision: Antigravity reference-doc ownership
+
+`platforms/antigravity/skills/qb/references/` carries a richer planning-reference
+set than the engine hosts. Two refs — `repo-aware-intake.md` and
+`workflow-quality.md` — are **shared** (they live in `shared/references/` and fan
+out to all engine hosts). The host-specific planner-step prompts
+(`first-planner.md`, `second-planner.md`, `third-planner.md`, `fourth-planner.md`,
+`assessment-planner.md`) are inherently Antigravity-only (they open with "You are
+Antigravity, running as…"). The remaining six concept docs were previously
+ungoverned; each is classified below so the divergence is owned, not silent drift
+(closes ASSESS-P1-02):
+
+| Reference doc | Classification | Rationale |
+|---|---|---|
+| `engineering-principles.md` | Antigravity-only | Deep planning methodology for the dedicated planning-only host; the engine hosts ship a leaner planning surface and add value through the audit/harden engine. |
+| `vibecoding-principles.md` | Antigravity-only | Same — planning-style guidance scoped to Antigravity's richer planning workflow. |
+| `task-delegation-playbook.md` | Antigravity-only | Helper-agent delegation guidance specific to Antigravity's multi-step planner run. |
+| `project-ontology.md` | Antigravity-only | Describes an optional `.qb/` planning artifact used by Antigravity's planner steps. |
+| `planning-ledger.md` | Antigravity-only | Describes an optional `.qb/` planning-memory artifact used by Antigravity's planner steps. |
+| `assessment-and-budget.md` | Antigravity-only | Supports the Antigravity Step-1.5 `assessment-planner.md` prompt. |
+
+**Conservative default.** All six are classified **intended Antigravity-only** (so
+no reconcile/move is required — Phase 5.4's reconcile step is a no-op). This is a
+deliberate, reversible governance decision: a maintainer may later reclassify any
+of these to *reconcile-into-shared* (moving it to `shared/references/` with a
+`scripts/sync.sh` MAP entry) if the engine hosts' planning surface should adopt it.
+
 ## Enforced invariants
 
 These are machine-checkable and pinned by `tests/test_host_parity_contract.py`:
