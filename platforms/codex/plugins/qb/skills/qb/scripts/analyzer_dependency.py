@@ -24,6 +24,7 @@ command line. Advisory ids are public; no secret/credential is written.
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
@@ -145,6 +146,34 @@ def parse_pyproject(text: str) -> list:
     return deps
 
 
+def parse_package_json(text: str) -> list:
+    """Parse bounded npm dependency sections into dependency records."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, dict):
+        return []
+
+    deps: list = []
+    for section in ("dependencies", "devDependencies", "optionalDependencies"):
+        entries = data.get(section, {})
+        if not isinstance(entries, dict):
+            continue
+        for name, raw_spec in sorted(entries.items()):
+            if not isinstance(name, str):
+                continue
+            spec = raw_spec if isinstance(raw_spec, str) else str(raw_spec)
+            deps.append({
+                "name": name,
+                "spec": spec,
+                "section": section,
+                "line": _line_for_token(text, f'"{name}"'),
+                "pinned": _is_exact_pin(spec),
+            })
+    return deps
+
+
 class DependencyAnalyzer:
     """Offline dependency-hygiene audit with an opt-in, fail-closed networked tier."""
 
@@ -215,6 +244,25 @@ class DependencyAnalyzer:
                     ))
 
         pkg_path = root / "package.json"
+        if pkg_path.is_file():
+            try:
+                text = pkg_path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                text = ""
+            for dep in parse_package_json(text):
+                dep["evidence"] = f"package.json:{dep['line']}"
+                inventory.append(dep)
+                if not dep["pinned"]:
+                    findings.append(self._finding(
+                        "dependency",
+                        "P2",
+                        confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                        dep["evidence"],
+                        f"unpinned-package-json:{dep['section']}:{dep['name']}",
+                        f"Offline package.json audit: {dep['section']} dependency '{dep['name']}' "
+                        f"is not pinned to an exact version ({dep['spec'] or 'no version specifier'}).",
+                        "Pin the package dependency to an exact version and regenerate the lockfile.",
+                    ))
         if pkg_path.is_file() and not any((root / lock).is_file() for lock in _LOCKFILES):
             findings.append(self._finding(
                 "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),

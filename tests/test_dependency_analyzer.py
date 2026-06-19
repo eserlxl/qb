@@ -83,6 +83,22 @@ class DependencyAnalyzerTests(unittest.TestCase):
                 'urllib3 = "2.2.1"\n',
                 encoding="utf-8",
             )
+            root.joinpath("package.json").write_text(
+                '{\n'
+                '  "dependencies": {\n'
+                '    "express": "^4.18.0",\n'
+                '    "lodash": "4.17.21"\n'
+                '  },\n'
+                '  "devDependencies": {\n'
+                '    "vitest": "latest"\n'
+                '  }\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            root.joinpath("package-lock.json").write_text(
+                '{"lockfileVersion": 3}\n',
+                encoding="utf-8",
+            )
             analyzer = self.dep.DependencyAnalyzer()
             findings = analyzer.analyze(d, _cfg(False))
 
@@ -91,6 +107,13 @@ class DependencyAnalyzerTests(unittest.TestCase):
         self.assertIn("pyproject.toml:8", evidences)  # requests = "^2.31"
         self.assertNotIn("pyproject.toml:4", evidences)  # django==4.2.1
         self.assertNotIn("pyproject.toml:9", evidences)  # urllib3 = "2.2.1"
+        package_evidences = [
+            f.evidence for f in findings if f.evidence.startswith("package.json")
+        ]
+        self.assertIn("package.json:3", package_evidences)  # express ^ range
+        self.assertIn("package.json:7", package_evidences)  # vitest latest
+        self.assertNotIn("package.json:4", package_evidences)  # lodash exact pin
+        self.assertNotIn("package.json:1", package_evidences)  # lockfile present
         for f in findings:
             self.assertEqual(self.validate(f), [])
 

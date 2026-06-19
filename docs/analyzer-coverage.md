@@ -28,8 +28,9 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
 - `CommandInjectionAnalyzer` covers shell-string execution, dynamic eval, and
   traversal sinks in the `injection` and `path-traversal` categories.
 - `DependencyAnalyzer` covers unpinned `requirements.txt` dependencies,
-  unpinned `pyproject.toml` project/Poetry dependencies, and missing npm
-  lockfiles in the `dependency` category.
+  unpinned `pyproject.toml` project/Poetry dependencies, unpinned
+  `package.json` `dependencies` / `devDependencies` / `optionalDependencies`,
+  and missing npm lockfiles in the `dependency` category.
 - `WorkflowActionAnalyzer` covers broad GitHub Actions `uses:` refs in workflow
   files in the `dependency` category.
 - `LicenseAnalyzer` covers missing or placeholder repository-root license files
@@ -43,13 +44,16 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
 
 ## Impact-ranked coverage gaps
 
-1. **Project manifests beyond `requirements.txt`, `pyproject.toml`, and basic `package.json`
-   lockfile presence (`dependency`)**
+1. **Project manifests beyond `requirements.txt`, `pyproject.toml`, and bounded `package.json`
+   dependency sections (`dependency`)**
    - Current coverage: `DependencyAnalyzer` parses `requirements.txt` and
-     `pyproject.toml` dependency declarations for exact Python pins and checks
-     that `package.json` has one recognized lockfile.
-   - Gap: `poetry.lock`, `Pipfile.lock`, `go.mod`, `Cargo.toml`, and richer npm
-     dependency sections are not inventoried.
+     `pyproject.toml` dependency declarations for exact Python pins, parses
+     `package.json` `dependencies` / `devDependencies` / `optionalDependencies`
+     with the stdlib JSON parser for exact npm pins, and checks that
+     `package.json` has one recognized lockfile.
+   - Gap: `poetry.lock`, `Pipfile.lock`, `go.mod`, `Cargo.toml`,
+     `peerDependencies`, npm alias/workspace/file specs, and lockfile contents
+     are not inventoried.
    - Candidate follow-up: extend existing dependency parsing before adding
      networked advisory enrichment.
 
