@@ -196,11 +196,19 @@ Constraint draft from what I saw in the repo or what is not yet clear:
 - Security/compliance: <detected boundaries or unknown>
 - Time/team/budget: <known if present, otherwise unknown>
 - Must-use / must-not-use: <known if present, otherwise unknown>
+- Desired autonomy: <report-only / propose / apply-with-review / autonomous, or unknown>
+- Review cadence: <per-slice / per-phase / on-blocker, or unknown>
+- Token/context budget: <stated budget, or low/medium/high risk tolerance, or unknown>
 
 Is there anything I should add, correct, or specifically avoid in this list?
 ```
 
 After the answer, confirm: `KNOWN_CONSTRAINTS recorded: <short normalized summary>.`
+
+If the user offered any of the three steering knobs (desired autonomy, review cadence,
+token/context budget), record them as run-steering notes; they steer later assessment depth
+and Step-4 autonomy decisions. Never invent exact budget numbers - use the low/medium/high
+risk band when no concrete figure is given.
 
 ## After Intake
 

@@ -59,6 +59,12 @@ Analysis expectations:
 
 Create a practical, ordered technical feedback report. Be specific and grounded in repository evidence. Do not invent evidence. Do not overstate readiness.
 
+Evidence and confidence discipline:
+
+- Tag each material claim with a confidence level: `confirmed`, `probable`, `tentative`, or `contradicted`. A `tentative` or `probable` claim is NOT an implementation fact; record it as work Step 2 must turn into validation.
+- A behavioral claim (what the code does at runtime) needs `test` or `runtime` evidence, or at least two independent evidence types with different locators. Independent means different evidence types AND different locators — two documentation references alone are not independent proof.
+- For an open why/how/what question, record a short hypothesis (e.g. `HYP-01: <claim>` with supporting and contradicting evidence and a next probe) instead of asserting a conclusion. Step 2 converts unresolved hypotheses into validation work; Step 4 verifies them before code changes.
+
 Focus on:
 - project modules and responsibility boundaries;
 - current feature inventory;
@@ -224,6 +230,7 @@ Use this format:
 - ASSESS-P0-01 — <title>
   - Impact: <why this matters>
   - Evidence: <file/path or repo evidence, redacted if sensitive>
+  - Confidence: <confirmed | probable | tentative | contradicted>
   - Step 2 impact: <how sub-plans should account for it>
 
 Use priorities:

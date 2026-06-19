@@ -131,6 +131,15 @@ AUDIT_FIX_RE = re.compile(
     re.MULTILINE,
 )
 
+# Optional per-finding lifecycle status carried on a fix-list row as the pipe-
+# delimited field immediately after the severity: "AUDIT-FIX-NN | PX | <status> |
+# <title>". Only OPEN and ACCEPTED findings block the Step 4 gate; RESOLVED and
+# NOT_APPLICABLE are recorded but do not gate. A row with no recognized status field
+# defaults to OPEN, so legacy audits keep their original status-unaware blocking
+# behavior. ACCEPTED means a risk is knowingly carried forward and stays visible.
+FINDING_STATUSES = ("open", "accepted", "resolved", "not_applicable")
+BLOCKING_FINDING_STATUSES = ("open", "accepted")
+
 # Single source of the length-bounded secret patterns lives in analyzer_core;
 # the planning validator is now a caller, not the owner (Phase 1.3 refactor).
 SECRET_PATTERNS = _core.SECRET_PATTERNS
@@ -199,11 +208,36 @@ def read_text(path: Path, state: ValidationState) -> str | None:
     return None
 
 
+def _mask_fenced_regions(text: str) -> str:
+    """Blank the visible content of fenced code blocks, preserving offsets.
+
+    Returns a string of identical length where every character inside a ``` or ~~~
+    fenced block (including the fence-marker lines) is replaced by a space, while
+    newlines are kept. Heading detection runs over the masked text so a heading-like
+    line such as ``## 13. ...`` quoted inside a code fence is not mistaken for a real
+    document heading; bodies are still sliced from the original text by the same
+    offsets.
+    """
+    out: list[str] = []
+    in_fence = False
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        is_marker = stripped.startswith("```") or stripped.startswith("~~~")
+        if in_fence or is_marker:
+            out.append("".join(ch if ch in "\r\n" else " " for ch in line))
+        else:
+            out.append(line)
+        if is_marker:
+            in_fence = not in_fence
+    return "".join(out)
+
+
 def validate_heading_order(text: str, headings: list[str], path: Path, state: ValidationState) -> None:
+    masked = _mask_fenced_regions(text)
     target_headings = set(headings)
     heading_positions: dict[str, list[int]] = {heading: [] for heading in target_headings}
     offset = 0
-    for line in text.splitlines(keepends=True):
+    for line in masked.splitlines(keepends=True):
         stripped = line.strip()
         if stripped in heading_positions:
             heading_positions[stripped].append(offset + line.find(stripped))
@@ -224,11 +258,12 @@ def validate_heading_order(text: str, headings: list[str], path: Path, state: Va
 
 
 def markdown_section(text: str, heading: str) -> str:
-    start = text.find(heading)
+    masked = _mask_fenced_regions(text)
+    start = masked.find(heading)
     if start == -1:
         return ""
     body_start = start + len(heading)
-    next_match = re.search(r"^##\s+\d+\.\s+", text[body_start:], flags=re.MULTILINE)
+    next_match = re.search(r"^##\s+\d+\.\s+", masked[body_start:], flags=re.MULTILINE)
     body_end = body_start + next_match.start() if next_match else len(text)
     return text[body_start:body_end].strip()
 
@@ -488,16 +523,17 @@ def validate_step3_preflight(state: ValidationState) -> None:
 
 
 def extract_audit_status(text: str) -> str | None:
+    masked = _mask_fenced_regions(text)
     status_pattern = re.compile(
         r"(?:overall audit status|audit status|final status|status)"
         r"\s*[:：-]\s*(PASS_WITH_WARNINGS|BLOCKED|PASS)\b",
         re.IGNORECASE,
     )
-    match = status_pattern.search(text)
+    match = status_pattern.search(masked)
     if match:
         return match.group(1).upper()
 
-    for line in text.splitlines():
+    for line in masked.splitlines():
         stripped = line.strip(" -*`|:")
         if stripped in {"PASS", "PASS_WITH_WARNINGS", "BLOCKED"}:
             return stripped
@@ -508,6 +544,45 @@ def count_audit_severities(text: str) -> dict[str, int]:
     fix_section = markdown_section(text, FIX_LIST_HEADING)
     severities = [severity for _, severity in AUDIT_FIX_RE.findall(fix_section)]
     return _core.count_severities(severities)
+
+
+def _normalize_finding_status(row_remainder: str) -> str:
+    """Read the lifecycle status from the field right after a fix-list row's severity.
+
+    The status, when present, is the pipe-delimited field immediately following the
+    severity ("... | PX | <status> | <title>"). Only that one field is consulted, so a
+    status word appearing later inside the free-text title never reclassifies a
+    finding. Absent or unrecognized -> 'open' (legacy status-unaware behavior).
+    """
+    rest = row_remainder.lstrip()
+    if not rest.startswith("|"):
+        return "open"
+    field = rest[1:].split("|", 1)[0].strip().lower().replace(" ", "_")
+    if field in FINDING_STATUSES:
+        return field
+    if field in ("n/a", "na"):
+        return "not_applicable"
+    return "open"
+
+
+def parse_audit_findings(text: str) -> list[tuple[str, str, str]]:
+    """Parse the fix-list section into (id, severity, status) triples.
+
+    Severity *counting* stays in count_audit_severities (status-unaware, all
+    findings); this adds the optional per-finding lifecycle status consumed only by
+    the Step 4 readiness gate.
+    """
+    fix_section = markdown_section(text, FIX_LIST_HEADING)
+    findings: list[tuple[str, str, str]] = []
+    for line in fix_section.splitlines():
+        match = AUDIT_FIX_RE.match(line)
+        if not match:
+            continue
+        fid = match.group(1)
+        severity = match.group(2).upper()
+        status = _normalize_finding_status(line[match.end():])
+        findings.append((fid, severity, status))
+    return findings
 
 
 def validate_step4_readiness(state: ValidationState) -> None:
@@ -525,16 +600,42 @@ def validate_step4_readiness(state: ValidationState) -> None:
     elif status == "BLOCKED":
         state.error("step4_blocked_by_audit_status=BLOCKED")
 
+    # Total severity counts (every finding, status-unaware) -- reporting metrics.
     severity_counts = count_audit_severities(text)
     for severity, count in severity_counts.items():
         state.metrics[f"{severity.lower()}_findings"] = count
-    if severity_counts["P0"] or severity_counts["P1"]:
+
+    # Status-aware gate: only OPEN/ACCEPTED findings gate Step 4. RESOLVED and
+    # NOT_APPLICABLE findings are recorded but do not block, so a remediated P0 no
+    # longer forces the gate shut. Rows with no status default to OPEN, preserving
+    # legacy blocking behavior exactly.
+    findings = parse_audit_findings(text)
+    status_tally: dict[str, int] = defaultdict(int)
+    for _fid, _severity, finding_status in findings:
+        status_tally[finding_status] += 1
+    for finding_status, count in sorted(status_tally.items()):
+        state.metrics[f"finding_status_{finding_status}"] = count
+
+    blocking = _core.count_severities(
+        [severity for _fid, severity, finding_status in findings
+         if finding_status in BLOCKING_FINDING_STATUSES]
+    )
+    state.metrics["blocking_p0_findings"] = blocking["P0"]
+    state.metrics["blocking_p1_findings"] = blocking["P1"]
+    if blocking["P0"] or blocking["P1"]:
+        state.metrics["execution_queue_state"] = "blocked"
+    elif blocking["P2"] or blocking["P3"]:
+        state.metrics["execution_queue_state"] = "warnings"
+    else:
+        state.metrics["execution_queue_state"] = "clear"
+
+    if blocking["P0"] or blocking["P1"]:
         state.error(
-            f"step4_blocked_by_high_severity_findings=P0:{severity_counts['P0']},P1:{severity_counts['P1']}"
+            f"step4_blocked_by_high_severity_findings=P0:{blocking['P0']},P1:{blocking['P1']}"
         )
-    if status == "PASS_WITH_WARNINGS" and (severity_counts["P2"] or severity_counts["P3"]):
+    if status == "PASS_WITH_WARNINGS" and (blocking["P2"] or blocking["P3"]):
         state.warning(
-            f"step4_has_nonblocking_warnings=P2:{severity_counts['P2']},P3:{severity_counts['P3']}"
+            f"step4_has_nonblocking_warnings=P2:{blocking['P2']},P3:{blocking['P3']}"
         )
 
 

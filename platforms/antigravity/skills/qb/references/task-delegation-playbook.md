@@ -40,6 +40,22 @@ Step 4 only. Turns a READY sub-plan into the smallest verified implementation sl
 
 Read-only where practical. Reviews diffs, tests, artifacts, and whether the acceptance criterion is actually met.
 
+### structure_mapper
+
+Read-only. Maps modules, ownership boundaries, entrypoints, and which domain concepts map to which types, modules, or data stores. Returns file-path evidence. (Step 1.5 comprehension.)
+
+### concept_trace_mapper
+
+Read-only. Traces a domain concept through the runtime path (concept → entrypoint → control/data flow → store) and identifies which tests prove the behavior. (Step 1.5 comprehension.)
+
+### behavior_evidence_auditor
+
+Read-only unless explicitly asked otherwise. Checks tests, smoke paths, runtime-only behavior claims, executable evidence, and missing validation probes. (Step 1.5 comprehension.)
+
+### history_architecture_auditor
+
+Read-only. Inspects bounded git history and hotspots, and whether documented architecture relations match source reality (convergent, divergent, or unmodeled). (Step 1.5 comprehension.)
+
 ## When to Spawn Helper agents
 
 Use helper agents when:
@@ -63,3 +79,27 @@ Do not spawn helper agents when:
 - Do not let multiple helper agents write the same file.
 - Only one writer should modify files for a Step 4 implementation slice unless the user explicitly requests parallel branches.
 - Parent agent must consolidate helper agent results and cite or summarize evidence before writing final artifacts.
+
+## Required Result Format
+
+Every helper agent should return this structured shape so the parent can synthesize
+evidence uniformly and decide whether to block:
+
+```yaml
+role:
+question_ids_answered:
+scope:
+files_inspected:
+claims:
+  - claim:
+    evidence:
+    confidence:
+contradictions:
+open_questions:
+recommended_parent_action:
+should_block:
+```
+
+Use the same `confidence` vocabulary as the assessment evidence discipline
+(`confirmed`, `probable`, `tentative`, `contradicted`). The parent agent owns final
+synthesis and the official `.qb/` artifact writes.

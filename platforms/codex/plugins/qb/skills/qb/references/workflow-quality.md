@@ -97,6 +97,7 @@ Use `git diff --no-index` only as a read-only comparison helper.
 
 - Use length-bounded token patterns such as `sk-[A-Za-z0-9_-]{20,}`; never one-character `sk-` prefixes.
 - Never print secret values if a secret-like pattern is detected.
+- Do not run grep/ripgrep commands that print matched secret-bearing lines. Prefer the bundled validator; if a fallback scan is unavoidable, use file-name-only output such as `rg -l`.
 
 ## Step Handoffs (in-session, automatic)
 

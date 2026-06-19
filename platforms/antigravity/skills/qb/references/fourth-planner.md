@@ -51,4 +51,15 @@ Do not write secrets, tokens, private keys, or local credentials. Do not paste f
 - Report exact blocker strings and separate code-delivery status from external config or credential blockers.
 - Keep `planning-ledger.md` concise; it is a replanning memory artifact, not a transcript dump.
 - Use `project-ontology.md` to preserve vocabulary, entity, workflow, boundary, integration, and invariant consistency for the active slice.
+- Do not batch unrelated sub-plans into one diff; keep each slice's diff scoped to its own sub-plan.
+- If targeted validation fails and the cause is unclear, stop before widening the edit; surface the failure instead of expanding scope to chase it.
 - Do not commit, push, open a PR, deploy, or mutate external systems unless the user explicitly asks in the Step 4 run.
+
+## Resume and Recovery
+
+If the implementation run is re-entered after an interruption, context compaction, or a fresh Antigravity task, re-establish ground truth before editing:
+
+- Re-read this template, the audit, the index, and the active sub-plan; do not trust a remembered plan.
+- Re-check `git status` and the current branch; stop on an unrelated dirty worktree or merge conflict.
+- Reconcile `.qb/planning-ledger.md` entries against real repo evidence; do not re-implement a slice the evidence already shows verified.
+- If the plan or audit no longer matches repo reality (plan-snapshot drift), stop and recommend a re-plan/re-audit instead of forcing the stale slice.

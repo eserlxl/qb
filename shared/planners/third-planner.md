@@ -401,15 +401,32 @@ Create a table:
 
 Columns:
 - Phase / Sub-Plan
+- Finding IDs (the AUDIT-FIX-NN ids from section 13 that affect this sub-plan, or none)
 - Ready for Step 4?
+- Dependency State
 - Reason
 - Required fix before Step 4 starts
 
-Use statuses:
+Use Ready-for-Step-4 statuses:
 - READY
 - READY_WITH_WARNINGS
 - NEEDS_REPAIR
 - BLOCKED
+
+For a re-audit of an in-progress repository, a sub-plan may instead be terminal:
+- COMPLETE — already implemented and verified; not a Step 4 candidate.
+- SUPERSEDED — replaced by a later plan or decision; carried for traceability only.
+- DEFERRED — intentionally postponed and tracked; not in the active queue.
+
+Dependency State (do this sub-plan's prerequisites hold?):
+- satisfied — prerequisite sub-plans are COMPLETE/verified.
+- independent — no prerequisites.
+- blocked — a prerequisite is not yet satisfied.
+- unknown — prerequisite state could not be determined.
+
+Close the section with an execution-queue verdict: the ordered list of READY and
+READY_WITH_WARNINGS sub-plans that form the Step 4 queue, or "queue empty" with the
+reason (all terminal, or blocked by open/accepted P0/P1 findings).
 
 ## 13. Prioritized Fix List
 
@@ -419,7 +436,23 @@ Write each finding as a single-line header in this form:
 
 - AUDIT-FIX-NN | PX | <short title>
 
-The severity token (PX) comes immediately after the id. Follow each header with optional detail bullets covering:
+The severity token (PX) comes immediately after the id. You may carry an optional
+per-finding lifecycle status as the next pipe-delimited field, before the title:
+
+- AUDIT-FIX-NN | PX | <status> | <short title>
+
+where <status> is one of:
+- open — not yet addressed (the default when the field is omitted).
+- accepted — the risk is knowingly carried forward; it stays visible but does not block.
+- resolved — already fixed; recorded for traceability only.
+- not_applicable — does not apply after review; recorded only.
+
+Only open and accepted findings gate Step 4: a resolved or not_applicable P0/P1 no
+longer holds the gate shut, so re-auditing an in-progress repo is not blocked by
+findings that are already remediated. Put the status only in this dedicated field; do
+not rely on a status word appearing inside the title.
+
+Follow each header with optional detail bullets covering:
 - affected file(s)
 - issue
 - recommended fix

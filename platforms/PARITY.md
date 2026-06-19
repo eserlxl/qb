@@ -55,9 +55,9 @@ set than the engine hosts. Two refs — `repo-aware-intake.md` and
 out to all engine hosts). The host-specific planner-step prompts
 (`first-planner.md`, `second-planner.md`, `third-planner.md`, `fourth-planner.md`,
 `assessment-planner.md`) are inherently Antigravity-only (they open with "You are
-Antigravity, running as…"). The remaining six concept docs were previously
-ungoverned; each is classified below so the divergence is owned, not silent drift
-(closes ASSESS-P1-02):
+Antigravity, running as…"). The remaining concept docs are classified below so the
+divergence is owned, not silent drift (closes ASSESS-P1-02); the first six were
+previously ungoverned and `probe-policy.md` is a newer addition:
 
 | Reference doc | Classification | Rationale |
 |---|---|---|
@@ -67,6 +67,7 @@ ungoverned; each is classified below so the divergence is owned, not silent drif
 | `project-ontology.md` | Antigravity-only | Describes an optional `.qb/` planning artifact used by Antigravity's planner steps. |
 | `planning-ledger.md` | Antigravity-only | Describes an optional `.qb/` planning-memory artifact used by Antigravity's planner steps. |
 | `assessment-and-budget.md` | Antigravity-only | Supports the Antigravity Step-1.5 `assessment-planner.md` prompt. |
+| `probe-policy.md` | Antigravity-only | Tiered evidence-probe discipline for the dedicated planning host's Step-1.5 assessment; the engine hosts keep a leaner read-only assessment surface. |
 
 **Conservative default.** All six are classified **intended Antigravity-only** (so
 no reconcile/move is required — Phase 5.4's reconcile step is a no-op). This is a

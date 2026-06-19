@@ -25,6 +25,7 @@ prompt; they clarify reliability practices observed from first real use.
 - Treat `assessment.md` as Step 2 feedback, not as a replacement for `main-planning.md`.
 - Skip Assessment for new or nearly empty repositories; do not create a speculative assessment file.
 - Step 2 must read `assessment.md` when it exists and must not block when it is absent.
+- When gathering runtime or behavioral evidence during assessment, follow the tiered probe discipline in `references/probe-policy.md`: prefer the lowest tier, and get explicit approval before any stateful or external/live probe.
 
 
 ## Vibecoding-First Planning

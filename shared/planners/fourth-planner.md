@@ -54,10 +54,37 @@ audit, the selected sub-plan, repo instructions, and existing validation command
 - Superpowers `verification-before-completion` before asserting the slice is done.
 - The security review (`review-security` / security-review) for security-, policy-, secret-, or command-execution-sensitive changes.
 
+## Helper agents (optional, for non-trivial slices)
+
+For a slice that spans several files or carries real risk, an optional helper-agent
+split keeps evidence-gathering out of the implementation context. Use it only when it
+reduces context pollution; never for a trivial single-file change:
+
+- explorer: map the files and risks relevant to the slice (read-only);
+- verifier: identify the validation/test path before any edit;
+- implementer: make the smallest change that satisfies the acceptance criterion;
+- reviewer: review the diff and the evidence (add the security review for sensitive changes).
+
+Only one writer modifies files per slice. The parent QB run owns the final summary.
+
+## Resume and recovery (interrupted or compacted runs)
+
+If this run is re-entered after an interruption, a context compaction, or a fresh
+session, re-establish ground truth before editing anything:
+
+1. Re-read this contract and the selected sub-plan; do not trust a remembered plan.
+2. Re-check `git status` and the current branch; stop on an unrelated dirty worktree.
+3. Re-read `.qb/sub-planning-audit.md` and `.qb/sub-planning-index.md` (and, if present, `.qb/planning-ledger.md`), and reconcile any recorded slice status against real repo evidence.
+4. Do not repeat a slice that the evidence already shows implemented and verified.
+5. If the plan or audit no longer matches repo reality (plan-snapshot drift), stop and recommend a re-plan/re-audit instead of forcing the stale slice.
+
 ## Safety rules
 
 - One sub-plan and one reversible slice per run.
+- Do not batch unrelated sub-plans into one diff; a second slice is a fresh run.
+- If targeted validation fails and the cause is unclear, stop before widening the edit — surface the failure rather than expanding scope to chase it.
 - Never write secrets, tokens, private keys, or local credentials into any file.
 - Do not commit, push, open a PR, deploy, or mutate external systems unless the user explicitly asks in this Step 4 run.
 - Prefer existing repo validation commands over invented commands.
+- If the project maintains a `.qb/planning-ledger.md` planning-memory artifact, append a concise summary of the verified slice (or stop event) to it; keep it terse, never a log dump.
 - Report exact blocker strings; do not claim success without running the validation command.

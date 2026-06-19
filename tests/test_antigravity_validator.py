@@ -32,6 +32,7 @@ ANTIGRAVITY_PLANNING_FILES = {
     "skills/qb/references/project-ontology.md",
     "skills/qb/references/assessment-and-budget.md",
     "skills/qb/references/engineering-principles.md",
+    "skills/qb/references/probe-policy.md",
     "README.md",
     "CHANGELOG.md",
     "docs/INSTALLATION.md",
