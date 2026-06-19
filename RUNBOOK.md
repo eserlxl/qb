@@ -52,6 +52,13 @@ into `.git/hooks/pre-push`, so a red gate blocks the push. Nothing installs it
 automatically, it performs **no network access and no push**, and it writes only
 inside this repo's `.git/hooks/`.
 
+This opt-in hook, together with the committed [`BASELINE.md`](BASELINE.md)
+gate-of-record record, is the **compensating control** for disabled cloud CI: the
+README badge does not gate, so a locally-runnable `make check` (optionally enforced
+by the hook on push) plus the recorded baseline are what keep a regression from
+shipping unnoticed. The hook is a convenience, not a requirement — there is still
+no enforcing hook by default.
+
 ### Verify a sanitized export
 
 `make export-sanitized` writes `QB-sanitized.zip` plus a `QB-sanitized.manifest` — a
