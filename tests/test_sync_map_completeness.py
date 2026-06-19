@@ -66,6 +66,38 @@ class SyncMapCompletenessTests(unittest.TestCase):
             by_source.setdefault(source, []).append(destination)
 
         self.assertTrue(by_source, "sync MAP parser found no entries")
+        shared_root = self.repo / "shared"
+        shared_sources = {
+            str(path.relative_to(shared_root))
+            for path in shared_root.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
+        self.assertEqual(set(by_source), shared_sources)
+        categories = {
+            "planner": {s for s in shared_sources if s.startswith("planners/")},
+            "reference": {s for s in shared_sources if s.startswith("references/")},
+            "validator": {
+                "scripts/validate_planner_docs.py",
+                "scripts/validate_planwright_plan.py",
+            },
+            "engine": {
+                s for s in shared_sources
+                if s.startswith("scripts/")
+                and s not in {
+                    "scripts/validate_planner_docs.py",
+                    "scripts/validate_planwright_plan.py",
+                }
+            },
+        }
+        for label, sources in categories.items():
+            self.assertTrue(sources, f"no {label} shared sources detected")
+            self.assertTrue(sources <= set(by_source), f"{label} sources missing from MAP")
+
+        all_destinations = [dst for destinations in by_source.values() for dst in destinations]
+        self.assertFalse(
+            any(dst.startswith("platforms/antigravity/") for dst in all_destinations),
+            "Antigravity is planning-only and must not be a sync destination",
+        )
         for source, destinations in sorted(by_source.items()):
             with self.subTest(source=source):
                 self.assertEqual(len(destinations), len(ENGINE_DEST_PREFIXES))
