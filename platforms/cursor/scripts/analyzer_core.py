@@ -143,15 +143,32 @@ def _has_skipped_part(path: Path, skipped: frozenset[str]) -> bool:
     return any(part in skipped for part in path.parts)
 
 
+def _command_safety():
+    """Lazily resolve command_safety without a module-load import cycle.
+
+    command_safety imports analyzer_core at load time, so analyzer_core cannot
+    import it at the top level. Resolve it on first use (by which point the engine
+    has loaded it) -- reusing the cached module instance when present.
+    """
+    module = sys.modules.get("qb_command_safety")
+    if module is None:
+        path = Path(__file__).resolve().parent / "command_safety.py"
+        spec = importlib.util.spec_from_file_location("qb_command_safety", path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["qb_command_safety"] = module
+        spec.loader.exec_module(module)
+    return module
+
+
 def _git_list_files(root: Path) -> list[str] | None:
     """Return git-tracked/non-ignored files, or None outside usable git."""
+    cs = _command_safety()
+    argv = ["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "-z"]
     try:
-        completed = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            check=False,
+        # Flow through the central run_command convention (no shell, argv vector);
+        # this trusted, read-only git call opts out of confinement explicitly.
+        completed = cs.run_command(
+            argv, confinement=cs.unconfined("trusted read-only git ls-files over the audited repo")
         )
     except (OSError, subprocess.SubprocessError):
         return None
