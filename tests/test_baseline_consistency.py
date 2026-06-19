@@ -150,6 +150,26 @@ class BaselineConsistencyTests(unittest.TestCase):
             "BASELINE.md invariant inventory must match the Makefile check recipe",
         )
 
+        # Absolute pin of the gate-of-record composition: the relative check above
+        # passes even if BOTH the Makefile and BASELINE dropped a sub-step in
+        # lockstep, so pin the six documented sub-steps directly -- a dropped or
+        # reordered step silently shrinks the regression net and is a regression.
+        documented_substeps = [
+            "bash scripts/sync.sh --check",
+            "bash platforms/claude-code/scripts/validate.sh",
+            "bash platforms/cursor/scripts/validate.sh",
+            "bash platforms/antigravity/scripts/validate.sh",
+            "cd platforms/codex && bash scripts/validate.sh",
+            "python3 -m unittest discover -s tests",
+        ]
+        self.assertEqual(
+            make_commands,
+            documented_substeps,
+            "make check must compose exactly the six documented sub-steps in order "
+            "(sync --check, claude-code/cursor/antigravity/codex validators, "
+            "unittest discovery); a dropped or reordered sub-step is a regression",
+        )
+
     def test_guard_set_matches_guard_mapping(self) -> None:
         section = _section(self.text, "Guard-to-test mapping")
         mapping_modules = _GUARD_MAPPING_COMMAND.findall(section)
