@@ -129,6 +129,7 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
     analyzers_run: list[str] = []
     analyzers_skipped: list[dict] = []
     analyzers_suppressed: list[dict] = []
+    capability_report: dict = {}
 
     # Offline-by-default: networked analyzers present but not enabled are skipped.
     for analyzer in registry.analyzers():
@@ -152,6 +153,19 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
             analyzers_suppressed.append(record)
         findings.extend(result)
         analyzers_run.append(analyzer.descriptor.id)
+        # Adapter-level capability (e.g. the quality analyzer's ruff/pyflakes
+        # ran/skipped) so an absent optional tool is visible at the run level --
+        # two machines with different optional-tool availability now produce
+        # visibly different, explainable coverage rather than identical summaries.
+        cap = getattr(analyzer, "last_capability_report", None)
+        if isinstance(cap, dict):
+            capability_report[analyzer.descriptor.id] = {
+                "ran": sorted(cap.get("ran", [])),
+                "skipped": sorted(
+                    (dict(entry) for entry in cap.get("skipped", [])),
+                    key=lambda entry: entry.get("adapter", ""),
+                ),
+            }
 
     findings.sort(key=_sort_key)
 
@@ -176,6 +190,7 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
             analyzers_suppressed,
             key=lambda item: (item["id"], item.get("evidence", ""), item.get("rule", "")),
         ),
+        "capability_report": capability_report,
         "allow_networked": config.allow_networked,
     }
     (output_dir / SUMMARY_FILENAME).write_text(
