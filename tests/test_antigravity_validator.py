@@ -106,6 +106,24 @@ class AntigravityPlanningOnlyFileSetTests(unittest.TestCase):
         }
         self.assertEqual(sorted(ANTIGRAVITY_PLANNING_FILES - present), [])
 
+        # Governed reference inventory: the on-disk references must EXACTLY match
+        # the recorded inventory (not merely be a superset of it), so a reference
+        # doc added or removed without updating this inventory -- and classifying it
+        # in platforms/PARITY.md -- fails the gate rather than drifting silently.
+        on_disk_refs = {
+            rel for rel in present
+            if rel.startswith("skills/qb/references/") and rel.endswith(".md")
+        }
+        recorded_refs = {
+            rel for rel in ANTIGRAVITY_PLANNING_FILES
+            if rel.startswith("skills/qb/references/")
+        }
+        self.assertEqual(
+            on_disk_refs, recorded_refs,
+            "on-disk Antigravity references diverge from the recorded inventory; "
+            "add the doc to ANTIGRAVITY_PLANNING_FILES and classify it in platforms/PARITY.md",
+        )
+
         forbidden = sorted(
             rel
             for rel in present
