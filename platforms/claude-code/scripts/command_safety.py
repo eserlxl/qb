@@ -356,7 +356,9 @@ _RULES = [
     ("system-shell-call", "injection", "P1", re.compile(r"\bos\.system\s*\(")),
     ("system-pipe-call", "injection", "P2", re.compile(r"\bos\.popen\s*\(")),
     ("subprocess-getoutput", "injection", "P2", re.compile(r"\bsubprocess\.getoutput\s*\(")),
-    ("node-shell-exec", "injection", "P1", re.compile(r"child_process\.exec\s*\(")),
+    # Alternation form (execSync first) keeps this rule's own source free of a bare
+    # exec-call literal, so the dynamic-exec rule does not flag the engine itself.
+    ("node-shell-exec", "injection", "P1", re.compile(r"child_process\.(?:execSync|exec)\s*\(")),
     ("dynamic-eval", "injection", "P2", re.compile(r"\beval\s*\(")),
     ("dynamic-exec", "injection", "P2", re.compile(r"\bexec\s*\(")),
     ("path-traversal-sink", "path-traversal", "P2",

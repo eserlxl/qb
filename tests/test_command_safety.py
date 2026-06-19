@@ -282,6 +282,18 @@ class CommandSafetyTests(unittest.TestCase):
         offenders = [f"{f.category}:{f.evidence}" for f in findings]
         self.assertEqual(offenders, [], f"QB engine code must obey the argv convention: {offenders}")
 
+    def test_node_execsync_detected_as_shell_exec(self) -> None:
+        # The synchronous Node shell sink (execSync) is a real injection surface;
+        # the async exec() form was already covered. execFile/execFileSync take an
+        # argv (no shell) and must stay unmatched.
+        rule_keys = {key for key, *_rest in self.cs.scan_text_for_command_risks(
+            "child_process.execSync(userInput)")}
+        self.assertIn("node-shell-exec", rule_keys)
+        self.assertIn("node-shell-exec", {key for key, *_rest in
+                      self.cs.scan_text_for_command_risks("child_process.exec(userInput)")})
+        self.assertNotIn("node-shell-exec", {key for key, *_rest in
+                         self.cs.scan_text_for_command_risks("child_process.execFileSync(bin, argv)")})
+
     def test_line_counting_is_correct_and_linear(self) -> None:
         import time
         # NOTE: the strings below are INPUT DATA fed to the static scanner (it searches
