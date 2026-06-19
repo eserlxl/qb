@@ -46,6 +46,7 @@ _policy = _load_sibling("qb_policy", "policy.py")
 _store = _load_sibling("qb_run_store", "run_store.py")
 _report = _load_sibling("qb_report", "report.py")
 _fs = _load_sibling("qb_finding_schema", "finding_schema.py")
+_telemetry = _load_sibling("qb_telemetry", "telemetry.py")
 
 AnalyzerConfig = _audit.AnalyzerConfig
 SEVERITIES = _fs.SEVERITIES
@@ -60,7 +61,8 @@ def _severity_counts(findings):
     return counts
 
 
-def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=False) -> int:
+def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=False,
+                 run_id="run") -> int:
     """Run the audit->report loop unattended; return an exit code."""
     policy = policy or _policy.default_policy()
     output_dir = Path(output_dir) if output_dir is not None else Path(repo_root) / _store.OUTPUT_DIR_NAME
@@ -93,6 +95,16 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
             "severity_counts": _severity_counts(findings),
             "autonomy_level": policy.autonomy_level,
         })
+        # A completed run emits exactly one telemetry.json (a fixed path, so a
+        # re-run overwrites rather than duplicates). Even report-only A0 records the
+        # detection slice; the action/cost/quality slices stay unmeasured by default
+        # (no fixes applied, no cost forwarded by the deterministic headless core).
+        store.write_telemetry(_telemetry.build_telemetry(
+            run_id=run_id,
+            autonomy_level=policy.autonomy_level,
+            findings=findings,
+            evidence=store.read_evidence(),
+        ))
         _report.emit(store, provenance=_report.build_provenance(policy))
         return EXIT_FINDINGS if findings else EXIT_CLEAN
     except Exception as exc:  # fail-closed: never report a crashed run as clean

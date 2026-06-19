@@ -50,6 +50,32 @@ class ObservabilityPipelineTest(unittest.TestCase):
             evidence=evidence,
             cost={"wall_ms": wall_ms, "iterations": 1, "tokens": tokens})
 
+    def test_real_run_emits_exactly_one_telemetry_record(self):
+        # The headless engine run must emit exactly one telemetry.json into the run
+        # store -- the non-fixture evidence that the per-run record is really written
+        # (make self-audit produces it the same way) -- and a re-run must overwrite
+        # the single fixed-path record, not duplicate it.
+        import json
+        headless = _load("qb_headless", "qb_headless.py")
+        store_mod = _load("qb_run_store", "run_store.py")
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            out = Path(d) / "out"
+            headless.run_headless(repo, output_dir=out)
+            telem = out / store_mod.TELEMETRY_FILENAME
+            self.assertTrue(telem.is_file(), "a completed run must emit telemetry.json")
+            record = json.loads(telem.read_text(encoding="utf-8"))
+            self.assertEqual(record["schema_version"], self.t.TELEMETRY_SCHEMA_VERSION)
+            for slice_key in ("detection", "action", "cost", "quality"):
+                self.assertIn(slice_key, record)
+            self.assertIn("precision_estimate", record["quality"])
+            self.assertIn("fix_safety_ok", record["quality"])
+            # A re-run overwrites the single fixed-path record (no duplicate).
+            headless.run_headless(repo, output_dir=out)
+            telem_files = sorted(p.name for p in out.glob("telemetry*.json"))
+            self.assertEqual(telem_files, [store_mod.TELEMETRY_FILENAME])
+
     def test_per_run_telemetry_to_aggregate_to_trends_to_recommendation(self):
         with tempfile.TemporaryDirectory() as d:
             agg_path = Path(d) / self.agg.AGGREGATE_TELEMETRY_FILENAME
