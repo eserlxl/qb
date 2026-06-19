@@ -19,6 +19,7 @@ from tests.test_no_committed_secrets import SECRET_PATTERNS
 SECURITY = REPO_ROOT / "SECURITY.md"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 RUNBOOK = REPO_ROOT / "RUNBOOK.md"
+RELEASING = REPO_ROOT / "RELEASING.md"
 CODEOWNERS = REPO_ROOT / "CODEOWNERS"
 ISSUE_TEMPLATE = REPO_ROOT / ".github/ISSUE_TEMPLATE/bug_report.md"
 PR_TEMPLATE = REPO_ROOT / ".github/PULL_REQUEST_TEMPLATE.md"
@@ -64,7 +65,7 @@ class GovernanceDocsTest(unittest.TestCase):
 
     def test_required_governance_docs_exist(self):
         # The governance contract fails if ANY required doc/file is missing.
-        for path in (SECURITY, CONTRIBUTING, RUNBOOK, CODEOWNERS, ISSUE_TEMPLATE,
+        for path in (SECURITY, CONTRIBUTING, RUNBOOK, RELEASING, CODEOWNERS, ISSUE_TEMPLATE,
                      PR_TEMPLATE, ACCEPTED_FINDINGS, ACCEPTED_LOADER):
             self.assertTrue(path.is_file(), f"missing required governance doc: {path}")
         accepted_text = self._read(ACCEPTED_FINDINGS)
@@ -84,8 +85,15 @@ class GovernanceDocsTest(unittest.TestCase):
         runbook = self._read(RUNBOOK)
         for phrase in (".qb/audit/findings.jsonl", "docs/accepted-findings.md",
                        "self_audit_clean", "production-gate.json",
-                       "release-authorization.json"):
+                       "release-authorization.json",
+                       "shared/scripts/production_gate_signals.py",
+                       "release-manifest.py --check", ".planwright/plan.md",
+                       "planwright execute", "A3 is always explicit opt-in"):
             self.assertIn(phrase, runbook)
+        releasing = self._read(RELEASING)
+        for phrase in ("make export-sanitized", "release-manifest.py --check",
+                       "tagging and publishing are operator-only"):
+            self.assertIn(phrase, releasing)
 
     def test_contributing_has_required_headings(self):
         text = self._read(CONTRIBUTING)
@@ -100,6 +108,9 @@ class GovernanceDocsTest(unittest.TestCase):
         self.assertIn("shared/", text)               # shared/ sync requirement
         self.assertIn("bump-version.sh", text)        # versioning/changelog convention
         self.assertIn("gate of record", text.lower())  # gate-of-record reference
+        self.assertIn(".qb/plan.md", text)              # QB -> planwright hand-off
+        self.assertIn(".planwright/plan.md", text)
+        self.assertIn("planwright execute", text)
         self.assertIn("secret", text.lower())          # no-secrets rule
 
     def test_review_ownership_and_templates_present(self):

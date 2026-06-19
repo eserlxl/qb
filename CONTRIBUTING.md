@@ -51,6 +51,10 @@ platform changelogs share the same latest version header
    may install the optional pre-push hook with `scripts/install-hooks.sh`.
 4. Add a changelog entry and bump the version through `scripts/bump-version.sh` (see
    **Versioning and changelog** above) — never hand-edit version fields.
+5. When QB-generated findings or planning docs become executable work, keep the
+   hand-off one-directional: QB writes under `.qb/`; copy `.qb/plan.md` to
+   `.planwright/plan.md` only when handing work to planwright, then run
+   `planwright execute`.
 
 ## No secrets
 

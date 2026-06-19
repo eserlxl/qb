@@ -275,6 +275,10 @@ discipline is load-bearing, so walk **one step per conjunct** — each is assemb
 from a real evidence source by `production_gate_signals.assemble_signals` and named
 exactly as in `production_gate.PRODUCTION_GATE_CHECKS`:
 
+```bash
+python3 shared/scripts/production_gate_signals.py --root . --out .qb/audit
+```
+
 1. **`telemetry_emitted`** — a schema-valid per-run quality record exists
    (`.qb/audit/telemetry.json`).
 2. **`rollback_drill_passed`** — the recoverability drill record records a pass
