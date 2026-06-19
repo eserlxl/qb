@@ -68,6 +68,31 @@ class DependencyAnalyzerTests(unittest.TestCase):
         self.assertEqual(analyzer.last_enrichment_status, "skipped:disabled")
         self.assertGreaterEqual(len(rules), 3)
 
+    def test_cargo_toml_unpinned_dependencies_are_flagged(self) -> None:
+        # Cargo semantics: a bare "1.0" is a caret range (unpinned); "*" is a
+        # wildcard (unpinned); only "=X.Y.Z" is an exact pin (clean).
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            root.joinpath("Cargo.toml").write_text(
+                '[dependencies]\n'
+                'serde = "1.0"\n'        # line 2: caret -> unpinned
+                'rand = "*"\n'           # line 3: wildcard -> unpinned
+                'exacted = "=1.2.3"\n'   # line 4: exact -> clean
+                '[dev-dependencies]\n'
+                'proptest = "^1.0"\n',   # line 6: caret -> unpinned
+                encoding="utf-8",
+            )
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+        cargo = [f.evidence for f in findings if f.evidence.startswith("Cargo.toml")]
+        self.assertIn("Cargo.toml:2", cargo)
+        self.assertIn("Cargo.toml:3", cargo)
+        self.assertIn("Cargo.toml:6", cargo)
+        self.assertNotIn("Cargo.toml:4", cargo)  # exact pin is clean
+        for finding in findings:
+            if finding.evidence.startswith("Cargo.toml"):
+                self.assertEqual(finding.category, "dependency")
+                self.assertEqual(self.validate(finding), [])
+
     def test_pyproject_dependencies_are_parsed_offline(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

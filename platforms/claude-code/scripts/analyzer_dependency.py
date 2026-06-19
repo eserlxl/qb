@@ -70,6 +70,15 @@ def _is_exact_pin(spec: str) -> bool:
     return "==" in spec or "===" in spec or bool(_EXACT_VERSION_RE.match(spec))
 
 
+def _is_cargo_exact_pin(spec: str) -> bool:
+    # Cargo semantics differ from pip/npm: a bare "1.2.3" is a caret range
+    # (^1.2.3), so ONLY a leading "=" is an exact version requirement. "*",
+    # "^", "~", ">=" etc. are ranges. (This is the inverse of _is_exact_pin,
+    # which treats a bare exact version as pinned.)
+    spec = (spec or "").strip()
+    return bool(re.match(r"^=\s*\d+(?:\.\d+)*(?:[-+][0-9A-Za-z.-]+)?$", spec))
+
+
 def _line_for_token(text: str, token: str, start: int = 1) -> int:
     for line_number, raw in enumerate(text.splitlines(), start=1):
         if line_number >= start and token in raw:
@@ -174,6 +183,44 @@ def parse_package_json(text: str) -> list:
     return deps
 
 
+def parse_cargo(text: str) -> list:
+    """Parse Cargo.toml dependency tables into dependency records (offline)."""
+    if tomllib is None:
+        return []
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return []
+    if not isinstance(data, dict):
+        return []
+
+    deps: list = []
+    for section in ("dependencies", "dev-dependencies", "build-dependencies"):
+        entries = data.get(section, {})
+        if not isinstance(entries, dict):
+            continue
+        for name, raw_spec in sorted(entries.items()):
+            if not isinstance(name, str):
+                continue
+            if isinstance(raw_spec, str):
+                spec = raw_spec
+            elif isinstance(raw_spec, dict):
+                # A path/git dependency carries no registry version to pin; skip.
+                if "version" not in raw_spec:
+                    continue
+                spec = str(raw_spec.get("version", ""))
+            else:
+                continue
+            deps.append({
+                "name": name,
+                "spec": spec,
+                "section": section,
+                "line": _line_for_token(text, name),
+                "pinned": _is_cargo_exact_pin(spec),
+            })
+    return deps
+
+
 class DependencyAnalyzer:
     """Offline dependency-hygiene audit with an opt-in, fail-closed networked tier."""
 
@@ -271,6 +318,26 @@ class DependencyAnalyzer:
                 "(package-lock.json / yarn.lock / pnpm-lock.yaml) was found.",
                 "Generate and commit a lockfile so dependency versions are reproducible.",
             ))
+
+        cargo_path = root / "Cargo.toml"
+        if cargo_path.is_file():
+            try:
+                text = cargo_path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                text = ""
+            for dep in parse_cargo(text):
+                dep["evidence"] = f"Cargo.toml:{dep['line']}"
+                inventory.append(dep)
+                if not dep["pinned"]:
+                    findings.append(self._finding(
+                        "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                        dep["evidence"],
+                        f"unpinned-cargo:{dep['section']}:{dep['name']}",
+                        f"Offline Cargo.toml audit: {dep['section']} dependency '{dep['name']}' is not "
+                        f"pinned to an exact version ({dep['spec'] or 'no version specifier'}); a bare, "
+                        f"caret, or wildcard spec can resolve to a different version over time.",
+                        "Pin the dependency to an exact version (=X.Y.Z) and commit Cargo.lock.",
+                    ))
 
         # --- Networked tier (opt-in, fail-closed) ----------------------------
         allow_networked = bool(getattr(config, "allow_networked", False))
