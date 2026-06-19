@@ -116,7 +116,11 @@ def project_finding(finding, root: str):
         f"      Development: {finding.suggested_fix}",
         f"      Acceptance: the {finding.category} finding at {finding.evidence} "
         f"is resolved and no longer reported by a re-run audit.",
-        "      Verification: python3 shared/scripts/qb_headless.py --root .",
+        # Content-asserting per finding: re-run the audit, then assert THIS finding's
+        # id is absent from the store, so the check fails iff this specific finding is
+        # still reported (independent of any other findings in the run).
+        f"      Verification: python3 shared/scripts/qb_headless.py --root . ; "
+        f"! grep -q '\"{finding.id}\"' .qb/audit/findings.jsonl",
     ])
 
 
