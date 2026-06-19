@@ -30,7 +30,10 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
 - `DependencyAnalyzer` covers unpinned `requirements.txt` dependencies,
   unpinned `pyproject.toml` project/Poetry dependencies, unpinned
   `package.json` `dependencies` / `devDependencies` / `optionalDependencies`,
-  and missing npm lockfiles in the `dependency` category.
+  unpinned `Cargo.toml` `dependencies` / `dev-dependencies` / `build-dependencies`
+  (Cargo semantics: a bare/caret/wildcard spec is unpinned, only `=X.Y.Z` is an
+  exact pin), and missing npm lockfiles in the `dependency` category
+  (`manifest-hygiene` rule kind, medium confidence, offline).
 - `WorkflowActionAnalyzer` covers missing, branch, and broad major-version
   GitHub Actions `uses:` refs in workflow files in the `dependency` category
   (`github-action-broad-ref`, medium confidence, offline); explicit full semver
