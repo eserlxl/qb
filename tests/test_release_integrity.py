@@ -67,7 +67,9 @@ class ReleaseIntegrityTest(unittest.TestCase):
         self.assertRegex(lines[2], r"^files: \d+$")
         self.assertTrue(lines[3:], "manifest must contain file hash entries")
         paths = [line.split("  ", 1)[1] for line in lines[3:]]
+        self.assertEqual(int(lines[2].split(": ", 1)[1]), len(paths))
         self.assertEqual(paths, sorted(paths), "manifest entries must be sorted by path")
+        self.assertIn("VERSION", paths, "root VERSION must be a hashed manifest entry")
         self.assertTrue(
             all(re.match(r"^[0-9a-f]{64}  .+", line) for line in lines[3:]),
             "manifest entries must be SHA-256 inventory rows",
@@ -99,12 +101,33 @@ class ReleaseIntegrityTest(unittest.TestCase):
             self.assertEqual(bad.returncode, 1, "drifted stored manifest must fail --check")
             self.assertIn("tree drifted", bad.stderr)
 
+            mini = Path(d) / "mini"
+            mini.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=str(mini), check=True)
+            (mini / "VERSION").write_text("1.2.3\n", encoding="utf-8")
+            (mini / "app.txt").write_text("original\n", encoding="utf-8")
+            subprocess.run(["git", "add", "VERSION", "app.txt"], cwd=str(mini), check=True)
+            mini_manifest = Path(d) / "mini.manifest"
+            write = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(mini), "--output", str(mini_manifest)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(write.returncode, 0, write.stderr)
+            (mini / "app.txt").write_text("changed\n", encoding="utf-8")
+            bad = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(mini), "--check", "--output",
+                 str(mini_manifest)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(bad.returncode, 1, "changed tracked bytes must fail --check")
+            self.assertIn("tree drifted", bad.stderr)
+
     def test_export_excludes_tool_state_trees(self):
         # The sanitized export = git-tracked files; the gitignored working trees must
         # never appear, so a release never ships .qb/ (which now holds the audit
         # run-store) or .planwright/.
         tracked = self._tracked()
-        for excluded in (".qb/", ".planwright/"):
+        for excluded in (".qb/", ".qb/audit/", ".planwright/"):
             offenders = [p for p in tracked if p.startswith(excluded)]
             self.assertEqual(offenders, [],
                              f"sanitized export must exclude {excluded}: {offenders}")
