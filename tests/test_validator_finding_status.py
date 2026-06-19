@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -116,6 +117,44 @@ class FindingStatusGateTests(unittest.TestCase):
         masked = self.v._mask_fenced_regions(raw)
         self.assertEqual(len(masked), len(raw))
         self.assertIn("## 13. Prioritized Fix List", masked)
+
+    def _step4_metrics(self, *rows: str, status: str = "PASS_WITH_WARNINGS") -> dict:
+        # Drive the real Step 4 readiness gate over a temp .qb/sub-planning-audit.md
+        # so the emitted, orchestrator-consumed metrics are exercised end to end.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / ".qb").mkdir()
+            (root / ".qb" / "sub-planning-audit.md").write_text(
+                _audit(*rows, status=status), encoding="utf-8"
+            )
+            state = self.v.ValidationState(root=root, mode="step4", strict=False)
+            self.v.validate_step4_readiness(state)
+            return state.metrics
+
+    def test_execution_queue_state_blocked_on_open_high_severity(self) -> None:
+        m = self._step4_metrics("- AUDIT-FIX-01 | P0 | open | blocker")
+        self.assertEqual(m["execution_queue_state"], "blocked")
+        self.assertEqual(m["blocking_p0_findings"], 1)
+        self.assertEqual(m["blocking_p1_findings"], 0)
+
+    def test_execution_queue_state_warnings_on_low_severity_only(self) -> None:
+        m = self._step4_metrics("- AUDIT-FIX-01 | P2 | open | minor")
+        self.assertEqual(m["execution_queue_state"], "warnings")
+        self.assertEqual(m["blocking_p0_findings"], 0)
+        self.assertEqual(m["blocking_p1_findings"], 0)
+
+    def test_execution_queue_state_clear_when_high_severity_resolved(self) -> None:
+        m = self._step4_metrics("- AUDIT-FIX-01 | P0 | resolved | fixed")
+        self.assertEqual(m["execution_queue_state"], "clear")
+        self.assertEqual(m["blocking_p0_findings"], 0)
+        self.assertEqual(m["finding_status_resolved"], 1)
+
+    def test_na_aliases_normalize_to_not_applicable(self) -> None:
+        self.assertEqual(self.v._normalize_finding_status(" | n/a | title"), "not_applicable")
+        self.assertEqual(self.v._normalize_finding_status(" | na | title"), "not_applicable")
+        # an n/a finding does not gate, mirroring not_applicable
+        m = self._step4_metrics("- AUDIT-FIX-01 | P0 | n/a | not relevant")
+        self.assertEqual(m["execution_queue_state"], "clear")
 
     def test_unterminated_fence_does_not_drop_fix_list_findings(self) -> None:
         # Regression: a dangling code fence before the fix list previously masked the
