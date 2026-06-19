@@ -10,6 +10,7 @@ No real network is used -- the advisory source is an injected callable.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -63,6 +64,25 @@ class DependencyAnalyzerTests(unittest.TestCase):
         self.assertEqual(names, ["flask", "django"])  # only the real PyPI deps
         self.assertFalse(next(d for d in deps if d["name"] == "flask")["pinned"])
         self.assertTrue(next(d for d in deps if d["name"] == "django")["pinned"])
+
+    def test_npm_nonregistry_specs_are_skipped_not_flagged_unpinned(self) -> None:
+        # A git/github/file/link/workspace/url npm dependency carries no registry
+        # version to pin, so it must not be reported "unpinned" (the npm twin of the
+        # pip VCS/URL skip). A registry range like ^1.0.0 is still flagged.
+        body = json.dumps({"dependencies": {
+            "express": "^1.0.0",
+            "pinned": "1.2.3",
+            "gitdep": "git+https://github.com/u/r.git",
+            "ghdep": "github:u/r",
+            "filedep": "file:../local",
+            "linkdep": "link:../l",
+            "workdep": "workspace:*",
+        }})
+        names = {d["name"] for d in self.dep.parse_package_json(body)}
+        self.assertEqual(names, {"express", "pinned"})  # only the registry deps
+        deps = {d["name"]: d for d in self.dep.parse_package_json(body)}
+        self.assertFalse(deps["express"]["pinned"])  # ^1.0.0 still flagged unpinned
+        self.assertTrue(deps["pinned"]["pinned"])
 
     def test_offline_tier_flags_unpinned_and_missing_lockfile(self) -> None:
         with tempfile.TemporaryDirectory() as d:

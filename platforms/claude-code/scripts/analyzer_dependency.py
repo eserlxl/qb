@@ -84,6 +84,16 @@ def _is_cargo_exact_pin(spec: str) -> bool:
     return bool(re.match(r"^=\s*\d+(?:\.\d+)*(?:[-+][0-9A-Za-z.-]+)?$", spec))
 
 
+def _is_npm_nonregistry(spec: str) -> bool:
+    # An npm spec pointing outside the registry -- git+/github:/gitlab:/file:/link:/
+    # portal:/workspace:/http(s):// , an npm: alias, or a "user/repo" shorthand --
+    # carries no registry version to pin. A registry version or range never contains
+    # "/" or ":", so their presence marks a non-registry spec to skip (mirrors the
+    # pip VCS/URL skip), rather than flag it "unpinned".
+    spec = (spec or "").strip()
+    return "/" in spec or ":" in spec
+
+
 def _line_for_token(text: str, token: str, start: int = 1) -> int:
     for line_number, raw in enumerate(text.splitlines(), start=1):
         if line_number >= start and token in raw:
@@ -180,6 +190,8 @@ def parse_package_json(text: str) -> list:
             if not isinstance(name, str):
                 continue
             spec = raw_spec if isinstance(raw_spec, str) else str(raw_spec)
+            if _is_npm_nonregistry(spec):
+                continue  # git/file/link/workspace/url/alias dep: no registry version to pin
             deps.append({
                 "name": name,
                 "spec": spec,
