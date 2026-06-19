@@ -10,6 +10,7 @@ is derived from a source of truth rather than a hardcoded duplicate:
 - absence of "synced verbatim" -> filesystem (root + host READMEs)
 - CHANGELOG version lockstep    -> filesystem (platforms/<host>/CHANGELOG.md)
 - README version badge          -> root VERSION file
+- sandbox vocabulary            -> SECURITY.md + docs/execution-sandbox.md
 
 Scope: analyzer-naming is asserted against the root README (the product
 source-of-truth doc for the audit/harden engine). Antigravity is planning-only
@@ -48,6 +49,7 @@ ANALYZER_COVERAGE_DOC = REPO_ROOT / "docs/analyzer-coverage.md"
 ROOT_VERSION = REPO_ROOT / "VERSION"
 RUNBOOK = REPO_ROOT / "RUNBOOK.md"
 SECURITY = REPO_ROOT / "SECURITY.md"
+EXECUTION_SANDBOX_DOC = REPO_ROOT / "docs/execution-sandbox.md"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 LIVE_VALIDATION_PROTOCOL = REPO_ROOT / "docs/live-validation-protocol.md"
 
@@ -288,6 +290,39 @@ class DocConsistencyTest(unittest.TestCase):
                       "CONTRIBUTING.md must carry the No secrets section")
         self.assertIn("test_no_committed_secrets", contributing,
                       "CONTRIBUTING.md no-secrets rule must name the enforcing guard")
+
+    def test_sandbox_vocabulary_separates_current_and_unshipped_boundaries(self):
+        security = self._read(SECURITY)
+        contract = self._read(EXECUTION_SANDBOX_DOC)
+        normalized_contract = " ".join(contract.split())
+
+        self.assertIn("# External Command Confinement Contract", contract)
+        self.assertNotIn("# Execution Sandbox Contract", contract)
+        for term in (
+            "Process confinement",
+            "Disposable write isolation",
+            "Sandboxed authorization",
+            "Full execution sandboxing",
+        ):
+            self.assertIn(term, contract, f"execution contract omits vocabulary term: {term}")
+
+        self.assertIn("not full execution sandboxing", contract.lower())
+        self.assertIn(
+            "authorization gate, not a claim of full containment",
+            normalized_contract,
+        )
+
+        self.assertIn(
+            "Full execution sandboxing of analyzed code is **not yet shipped**",
+            security,
+        )
+        self.assertNotIn(
+            "Execution sandboxing of analyzed code is **not yet shipped**",
+            security,
+            "SECURITY.md must not use ambiguous sandbox wording for shipped confinement",
+        )
+        self.assertIn("process confinement", security.lower())
+        self.assertIn("write isolation", security.lower())
 
     def test_accepted_findings_register_requires_explicit_records(self):
         sample = (
