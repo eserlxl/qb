@@ -443,7 +443,7 @@ per-finding lifecycle status as the next pipe-delimited field, before the title:
 
 where <status> is one of:
 - open — not yet addressed (the default when the field is omitted).
-- accepted — the risk is knowingly carried forward; it stays visible but does not block.
+- accepted — the risk is knowingly acknowledged; it stays visible and still gates Step 4 (use resolved or not_applicable to stop gating).
 - resolved — already fixed; recorded for traceability only.
 - not_applicable — does not apply after review; recorded only.
 

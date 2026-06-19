@@ -69,7 +69,7 @@ previously ungoverned and `probe-policy.md` is a newer addition:
 | `assessment-and-budget.md` | Antigravity-only | Supports the Antigravity Step-1.5 `assessment-planner.md` prompt. |
 | `probe-policy.md` | Antigravity-only | Tiered evidence-probe discipline for the dedicated planning host's Step-1.5 assessment; the engine hosts keep a leaner read-only assessment surface. |
 
-**Conservative default.** All six are classified **intended Antigravity-only** (so
+**Conservative default.** All seven are classified **intended Antigravity-only** (so
 no reconcile/move is required — Phase 5.4's reconcile step is a no-op). This is a
 deliberate, reversible governance decision: a maintainer may later reclassify any
 of these to *reconcile-into-shared* (moving it to `shared/references/` with a
