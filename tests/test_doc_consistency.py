@@ -398,6 +398,27 @@ class DocConsistencyTest(unittest.TestCase):
             f"CHANGELOG latest version headers diverge across hosts: {latest}",
         )
 
+    def test_antigravity_concept_references_are_classified_in_parity(self):
+        # Every Antigravity-only CONCEPT reference doc (not a shared ref, not a
+        # host-specific *-planner prompt) must be classified in PARITY.md, so a
+        # newly added, unclassified reference doc fails until its ownership is
+        # recorded -- closing the silent-drift gap (ASSESS-P1-02).
+        refs_dir = REPO_ROOT / "platforms/antigravity/skills/qb/references"
+        self.assertTrue(refs_dir.is_dir(), "antigravity references directory missing")
+        shared = {p.name for p in (REPO_ROOT / "shared/references").glob("*.md")}
+        parity = self._read(REPO_ROOT / "platforms/PARITY.md")
+        unclassified = []
+        for ref in sorted(refs_dir.glob("*.md")):
+            name = ref.name
+            if name in shared or name.endswith("-planner.md"):
+                continue  # shared ref, or an inherently host-specific planner prompt
+            if f"`{name}`" not in parity:
+                unclassified.append(name)
+        self.assertEqual(
+            unclassified, [],
+            f"Antigravity concept reference docs not classified in PARITY.md: {unclassified}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
