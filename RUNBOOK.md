@@ -155,9 +155,9 @@ ceiling, and this confinement clamp.
   `.qb/audit/recoverability.json`. The format (the single committed source the
   production-gate procedure points at) is `schema_version`, `run_id`,
   `baseline_ref` (`refs/qb-baseline/<run_id>`), `baseline_sha_len` (the baseline
-  sha's **length**, never its value), `baseline_clean`, and `passed` — redacted via
-  `run_store.redact` and written with sorted keys, so the audit trail proves
-  recoverability without persisting any secret value.
+  sha's **length**, never its value), `baseline_clean`, `mutation_error`, and
+  `passed` — redacted via `run_store.redact` and written with sorted keys, so the
+  audit trail proves recoverability without persisting any secret value.
 
 ## Live-validation protocol
 
