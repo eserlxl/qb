@@ -352,6 +352,25 @@ class DocConsistencyTest(unittest.TestCase):
         for tag in sorted(qb_corpus.TRUST_TAGS):
             self.assertIn(f"`{tag}`", text, f"live protocol omits trust tag {tag}")
 
+    def test_pre_push_hook_invokes_gate_and_fails_closed(self):
+        # The opt-in pre-push hook is the documented compensating control for
+        # disabled cloud CI, so its payload must invoke the gate of record
+        # (make ... check) and use fail-closed shell options -- otherwise a push
+        # could slip past a broken gate. Parse the committed hook source directly.
+        hook = REPO_ROOT / "scripts" / "hooks" / "pre-push"
+        text = self._read(hook)
+        self.assertRegex(
+            text,
+            r"\bmake\b[^\n]*\bcheck\b",
+            "pre-push hook must invoke the gate of record (make ... check)",
+        )
+        self.assertIn(
+            "set -euo pipefail",
+            text,
+            "pre-push hook must use fail-closed shell options (set -euo pipefail) "
+            "so it can never allow a push past a broken gate",
+        )
+
     def test_no_synced_verbatim_phrasing(self):
         docs = [ROOT_README] + [pkg["root"] / "README.md" for pkg in ALL_PACKAGES]
         offenders = [
