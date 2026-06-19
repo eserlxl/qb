@@ -71,10 +71,14 @@ class ObservabilityPipelineTest(unittest.TestCase):
                 self.assertIn(slice_key, record)
             self.assertIn("precision_estimate", record["quality"])
             self.assertIn("fix_safety_ok", record["quality"])
-            # A re-run overwrites the single fixed-path record (no duplicate).
+            # A re-run overwrites the single fixed-path per-run record (no duplicate),
+            # and maintains exactly one multi-run aggregate series alongside it.
             headless.run_headless(repo, output_dir=out)
             telem_files = sorted(p.name for p in out.glob("telemetry*.json"))
-            self.assertEqual(telem_files, [store_mod.TELEMETRY_FILENAME])
+            self.assertEqual(
+                telem_files,
+                [store_mod.AGGREGATE_TELEMETRY_FILENAME, store_mod.TELEMETRY_FILENAME],
+            )
 
     def test_per_run_telemetry_to_aggregate_to_trends_to_recommendation(self):
         with tempfile.TemporaryDirectory() as d:
