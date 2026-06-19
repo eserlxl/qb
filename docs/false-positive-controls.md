@@ -1,5 +1,7 @@
 # False-Positive Controls
 
+*Part of the [QB engine contract docs](README.md).*
+
 QB false-positive controls must be deterministic and auditable: a finding may be
 withheld or downgraded only by a documented rule that records why it happened.
 

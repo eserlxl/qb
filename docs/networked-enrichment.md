@@ -1,5 +1,7 @@
 # Networked Enrichment Analyzer Contract
 
+*Part of the [QB engine contract docs](README.md).*
+
 QB's default audit path is offline. A networked enrichment analyzer is allowed
 only as an optional extension whose absence or unavailability never prevents the
 offline audit from completing.
