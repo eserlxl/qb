@@ -100,6 +100,17 @@ _ANALYZER_DOC_CATEGORIES = re.compile(
 _PRODUCTION_GATE_SECTION = re.compile(
     r"^## Production gate\s*$(?P<body>.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
 _GATE_CONJUNCT = re.compile(r"^\d+\.\s+\*\*`([a-z_]+)`\*\*", re.MULTILINE)
+# Narrative docs state the producer-analyzer count as a spelled-out word
+# ("seven producer analyzers"); the name-equality checks above pin the *names*
+# but never the count word, so a stale count can drift silently. The expected
+# word is derived from len(PRODUCER_ANALYZERS), never hardcoded.
+_NUMBER_WORDS = {
+    1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+    7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve",
+}
+_NUMBER_WORD_SET = frozenset(_NUMBER_WORDS.values())
+_PRODUCER_COUNT_PHRASE = re.compile(
+    r"\b([A-Za-z]+)\s+producer\s+analyzers\b", re.IGNORECASE)
 
 
 def _backtick_values(text: str) -> list[str]:
@@ -158,6 +169,37 @@ class DocConsistencyTest(unittest.TestCase):
         self.assertIsNotNone(match, "analyzer coverage doc has no category list")
         declared = _backtick_values(match.group("body"))
         self.assertEqual(declared, FINDING_CATEGORIES)
+
+    def test_prose_producer_count_word_matches_registry(self):
+        # The spelled-out "<N> producer analyzers" count in narrative contract
+        # docs (BASELINE.md, the root README, the analyzer-coverage doc, and the
+        # per-host READMEs) is plain prose that the name-equality checks above do
+        # not pin, so a stale count (e.g. "six" after a seventh analyzer is
+        # registered) can drift silently. Derive the expected word from the
+        # registry and fail closed on any disagreement.
+        expected = _NUMBER_WORDS[len(PRODUCER_ANALYZERS)]
+        docs = [REPO_ROOT / "BASELINE.md", ROOT_README, ANALYZER_COVERAGE_DOC]
+        docs += sorted((REPO_ROOT / "platforms").glob("*/README.md"))
+        seen = []
+        for path in docs:
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            for match in _PRODUCER_COUNT_PHRASE.finditer(text):
+                word = match.group(1).lower()
+                if word not in _NUMBER_WORD_SET:
+                    continue  # e.g. "the"/"built-in" producer analyzers
+                rel = path.relative_to(REPO_ROOT).as_posix()
+                seen.append((rel, word))
+                self.assertEqual(
+                    word, expected,
+                    f"{rel}: prose says '{word} producer analyzers' but the engine "
+                    f"registers {len(PRODUCER_ANALYZERS)} ({expected})",
+                )
+        self.assertTrue(
+            seen, "no doc states a spelled-out producer-analyzer count word; "
+                  "the drift guard would be vacuous",
+        )
 
     def test_root_readme_version_badge_matches_version_file(self):
         # The shields.io version badge is prose, not frontmatter, so the manifest
