@@ -288,6 +288,7 @@ scripts/
   sync.sh                   # shared-core fan-out
   bump-version.sh           # version metadata maintenance
 tests/                      # cross-platform invariant tests
+docs/                       # engine contract docs (index: docs/README.md)
 Makefile
 RUNBOOK.md
 VERSION
