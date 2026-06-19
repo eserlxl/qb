@@ -1,0 +1,11 @@
+{
+  "fixture": "workflow-permissions-positive",
+  "expected_findings": [
+    {
+      "analyzer_id": "workflow-actions",
+      "category": "dependency",
+      "evidence": ".github/workflows/ci.yml:2",
+      "rule_key": "github-action-broad-permissions"
+    }
+  ]
+}

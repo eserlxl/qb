@@ -55,7 +55,7 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(
             first["totals"],
             {
-                "true_positive": 4,
+                "true_positive": 5,
                 "false_positive": 0,
                 "false_negative": 0,
                 "precision": 1.0,
@@ -79,10 +79,10 @@ class PrecisionHarnessTests(unittest.TestCase):
 
             report = self._build_report(corpus)
 
-        self.assertEqual(report["totals"]["true_positive"], 4)
+        self.assertEqual(report["totals"]["true_positive"], 5)
         self.assertEqual(report["totals"]["false_positive"], 1)
         self.assertEqual(report["totals"]["false_negative"], 0)
-        self.assertEqual(report["totals"]["precision"], 4 / 5)
+        self.assertEqual(report["totals"]["precision"], 5 / 6)
         self.assertEqual(report["per_analyzer"]["command-injection"]["precision"], 0.5)
 
 

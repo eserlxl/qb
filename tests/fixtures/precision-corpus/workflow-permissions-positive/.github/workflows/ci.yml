@@ -1,0 +1,6 @@
+name: ci
+permissions: write-all
+jobs:
+  test:
+    steps:
+      - uses: actions/checkout@v4.2.2
