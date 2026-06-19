@@ -180,7 +180,7 @@ for path in Path(".").rglob("*"):
                 findings.append(f"{path}:{line_number}: {name}")
 
 if findings:
-    print("package_secret_hygiene_failed")
+    print("tracked_secret_hygiene_failed")
     for finding in findings:
         print(finding)
     sys.exit(1)

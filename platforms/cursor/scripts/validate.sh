@@ -155,7 +155,7 @@ secret_hits="$(find . \
   ! -name '*.png' ! -name '*.jpg' ! -name '*.jpeg' ! -name '*.gif' \
   -exec grep -EnH -- "$secret_re" {} + 2>/dev/null || true)"
 if [ -n "$secret_hits" ]; then
-  echo "secret_hygiene_failed"
+  echo "tracked_secret_hygiene_failed"
   printf '%s\n' "$secret_hits"
   exit 1
 fi
