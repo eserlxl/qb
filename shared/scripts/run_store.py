@@ -196,27 +196,48 @@ class RunStore:
         path = self.root / SELF_AUDIT_FILENAME
         if not path.is_file():
             return {}
-        return json.loads(path.read_text(encoding="utf-8"))
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
 
     def read_production_gate(self) -> dict:
         path = self.root / PRODUCTION_GATE_FILENAME
         if not path.is_file():
             return {}
-        return json.loads(path.read_text(encoding="utf-8"))
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+
     def read_findings(self) -> list:
+        # A single malformed/truncated line (e.g. a half-written findings.jsonl from
+        # a killed run) must not propagate JSONDecodeError to the caller; degrade to
+        # [] like read_telemetry, so reporting over a corrupt store stays resilient.
         path = self.root / FINDINGS_FILENAME
         if not path.is_file():
             return []
-        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        try:
+            return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        except (OSError, json.JSONDecodeError):
+            return []
 
     def read_evidence(self) -> list:
         if not self.evidence_dir.is_dir():
             return []
-        return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(self.evidence_dir.glob("*.json"))]
+        try:
+            return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(self.evidence_dir.glob("*.json"))]
+        except (OSError, json.JSONDecodeError):
+            return []
 
     def read_summary(self) -> dict:
         path = self.root / SUMMARY_FILENAME
-        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+        if not path.is_file():
+            return {}
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
 
     def read_telemetry(self) -> dict:
         path = self.root / TELEMETRY_FILENAME
