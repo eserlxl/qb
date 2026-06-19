@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from importlib import util as _import_util
 from pathlib import Path
 
