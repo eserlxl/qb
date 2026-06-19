@@ -10,6 +10,7 @@ shared/scripts/ obeys the argv convention (zero injection findings).
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 import tempfile
 import unittest
@@ -71,6 +72,32 @@ class CommandSafetyTests(unittest.TestCase):
 
     def test_no_auto_run_repo_scripts_rule(self) -> None:
         self.assertFalse(self.cs.AUTO_RUN_REPO_SCRIPTS)
+
+    def test_minimal_env_forwards_only_allowlist_and_keeps_path(self) -> None:
+        # A credential in QB's own environment must never reach a repo-provided
+        # command: minimal_env forwards only the allowlisted keys (PATH/HOME/
+        # locale/...) and drops everything else, including any injected token.
+        # Values here are plainly synthetic, not real secrets.
+        base = {
+            "PATH": "/custom/bin",
+            "HOME": "/home/qb",
+            "LC_ALL": "C",
+            "QB_INJECTED_KEY": "inert-non-secret-test-value",
+        }
+        env = self.cs.minimal_env(base)
+        self.assertEqual(env["PATH"], "/custom/bin", "PATH must be preserved")
+        self.assertEqual(env.get("HOME"), "/home/qb", "allowlisted HOME must survive")
+        self.assertEqual(env.get("LC_ALL"), "C", "LC_ prefix must be allowlisted")
+        self.assertNotIn(
+            "QB_INJECTED_KEY", env,
+            "a non-allowlisted environment key must be dropped before reaching a command",
+        )
+
+    def test_minimal_env_falls_back_path_to_defpath(self) -> None:
+        # With no PATH in the base env, minimal_env must still provide one so the
+        # command remains locatable -- the documented os.defpath fallback.
+        env = self.cs.minimal_env({"HOME": "/home/qb"})
+        self.assertEqual(env["PATH"], os.defpath)
 
     # --- confine-by-default -----------------------------------------------
     def test_run_command_confines_by_default_when_available(self) -> None:
