@@ -187,11 +187,30 @@ def render_summary_text(store) -> str:
     # reader can confirm fix verification "ran contained" from the summary alone.
     confinement = sorted({c for e in evidence for c in (e.get("confinement_controls") or [])})
     confinement_str = ",".join(confinement) if confinement else "none"
+    # Coverage caveats: which analyzers ran vs were skipped (with reason), and any
+    # optional adapter that was unavailable (e.g. ruff/pyflakes absent) -- so an
+    # absent optional tool is visible in the report rather than silently dropped.
+    analyzers_run = summary.get("analyzers_run", [])
+    analyzers_skipped = summary.get("analyzers_skipped", [])
+    skipped_str = (
+        ", ".join(f"{s.get('id', '?')}({s.get('reason', '?')})" for s in analyzers_skipped)
+        or "none"
+    )
+    unavailable = sorted(
+        entry.get("adapter", "?")
+        for cap in summary.get("capability_report", {}).values()
+        for entry in cap.get("skipped", [])
+        if entry.get("reason") == "tool-unavailable"
+    )
+    coverage_line = f"coverage: ran={len(analyzers_run)} skipped=[{skipped_str}]"
+    if unavailable:
+        coverage_line += f" tool-unavailable=[{', '.join(unavailable)}]"
     lines = [
         "QB audit report",
         f"findings: {len(findings)} (" + ", ".join(f"{s}={sev_counts[s]}" for s in _SEVERITIES) + ")",
         f"hardening: kept={fixes['kept']} reverted={fixes['reverted']} blocked={fixes['blocked']}",
         f"confinement: {confinement_str}",
+        coverage_line,
         "signals: "
         f"precision={quality['precision_estimate']} "
         f"fix_safety_ok={quality['fix_safety_ok']} "

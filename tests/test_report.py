@@ -114,6 +114,10 @@ class ReportTests(unittest.TestCase):
             self.assertIn("reverted=1", text)
             self.assertIn("blocked=0", text)
             self.assertIn("signals: precision=0.0 fix_safety_ok=True iterations=0", text)
+            # Coverage caveats must be visible in the report (analyzers ran vs skipped),
+            # so an absent optional tool is never silently dropped from the summary.
+            self.assertIn("coverage: ran=", text)
+            self.assertIn("skipped=[", text)
 
     def test_sarif_excludes_operational_signals(self) -> None:
         with tempfile.TemporaryDirectory() as d:
