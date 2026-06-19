@@ -54,6 +54,11 @@ See also the [RUNBOOK](RUNBOOK.md) gate-of-record and release-integrity sections
    cryptographic signing, includes no GPG/sigstore signature, and does not prove
    artifact origin or authenticity.
 
+   Optional authenticity is a separate, explicit release decision. If maintainers
+   approve it for a candidate, add a detached GPG signature or sigstore attestation
+   for `QB-sanitized.zip` and/or `QB-sanitized.manifest`, document the verifier
+   command in the release notes, and keep the SHA-256 manifest path dependency-free.
+
 7. **Tag the release — operator-only, manual.** The operator creates the annotated
    tag deliberately (for example `git tag -a v<version> -m "<version>"`, a *local*
    tag). Tagging is a manual operator action, not automated here.

@@ -64,6 +64,9 @@ class ReleaseDocsTest(unittest.TestCase):
                 self.assertIn("authenticity", text)
                 self.assertRegex(text, r"\b(no|not) cryptographic signing\b")
                 self.assertIn("gpg/sigstore", text)
+                self.assertIn("optional authenticity", text)
+                self.assertIn("explicit", text)
+                self.assertIn("sha-256", text)
 
     def test_releasing_doc_keeps_baseline_counts_exact(self):
         text = self._read(RELEASING)

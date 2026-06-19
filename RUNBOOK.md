@@ -88,6 +88,13 @@ guarantee.
   signature, so it does not prove *who* produced the artifact, only that its listed
   files hash as recorded.
 
+**Optional authenticity path:** signing or attestation is deliberately separate from
+the default SHA-256 manifest. If maintainers explicitly approve it for a release
+candidate, an operator may add a detached GPG signature or sigstore attestation for
+the artifact and/or manifest and record the verifier command in the release notes.
+That optional layer proves authorship/provenance according to the chosen signer; it
+does not replace the dependency-free integrity manifest.
+
 To check a built artifact, run the verify recipe in **Verify a sanitized export**
 above; it exits `0` only when the tree still matches its manifest.
 
