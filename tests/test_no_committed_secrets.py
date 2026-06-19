@@ -9,26 +9,38 @@ fixtures opt out with a trailing ``pragma: allowlist secret`` marker.
 
 from __future__ import annotations
 
-import re
+import importlib.util
 import subprocess
+import sys
 import unittest
 
-from tests.qb_monorepo import REPO_ROOT
+from tests.qb_monorepo import REPO_ROOT, SHARED_DIR
 
 ALLOW_MARKER = "pragma: allowlist secret"
 
 BLOCKED_SUFFIXES = (".pyc", ".zip", ".png", ".jpg", ".jpeg", ".gif", ".svg")
 
-# The canonical secret classes (mirrors the shared validator's analyzer_core coverage).
-SECRET_PATTERNS = [
-    ("openai_api_key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
-    ("github_pat", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b")),
-    ("github_legacy_pat", re.compile(r"\bghp_[A-Za-z0-9]{20,}\b")),
-    ("aws_access_key", re.compile(r"\b(?:AKIA|ASIA|AGPA|AIDA|ANPA|AROA|AIPA|ANVA)[0-9A-Z]{16}\b")),
-    ("private_key", re.compile(r"BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY")),
-    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b")),
-    ("stripe_secret_key", re.compile(r"\bsk_(?:live|test)_[A-Za-z0-9]{20,}\b")),
-]
+
+def _load_engine_secret_patterns():
+    """Import SECRET_PATTERNS from analyzer_core, the engine's single source.
+
+    A hand-maintained copy here silently drifts from the engine (it had already
+    fallen behind the azure_storage_key class); importing the canonical list keeps
+    this repo-wide guard enforcing exactly what the analyzer detects, so a new
+    engine pattern is covered everywhere without editing this file.
+    """
+    path = SHARED_DIR / "scripts" / "analyzer_core.py"
+    spec = importlib.util.spec_from_file_location("qb_analyzer_core", path)
+    module = importlib.util.module_from_spec(spec)
+    # Register before exec: the module's own @dataclass definitions resolve their
+    # __module__ namespace via sys.modules under deferred annotations.
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.SECRET_PATTERNS
+
+
+# The canonical secret classes, from analyzer_core (the single source of truth).
+SECRET_PATTERNS = _load_engine_secret_patterns()
 
 
 def _tracked_files() -> list[str]:
