@@ -104,6 +104,35 @@ class FindingStatusGateTests(unittest.TestCase):
         self.v.validate_heading_order(text, self.v.STEP1_HEADINGS, Path("main-planning.md"), state)
         self.assertTrue(any("duplicate_heading" in e for e in state.errors))
 
+    def test_balanced_fence_is_masked_with_preserved_offsets(self) -> None:
+        raw = "a\n```\n## 1. fake heading\n```\nb\n"
+        masked = self.v._mask_fenced_regions(raw)
+        self.assertEqual(len(masked), len(raw))  # offsets preserved for body slicing
+        self.assertNotIn("## 1. fake heading", masked)  # fenced heading is hidden
+
+    def test_unterminated_fence_is_left_literal(self) -> None:
+        # A fence that opens and never closes must not mask the rest of the document.
+        raw = "a\n```text\nexample never closed\n## 13. Prioritized Fix List\n"
+        masked = self.v._mask_fenced_regions(raw)
+        self.assertEqual(len(masked), len(raw))
+        self.assertIn("## 13. Prioritized Fix List", masked)
+
+    def test_unterminated_fence_does_not_drop_fix_list_findings(self) -> None:
+        # Regression: a dangling code fence before the fix list previously masked the
+        # rest of the doc, emptying the section so a real P0 stopped blocking Step 4.
+        text = (
+            "# Sub-Planning Audit\n\n## 1. Audit Summary\n\n"
+            "overall audit status: PASS_WITH_WARNINGS\n\n"
+            "```text\nan illustrative block that is never closed\n\n"
+            "## 13. Prioritized Fix List\n\n"
+            "- AUDIT-FIX-01 | P0 | open | a real blocker\n\n"
+            "## 15. Audit Result\n\nfinal status: PASS_WITH_WARNINGS\n"
+        )
+        self.assertEqual(
+            self.v.parse_audit_findings(text), [("AUDIT-FIX-01", "P0", "open")]
+        )
+        self.assertEqual(self._blocking(text)["P0"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -217,18 +217,39 @@ def _mask_fenced_regions(text: str) -> str:
     line such as ``## 13. ...`` quoted inside a code fence is not mistaken for a real
     document heading; bodies are still sliced from the original text by the same
     offsets.
+
+    Only *balanced* fences are masked: an opening marker's region is masked only once
+    a matching closing marker is found. A fence that opens and never closes (malformed
+    markdown) is left literal rather than masking the rest of the document, so a
+    dangling fence cannot hide a real heading or fix-list finding from the Step 4 gate
+    (which would otherwise fail open).
     """
+
+    def _mask(line: str) -> str:
+        return "".join(ch if ch in "\r\n" else " " for ch in line)
+
     out: list[str] = []
+    pending: list[str] = []  # lines buffered inside an as-yet-unclosed fence
     in_fence = False
     for line in text.splitlines(keepends=True):
         stripped = line.lstrip()
         is_marker = stripped.startswith("```") or stripped.startswith("~~~")
-        if in_fence or is_marker:
-            out.append("".join(ch if ch in "\r\n" else " " for ch in line))
+        if not in_fence:
+            if is_marker:
+                in_fence = True
+                pending = [line]
+            else:
+                out.append(line)
         else:
-            out.append(line)
-        if is_marker:
-            in_fence = not in_fence
+            pending.append(line)
+            if is_marker:
+                # closing marker: the region is balanced -> mask the whole block
+                out.extend(_mask(buf) for buf in pending)
+                pending = []
+                in_fence = False
+    if in_fence:
+        # unterminated fence: keep the buffered remainder visible, do not mask to EOF
+        out.extend(pending)
     return "".join(out)
 
 
