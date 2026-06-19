@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-06-19
+
+### Changed
+- Broaden secret-hygiene coverage to GitHub OAuth/app/refresh tokens, Google API keys and OAuth client secrets, and GitLab/npm/SendGrid credentials, single-sourced into the repo-wide committed-secret guard; detect child_process.execSync as a shell-injection sink; skip non-registry npm dependencies (git/file/link/workspace/url) to remove false unpinned findings; harden the release-gate and recoverability evidence readers to degrade gracefully on malformed records; and make the audit engine clean under its own QualityAnalyzer.
+
 ## [0.16.0] - 2026-06-19
 
 ### Changed
