@@ -52,6 +52,8 @@ SECURITY = REPO_ROOT / "SECURITY.md"
 EXECUTION_SANDBOX_DOC = REPO_ROOT / "docs/execution-sandbox.md"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 LIVE_VALIDATION_PROTOCOL = REPO_ROOT / "docs/live-validation-protocol.md"
+DOCS_DIR = REPO_ROOT / "docs"
+DOCS_INDEX = DOCS_DIR / "README.md"
 
 # Derived sources of truth (computed once, not copied into the test).
 PRODUCER_ANALYZERS = sorted(
@@ -127,6 +129,24 @@ class DocConsistencyTest(unittest.TestCase):
         # assertions below vacuously pass.
         self.assertTrue(PRODUCER_ANALYZERS, "no producer analyzers derived from registry")
         self.assertTrue(FINDING_CATEGORIES, "no finding categories derived from schema")
+
+    def test_docs_index_links_every_contract_doc(self):
+        # docs/README.md is the authoritative per-guarantee contract index; the root
+        # README/RUNBOOK/SECURITY point readers to it. Derive the contract-doc set from
+        # the filesystem (every docs/*.md except the index itself) and assert the index
+        # links each one -- and links no doc that does not exist -- so a newly added
+        # contract doc that is never indexed (the telemetry-trends.md drift class), or a
+        # deleted one still linked, fails here instead of shipping an unreachable contract.
+        index_text = self._read(DOCS_INDEX)
+        on_disk = {p.name for p in DOCS_DIR.glob("*.md") if p.name != "README.md"}
+        self.assertTrue(on_disk, "no docs/*.md contract docs found (guard would be vacuous)")
+        # Intra-docs links only: bare 'name.md' (optionally '#anchor'). The '../' parent
+        # links to README/RUNBOOK/SECURITY are out of scope for index completeness.
+        linked = set(re.findall(r"\]\((?!\.\./)([A-Za-z0-9._-]+\.md)(?:#[^)]*)?\)", index_text))
+        missing = sorted(on_disk - linked)
+        self.assertEqual(missing, [], f"docs/README.md index omits contract docs: {missing}")
+        dangling = sorted(linked - on_disk)
+        self.assertEqual(dangling, [], f"docs/README.md index links nonexistent docs: {dangling}")
 
     def test_root_readme_names_every_producer_analyzer(self):
         text = self._read(ROOT_README)
