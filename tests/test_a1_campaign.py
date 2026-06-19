@@ -38,6 +38,13 @@ def _git_porcelain(repo: Path) -> str:
                           capture_output=True, text=True).stdout.strip()
 
 
+def _tracked_snapshot(repo: Path) -> dict[str, bytes]:
+    files = subprocess.run(["git", "-C", str(repo), "ls-files", "-z"], check=True,
+                           capture_output=True).stdout
+    names = [item.decode("utf-8") for item in files.split(b"\0") if item]
+    return {name: (repo / name).read_bytes() for name in names}
+
+
 EXPECTED_CORPUS_LABELS = {
     "injection_pair": {"injection": 2},
     "traversal": {"path-traversal": 1},
@@ -52,8 +59,14 @@ class A1CampaignTests(unittest.TestCase):
     def test_campaign_corpus_label_map_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repos = qb_corpus.build_corpus(Path(d))
-        self.assertEqual({repo.name: repo.labels for repo in repos}, EXPECTED_CORPUS_LABELS)
-        self.assertTrue(any(labels for labels in EXPECTED_CORPUS_LABELS.values()))
+            self.assertEqual({repo.name: repo.labels for repo in repos}, EXPECTED_CORPUS_LABELS)
+            self.assertTrue(any(labels for labels in EXPECTED_CORPUS_LABELS.values()))
+            for repo in repos:
+                self.assertEqual(repo.trust, "neutralized-noop")
+                self.assertEqual(repo.precondition, qb_corpus.NEUTRAL_PRECONDITION)
+                self.assertEqual(repo.verify_command, qb_corpus.NEUTRAL_VERIFY)
+                makefile = (repo.path / "Makefile").read_text(encoding="utf-8")
+                self.assertIn("python3 -c \"\"", makefile)
 
     def test_a1_run_writes_schema_versioned_quality_telemetry(self) -> None:
         lv = _driver()
@@ -78,8 +91,11 @@ class A1CampaignTests(unittest.TestCase):
             base = Path(d)
             for repo in qb_corpus.build_corpus(base / "corpus"):
                 self.assertEqual(_git_porcelain(repo.path), "", f"{repo.name} dirty before run")
+                before = _tracked_snapshot(repo.path)
                 lv.run_campaign(repo, "A1", base / "out" / repo.name / ".qb/audit")
-                # A1 confines writes to throwaway isolation: the target tree is unchanged.
+                # A1 confines writes to throwaway isolation: tracked target bytes stay unchanged.
+                self.assertEqual(_tracked_snapshot(repo.path), before,
+                                 f"{repo.name} tracked bytes changed after A1 run")
                 self.assertEqual(_git_porcelain(repo.path), "",
                                  f"{repo.name} working tree changed after A1 run")
 

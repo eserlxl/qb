@@ -54,7 +54,13 @@ class A2CampaignTests(unittest.TestCase):
                                      prior_telemetry=prior)
                 self.assertIn("kept", a2.outcomes())
                 self.assertIn("fix_target.txt", a2.promoted())
-                self.assertTrue((repo.path / "fix_target.txt").exists())  # promoted to the tree
+                promoting = [result for result in a2.results
+                             if "fix_target.txt" in result.get("promoted", [])]
+                self.assertEqual(len(promoting), 1, repo.name)
+                self.assertEqual(promoting[0]["outcome"], "kept")
+                self.assertEqual(promoting[0]["evidence"]["after_exit"], 0)
+                self.assertEqual((repo.path / "fix_target.txt").read_text(encoding="utf-8"),
+                                 "clean\n")  # promoted to the tree after green verification
 
     def test_poor_and_breached_telemetry_deny_promotion(self) -> None:
         lv = _driver()
@@ -87,7 +93,10 @@ class A2CampaignTests(unittest.TestCase):
                                                     telemetry=prior, run_id=f"{repo.name}-kr")
                 green_res, bad_res = results
                 self.assertEqual(green_res["outcome"], "kept")
+                self.assertEqual(green_res["evidence"]["after_exit"], 0)
                 self.assertEqual(bad_res["outcome"], "reverted")
+                self.assertNotEqual(bad_res["evidence"]["after_exit"], 0)
+                self.assertIn("fix_target.txt", green_res["promoted"])
                 promoted = [p for r in results for p in r["promoted"]]
                 self.assertNotIn("bad.txt", promoted)
                 self.assertFalse((repo.path / "bad.txt").exists())  # non-green never reaches the tree
