@@ -200,6 +200,10 @@ def build_report(corpus_root, audit_output_root=None) -> dict:
     per_category = {category: _new_counts() for category in sorted(CATEGORIES)}
     totals = _new_counts()
     fixture_reports: list[dict] = []
+    # Analyzers that could not effectively run because their only adapters were
+    # optional tools that were absent (e.g. ruff/pyflakes): the gate must not score
+    # these as a precision/recall failure -- not-run is distinct from below-threshold.
+    capability_skipped: set[str] = set()
 
     if audit_output_root is None:
         scratch_ctx = tempfile.TemporaryDirectory()
@@ -243,6 +247,14 @@ def build_report(corpus_root, audit_output_root=None) -> dict:
                 analyzer_counts = _compare(analyzer_labels, analyzer_result["findings"])
                 _add_counts(per_analyzer[descriptor.id], analyzer_counts)
                 analyzer_rows[descriptor.id] = _finalize_counts(analyzer_counts)
+                # Capability: if this analyzer's adapters were all absent optional
+                # tools (ran nothing, every adapter tool-unavailable), record it so
+                # the gate treats it as not-run rather than below-threshold.
+                cap = analyzer_result["summary"].get("capability_report", {}).get(descriptor.id)
+                if cap is not None and not cap.get("ran") and cap.get("skipped") and all(
+                    entry.get("reason") == "tool-unavailable" for entry in cap["skipped"]
+                ):
+                    capability_skipped.add(descriptor.id)
 
             fixture_reports.append({
                 "fixture": fixture_name,
@@ -267,6 +279,7 @@ def build_report(corpus_root, audit_output_root=None) -> dict:
             for key in sorted(per_category)
         },
         "totals": _finalize_counts(totals),
+        "capability_skipped": sorted(capability_skipped),
     }
 
 
@@ -310,7 +323,10 @@ def evaluate_thresholds(report: dict, *, min_precision=None, min_recall=None,
                 })
 
     _check("totals", report.get("totals", {}), min_precision, min_recall)
+    capability_skipped = set(report.get("capability_skipped", []))
     for analyzer_id, bars in sorted((per_analyzer or {}).items()):
+        if analyzer_id in capability_skipped:
+            continue  # not-run (its optional tool was absent): never a failure
         metrics = report.get("per_analyzer", {}).get(analyzer_id)
         if metrics is not None:
             _check(f"per_analyzer:{analyzer_id}", metrics,
