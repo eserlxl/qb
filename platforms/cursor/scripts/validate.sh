@@ -136,4 +136,28 @@ for path in $host_files; do
   done
 done
 
+# ---------------------------------------------------------------------------
+# 5) Tracked-file secret hygiene over the package (dependency-free: find + grep,
+#    no python). Length-bounded patterns so ordinary words/filenames are not
+#    flagged; the same shapes the Codex and Antigravity validators scan for.
+#    The pattern literals are written so this scanner never matches its own
+#    source text (each shape is followed here by a regex metachar, not 20+
+#    secret-class characters).
+# ---------------------------------------------------------------------------
+secret_re='sk-or-v1-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN ([A-Z0-9]+ )?PRIVATE KEY|xox[baprs]-[A-Za-z0-9-]{20,}'
+secret_hits="$(find . \
+  \( -name .git -o -name __pycache__ -o -name __MACOSX -o -name .pytest_cache \
+     -o -name .mypy_cache -o -name artifacts -o -name build -o -name dist \
+     -o -name logs -o -name tmp \) -prune -o \
+  -type f \
+  ! -name '.DS_Store' ! -name '.env*' ! -name '*.local' ! -name '*.local.*' \
+  ! -name '*.key' ! -name '*.pem' ! -name '*.pyc' ! -name '*.zip' \
+  ! -name '*.png' ! -name '*.jpg' ! -name '*.jpeg' ! -name '*.gif' \
+  -exec grep -EnH -- "$secret_re" {} + 2>/dev/null || true)"
+if [ -n "$secret_hits" ]; then
+  echo "secret_hygiene_failed"
+  printf '%s\n' "$secret_hits"
+  exit 1
+fi
+
 echo "qb_repo_validation=passed"
