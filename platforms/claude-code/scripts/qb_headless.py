@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import traceback
 from importlib import util as _import_util
 from pathlib import Path
 
@@ -150,6 +151,9 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
         return EXIT_FINDINGS if findings else EXIT_CLEAN
     except Exception as exc:  # fail-closed: never report a crashed run as clean
         sys.stderr.write(f"qb_headless: internal error: {type(exc).__name__}: {exc}\n")
+        # Emit the full traceback too, so an obscure internal failure in a
+        # production pipeline is diagnosable instead of a bare type/message line.
+        traceback.print_exc()
         return EXIT_INTERNAL_ERROR
 
 
