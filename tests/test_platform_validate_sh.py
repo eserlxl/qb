@@ -3,7 +3,8 @@
 The per-platform validate.sh scripts are otherwise only run against the healthy
 repo, so their rejection branches are unverified. For each platform this copies
 the package into a temp dir and confirms validate.sh actually fails on a missing
-required file and on a mis-named manifest, not just that it passes when clean.
+required file, a mis-named manifest, and a planted secret, not just that it
+passes when clean.
 """
 
 from __future__ import annotations
@@ -71,6 +72,21 @@ class _ValidateShFailureBase:
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("unexpected_plugin_name", result.stdout + result.stderr)
 
+    def test_planted_secret_fails(self) -> None:
+        # Every platform validate.sh now runs the CI-time tracked-file secret
+        # scan, so each must reject a planted credential. Build the token by
+        # concatenation so this source carries no literal credential (and never
+        # trips a secret scan itself).
+        fake_secret = "ghp_" + "A" * 32  # matches the github_legacy_pat pattern
+        leak = self.root / "docs/USAGE.md"  # exists in every host package
+        leak.write_text(
+            leak.read_text(encoding="utf-8") + f"\n{fake_secret}\n",
+            encoding="utf-8",
+        )
+        result = _run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("tracked_secret_hygiene_failed", result.stdout + result.stderr)
+
 
 class ClaudeCodeValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
     PLATFORM = CLAUDE_CODE
@@ -82,20 +98,6 @@ class CursorValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
 
 class CodexValidateShFailureTests(_ValidateShFailureBase, unittest.TestCase):
     PLATFORM = CODEX
-
-    def test_planted_secret_fails(self) -> None:
-        # Codex-only: its validate.sh is the repo's CI-time tracked-file secret
-        # scanner. Build the token by concatenation so this source carries no
-        # literal credential (and never trips a secret scan itself).
-        fake_secret = "ghp_" + "A" * 32  # matches the github_legacy_pat pattern
-        leak = self.root / "docs/USAGE.md"  # exists, passes checks 1-7
-        leak.write_text(
-            leak.read_text(encoding="utf-8") + f"\n{fake_secret}\n",
-            encoding="utf-8",
-        )
-        result = _run(self.root)
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("tracked_secret_hygiene_failed", result.stdout + result.stderr)
 
 
 class AntigravityValidateShFailureTests(unittest.TestCase):
@@ -138,6 +140,20 @@ class AntigravityValidateShFailureTests(unittest.TestCase):
         # line, so a wrong identity is rejected with this specific token (assert it
         # precisely rather than a vacuous substring that any frontmatter edit trips).
         self.assertIn("skill_frontmatter_missing_keys", result.stdout + result.stderr)
+
+    def test_planted_secret_fails(self) -> None:
+        # Antigravity's validate.sh also runs the CI-time tracked-file secret
+        # scan. Build the token by concatenation so this source carries no
+        # literal credential (and never trips a secret scan itself).
+        fake_secret = "ghp_" + "A" * 32  # matches the github_legacy_pat pattern
+        leak = self.root / "docs/USAGE.md"  # exists in the antigravity package
+        leak.write_text(
+            leak.read_text(encoding="utf-8") + f"\n{fake_secret}\n",
+            encoding="utf-8",
+        )
+        result = _run(self.root)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("tracked_secret_hygiene_failed", result.stdout + result.stderr)
 
 
 class AntigravityInstallVersionTests(unittest.TestCase):
