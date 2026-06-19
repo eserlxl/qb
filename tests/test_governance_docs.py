@@ -9,6 +9,8 @@ every tracked file) with focused, named governance-doc assertions.
 
 from __future__ import annotations
 
+import importlib.util
+import sys
 import unittest
 
 from tests.qb_monorepo import REPO_ROOT
@@ -16,10 +18,23 @@ from tests.test_no_committed_secrets import SECRET_PATTERNS
 
 SECURITY = REPO_ROOT / "SECURITY.md"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
+RUNBOOK = REPO_ROOT / "RUNBOOK.md"
 CODEOWNERS = REPO_ROOT / "CODEOWNERS"
 ISSUE_TEMPLATE = REPO_ROOT / ".github/ISSUE_TEMPLATE/bug_report.md"
 PR_TEMPLATE = REPO_ROOT / ".github/PULL_REQUEST_TEMPLATE.md"
 VERSION_FILE = REPO_ROOT / "VERSION"
+ACCEPTED_FINDINGS = REPO_ROOT / "docs" / "accepted-findings.md"
+ACCEPTED_LOADER = REPO_ROOT / "shared" / "scripts" / "accepted_findings.py"
+
+
+def _load_module(name, path):
+    if name in sys.modules:
+        return sys.modules[name]
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 class GovernanceDocsTest(unittest.TestCase):
@@ -49,8 +64,28 @@ class GovernanceDocsTest(unittest.TestCase):
 
     def test_required_governance_docs_exist(self):
         # The governance contract fails if ANY required doc/file is missing.
-        for path in (SECURITY, CONTRIBUTING, CODEOWNERS, ISSUE_TEMPLATE, PR_TEMPLATE):
+        for path in (SECURITY, CONTRIBUTING, RUNBOOK, CODEOWNERS, ISSUE_TEMPLATE,
+                     PR_TEMPLATE, ACCEPTED_FINDINGS, ACCEPTED_LOADER):
             self.assertTrue(path.is_file(), f"missing required governance doc: {path}")
+        accepted_text = self._read(ACCEPTED_FINDINGS)
+        for phrase in ("reviewer", "rationale", "fail-closed", "self_audit_clean"):
+            self.assertIn(phrase, accepted_text)
+        loader = _load_module("qb_accepted_findings_governance", ACCEPTED_LOADER)
+        sample = (
+            "## Accepted\n"
+            "- `QBF-GOOD` -- reviewed false positive (reviewer: maintainer)\n"
+            "- `QBF-NO-REVIEWER` -- missing reviewer marker\n"
+            "- `QBF-NO-RATIONALE` (reviewer: maintainer)\n"
+            "    - `QBF-INDENTED` -- example only (reviewer: maintainer)\n"
+            "## Other\n"
+            "- `QBF-OTHER` -- wrong section (reviewer: maintainer)\n"
+        )
+        self.assertEqual(loader.parse_accepted_ids(sample), {"QBF-GOOD"})
+        runbook = self._read(RUNBOOK)
+        for phrase in (".qb/audit/findings.jsonl", "docs/accepted-findings.md",
+                       "self_audit_clean", "production-gate.json",
+                       "release-authorization.json"):
+            self.assertIn(phrase, runbook)
 
     def test_contributing_has_required_headings(self):
         text = self._read(CONTRIBUTING)

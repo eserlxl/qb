@@ -281,8 +281,14 @@ exactly as in `production_gate.PRODUCTION_GATE_CHECKS`:
 5. **`killswitch_proven`** — the kill-switch halts at a safe checkpoint with the
    documented kill-stop exit code (`budget.KillSwitch`; see [Pause / Kill](#pause--kill)).
 6. **`self_audit_clean`** — every QB-audits-QB finding is fixed or explicitly accepted
-   (`.qb/audit/self-audit.json` reconciled against
+   (`.qb/audit/findings.jsonl` reconciled by `self_audit_reconcile.py` against
    [docs/accepted-findings.md](docs/accepted-findings.md)).
+
+To refresh self-audit evidence, rerun the self-audit, inspect
+`.qb/audit/findings.jsonl`, and either fix each finding or add a reviewed entry to
+`docs/accepted-findings.md` with a rationale and `reviewer:` marker. Do not edit
+the audit store to hide a finding; rerun the production gate after the register or
+fix changes.
 
 The composite decision and the earned-autonomy authorization are persisted redacted
 under `.qb/audit/production-gate.json` and `.qb/audit/release-authorization.json`. The
