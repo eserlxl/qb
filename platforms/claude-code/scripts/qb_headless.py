@@ -73,12 +73,43 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
         config = AnalyzerConfig(allow_networked=allow_networked)
         registry = _audit.build_default_registry()
         findings = []
-        for analyzer in registry.enabled(config.allow_networked):
+        analyzers_run: list[str] = []
+        analyzers_skipped: list[dict] = []
+        capability_report: dict = {}
+
+        enabled = registry.enabled(config.allow_networked)
+        enabled_ids = {analyzer.descriptor.id for analyzer in enabled}
+        # Record the skips explicitly (mirroring audit_runner) so an absent optional
+        # tool is visible in the summary rather than silently understating coverage:
+        # networked analyzers present-but-disabled, and registry load failures.
+        for analyzer in registry.analyzers():
+            if analyzer.descriptor.id not in enabled_ids:
+                analyzers_skipped.append({"id": analyzer.descriptor.id, "reason": "networked-disabled"})
+        for skipped_id, reason in registry.skipped:
+            analyzers_skipped.append({"id": skipped_id, "reason": reason})
+
+        for analyzer in enabled:
             try:
-                findings.extend(analyzer.analyze(str(repo_root), config))
+                result = analyzer.analyze(str(repo_root), config)
             except Exception as exc:  # one analyzer failing must not abort the audit
                 store.append_log({"event": "analyzer-error",
                                   "analyzer": analyzer.descriptor.id, "error": str(exc)})
+                analyzers_skipped.append(
+                    {"id": analyzer.descriptor.id, "reason": f"{type(exc).__name__}: {exc}"})
+                continue
+            findings.extend(result)
+            analyzers_run.append(analyzer.descriptor.id)
+            # Adapter-level capability (e.g. quality's ruff/pyflakes ran/skipped),
+            # so a clean build server without the optional tools reports visibly
+            # different, explainable coverage instead of an identical summary.
+            cap = getattr(analyzer, "last_capability_report", None)
+            if isinstance(cap, dict):
+                capability_report[analyzer.descriptor.id] = {
+                    "ran": sorted(cap.get("ran", [])),
+                    "skipped": sorted(
+                        (dict(entry) for entry in cap.get("skipped", [])),
+                        key=lambda entry: entry.get("adapter", "")),
+                }
         findings.sort(key=lambda f: f.id)
         store.write_findings(findings)
         store.append_log({"event": "audit-complete", "findings": len(findings)})
@@ -94,6 +125,9 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
             "total_findings": len(findings),
             "severity_counts": _severity_counts(findings),
             "autonomy_level": policy.autonomy_level,
+            "analyzers_run": sorted(analyzers_run),
+            "analyzers_skipped": sorted(analyzers_skipped, key=lambda item: item["id"]),
+            "capability_report": capability_report,
         })
         # A completed run emits exactly one telemetry.json (a fixed path, so a
         # re-run overwrites rather than duplicates). Even report-only A0 records the
