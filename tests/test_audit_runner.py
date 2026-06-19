@@ -123,6 +123,51 @@ class AuditRunnerTests(unittest.TestCase):
             self.skipTest(f"audit runner missing: {MODULE_PATH}")
         self.runner = _load("qb_audit_runner_under_test", MODULE_PATH)
 
+    def test_run_summary_aggregates_adapter_capability_and_is_exit_neutral(self) -> None:
+        # The run summary must aggregate each analyzer's adapter-level capability
+        # (e.g. ruff/pyflakes ran vs skipped) at the run level so an absent optional
+        # tool is reported, not silently dropped; and an absent tool must not change
+        # the run outcome (graceful degradation). A stub makes the absent-tool path
+        # deterministic regardless of which tools this host actually has installed.
+        runner = self.runner
+
+        class _CapStub:
+            def __init__(self) -> None:
+                self.descriptor = runner.AnalyzerDescriptor(
+                    id="cap-stub", categories=("quality",), offline=True
+                )
+                self.last_capability_report = {
+                    "ran": ["present-tool"],
+                    "skipped": [{"adapter": "absent-tool", "reason": "tool-unavailable"}],
+                }
+
+            def analyze(self, repo_root, config):
+                return []
+
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            reg = runner.AnalyzerRegistry()
+            reg.register(_CapStub())
+            summary = runner.run_audit(
+                repo, config=runner.AnalyzerConfig(), registry=reg,
+                output_dir=Path(d) / runner.OUTPUT_DIR_NAME,
+            )["summary"]
+
+        self.assertIn("capability_report", summary)
+        self.assertEqual(
+            summary["capability_report"]["cap-stub"],
+            {
+                "ran": ["present-tool"],
+                "skipped": [{"adapter": "absent-tool", "reason": "tool-unavailable"}],
+            },
+        )
+        # Exit-code neutrality: the absent optional tool produced no finding and did
+        # not error the run -- the run is clean (0 findings), exactly as it would be
+        # had the tool been present and reported nothing.
+        self.assertEqual(summary["total_findings"], 0)
+        self.assertNotIn("cap-stub", [s["id"] for s in summary["analyzers_skipped"]])
+
     def test_run_is_deterministic_across_two_runs(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d) / "repo"
