@@ -65,6 +65,19 @@ class BaselineBumpLockstepTests(unittest.TestCase):
             "bump-version.sh --dry-run did not report a BASELINE.md update; "
             "the gate-of-record version would silently drift",
         )
+        # Harden the lockstep: the report must name the NEW bumped version for
+        # BASELINE, not merely mention the file. A bump that reported BASELINE.md
+        # but wrote the wrong (or unchanged) version would still drift the gate of
+        # record while passing the substring check above.
+        major, minor, _patch = (int(part) for part in current.split("."))
+        bumped = f"{major}.{minor + 1}.0"
+        self.assertIn(
+            f"BASELINE.md gate-of-record version -> {bumped}",
+            out,
+            "bump-version.sh --dry-run must report the new bumped version for "
+            "BASELINE.md; reporting the file without the bumped version would let "
+            "the gate-of-record version drift out of lockstep with VERSION",
+        )
 
     def test_dry_run_writes_nothing(self) -> None:
         before = _sha(BASELINE)
