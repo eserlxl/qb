@@ -270,6 +270,14 @@ SECRET_PATTERNS = [
     # Google API key: the distinctive "AIza" prefix plus a fixed 35-char body
     # bounds false positives on bare base64-ish strings.
     ("google_api_key", re.compile(r"\bAIza[0-9A-Za-z_\-]{35}\b")),
+    # GitLab personal access token: the "glpat-" prefix is distinctive.
+    ("gitlab_pat", re.compile(r"\bglpat-[A-Za-z0-9_-]{20,}\b")),
+    # npm access token: "npm_" prefix plus a fixed 36-char body.
+    ("npm_token", re.compile(r"\bnpm_[A-Za-z0-9]{36}\b")),
+    # SendGrid API key: "SG." plus two base64url segments of fixed length.
+    ("sendgrid_key", re.compile(r"\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b")),
+    # Google OAuth client secret: the "GOCSPX-" prefix plus a 28-char body.
+    ("google_oauth_secret", re.compile(r"\bGOCSPX-[A-Za-z0-9_-]{28}\b")),
 ]
 
 

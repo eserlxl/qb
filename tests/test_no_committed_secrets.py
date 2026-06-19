@@ -102,6 +102,10 @@ class NoCommittedSecretsTest(unittest.TestCase):
         self.assertIsNone(by_name["github_app_token"].search("ghp_" + "A" * 36))
         self.assertTrue(by_name["github_legacy_pat"].search("ghp_" + "A" * 36))
         self.assertTrue(by_name["google_api_key"].search("AIza" + "b" * 35))
+        self.assertTrue(by_name["gitlab_pat"].search("glpat-" + "a" * 20))
+        self.assertTrue(by_name["npm_token"].search("npm_" + "a" * 36))
+        self.assertTrue(by_name["sendgrid_key"].search("SG." + "a" * 22 + "." + "b" * 43))
+        self.assertTrue(by_name["google_oauth_secret"].search("GOCSPX-" + "a" * 28))
 
 
 if __name__ == "__main__":
