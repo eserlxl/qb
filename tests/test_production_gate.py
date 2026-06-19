@@ -214,6 +214,14 @@ class ProductionGateSignalsTests(unittest.TestCase):
             repo.mkdir()
             self.assertFalse(self.sig.telemetry_emitted(empty_audit))
             self.assertFalse(self.sig.rollback_drill_passed(empty_audit))
+            decision = self.sig.gate_decision(
+                empty_audit, repo, scripts_dir=SHARED_DIR / "scripts")
+            self.assertFalse(decision["passed"])
+            self.assertFalse(decision["signals"]["telemetry_emitted"])
+            self.assertFalse(decision["signals"]["rollback_drill_passed"])
+            self.assertIn("telemetry_emitted", decision["failures"])
+            self.assertIn("rollback_drill_passed", decision["failures"])
+            self.assertEqual(decision["permitted_autonomy"], "A1")
 
     def test_single_broken_real_signal_denies_gate_with_named_failure(self) -> None:
         # Phase 7.4: at the ASSEMBLY level, breaking ONE real signal source (the
@@ -252,6 +260,17 @@ class ProductionGateSignalsTests(unittest.TestCase):
             decision = self.sig.gate_decision(audit, repo, scripts_dir=tainted)
             self.assertFalse(decision["passed"])
             self.assertEqual(decision["failures"], ["supply_chain_ok"])
+
+        with tempfile.TemporaryDirectory() as d:  # killswitch_proven
+            audit, repo = self._all_real_signals(d)
+            original = self.sig.prove_killswitch
+            try:
+                self.sig.prove_killswitch = lambda: False
+                decision = self.sig.gate_decision(audit, repo, scripts_dir=scripts)
+            finally:
+                self.sig.prove_killswitch = original
+            self.assertFalse(decision["passed"])
+            self.assertEqual(decision["failures"], ["killswitch_proven"])
 
     def test_gate_re_evaluates_on_signal_regression(self) -> None:
         # Phase 7.4: the gate re-evaluates CURRENT signals; it is not a one-time
