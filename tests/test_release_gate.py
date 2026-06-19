@@ -186,6 +186,20 @@ class RollbackDrillTests(unittest.TestCase):
         self.assertFalse(breach["quality"]["fix_safety_ok"])
         self.assertEqual(self.rg.permitted_autonomy(breach), "A1")
 
+    def test_read_authorization_degrades_on_malformed_record(self) -> None:
+        # A corrupt/partial release-authorization.json must read back as {} (the
+        # same default as an absent file), like the hardened run_store readers --
+        # never raise JSONDecodeError to the caller.
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            (out / self.rg.AUTHORIZATION_EVIDENCE_FILENAME).write_text(
+                "{not valid json", encoding="utf-8")
+            self.assertEqual(self.rg.read_authorization(out), {})
+            # A valid record still round-trips through persist/read.
+            record = self.rg.authorization_record(self._telemetry(9, 1))
+            self.rg.persist_authorization(record, out)
+            self.assertEqual(self.rg.read_authorization(out)["permitted_autonomy"], "A2")
+
     def _telemetry(self, kept, reverted):
         return self.t.build_telemetry(run_id="r", autonomy_level="A2", findings=[],
                                       evidence=[{"outcome": "kept", "after_exit": 0}] * kept

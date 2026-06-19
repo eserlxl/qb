@@ -197,8 +197,13 @@ def persist_authorization(record, output_dir) -> Path:
 
 
 def read_authorization(output_dir) -> dict:
-    """Read back the release-gate authorization record, or {} when absent."""
+    """Read back the release-gate authorization record, or {} when absent or malformed."""
     path = Path(output_dir) / AUTHORIZATION_EVIDENCE_FILENAME
     if not path.is_file():
         return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        # A corrupt/partial record (e.g. a killed run) degrades to "no record" --
+        # the same empty default as an absent file, matching the run_store readers.
+        return {}
