@@ -185,10 +185,17 @@ else
   NEW="$(python3 - "$CURRENT" "$BUMP" <<'PY'
 import re, sys
 cur, bump = sys.argv[1], sys.argv[2]
-# Accept an explicit target version: strict X.Y.Z, optionally with a SemVer
-# pre-release (-rc1) and/or build (+meta) suffix.
-if re.fullmatch(r"\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?", bump):
+# Accept an explicit target version: strict X.Y.Z only. The version invariant
+# (tests/test_version_and_structure.py) and release-manifest.py accept only
+# strict X.Y.Z, so a SemVer pre-release/build suffix here would mint a VERSION
+# that fails QB's own gate -- reject it with a pointed error rather than emit it.
+if re.fullmatch(r"\d+\.\d+\.\d+", bump):
     print(bump); raise SystemExit
+if re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]*)+", bump):
+    sys.stderr.write(
+        f"Refusing '{bump}': pre-release/build suffixes fail the strict X.Y.Z "
+        "invariant (test_version_and_structure.py / release-manifest.py)\n")
+    raise SystemExit(1)
 # A relative bump operates on the release core: strip any pre-release/build
 # suffix from the current version first.
 core = re.match(r"(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$", cur)
