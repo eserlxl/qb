@@ -11,6 +11,8 @@ the planning-state finding is dropped, not projected.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import importlib.util
 import json
 import sys
@@ -72,6 +74,21 @@ class FindingsPlanRoundTripTest(unittest.TestCase):
 
             # The same secret scan the validator runs under --strict: zero findings.
             self.assertEqual(core.scan_text_for_secrets(text), [])
+
+            audit = root / ".qb/audit"
+            audit.mkdir(parents=True)
+            (audit / "findings.jsonl").write_text(FIXTURE.read_text(encoding="utf-8"),
+                                                  encoding="utf-8")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                code = ftp.main(["--root", str(root)])
+            out = buf.getvalue()
+            self.assertEqual(code, 0, out)
+            self.assertIn("planwright_plan_validation=passed", out)
+            self.assertIn("findings_projected=5", out)
+            self.assertIn("findings_skipped=1", out)
+            self.assertFalse((root / ".qb/plan.md").exists())
+            self.assertFalse((root / ".planwright").exists())
 
 
 if __name__ == "__main__":

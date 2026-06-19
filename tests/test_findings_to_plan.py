@@ -121,8 +121,11 @@ class FindingsToPlanConformanceTest(unittest.TestCase):
     def test_batch_projection_has_no_planning_state_surface_and_is_clean(self):
         findings = [_finding(category=c) for c in sorted(fs.CATEGORIES)]
         findings.append(_finding(category="config", evidence=".qb/x.md:1"))   # skipped
-        text = ftp.project_findings(findings, str(self.root))
-        self.assertEqual(text.count("- [ ]"), len(fs.CATEGORIES))  # .qb one dropped
+        findings.append(_finding(category="config", evidence=".planwright/plan.md:1"))   # skipped
+        skipped = []
+        text = ftp.project_findings(findings, str(self.root), skipped=skipped)
+        self.assertEqual(text.count("- [ ]"), len(fs.CATEGORIES))  # planning-state drops
+        self.assertEqual(len(skipped), 2)
         for line in text.splitlines():
             s = line.strip()
             if s.startswith("Surfaces:") or s.startswith("New Surfaces:"):
@@ -135,14 +138,18 @@ class FindingsToPlanConformanceTest(unittest.TestCase):
         # A .qb/-anchored finding is dropped, but the drop is reported via `skipped`,
         # never silently lost.
         emitted = _finding(category="quality")
-        dropped = _finding(category="config", evidence=".qb/main-planning.md:1")
+        dropped = [
+            _finding(category="config", evidence=".qb/main-planning.md:1"),
+            _finding(category="config", evidence=".planwright/plan.md:1"),
+        ]
         skipped = []
-        text = ftp.project_findings([emitted, dropped], str(self.root), skipped=skipped)
+        text = ftp.project_findings([emitted, *dropped], str(self.root), skipped=skipped)
         self.assertEqual(text.count("- [ ]"), 1)        # only the projectable finding
-        self.assertEqual(len(skipped), 1)               # the drop is reported, not silent
-        finding, reason = skipped[0]
-        self.assertEqual(finding.id, dropped.id)
-        self.assertIn("planning state", reason)
+        self.assertEqual(len(skipped), 2)               # the drops are reported, not silent
+        self.assertEqual([finding.id for finding, _reason in skipped],
+                         [finding.id for finding in dropped])
+        for _finding_obj, reason in skipped:
+            self.assertIn("planning state", reason)
 
 
 if __name__ == "__main__":
