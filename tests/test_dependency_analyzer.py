@@ -48,6 +48,22 @@ class DependencyAnalyzerTests(unittest.TestCase):
         self.dep = _load("qb_analyzer_dependency_under_test", MODULE_PATH)
         self.validate = sys.modules["qb_analyzer_interface"].validate_finding
 
+    def test_vcs_url_requirements_are_skipped_not_misparsed(self) -> None:
+        # Resolves council S12: a git+https / bare-URL requirement must not be
+        # split into a bogus "git" dependency, and carries no PyPI version to pin.
+        body = (
+            "git+https://github.com/psf/requests.git#egg=requests\n"
+            "https://example.com/pkg-1.0.whl\n"
+            "flask\n"
+            "django==4.2.1\n"
+        )
+        deps = self.dep.parse_requirements(body)
+        names = [d["name"] for d in deps]
+        self.assertNotIn("git", names)
+        self.assertEqual(names, ["flask", "django"])  # only the real PyPI deps
+        self.assertFalse(next(d for d in deps if d["name"] == "flask")["pinned"])
+        self.assertTrue(next(d for d in deps if d["name"] == "django")["pinned"])
+
     def test_offline_tier_flags_unpinned_and_missing_lockfile(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             _fixture(Path(d))

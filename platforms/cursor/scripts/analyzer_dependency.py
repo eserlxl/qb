@@ -55,6 +55,11 @@ confidence_for_rule = _core.confidence_for_rule
 
 _LOCKFILES = ("package-lock.json", "yarn.lock", "pnpm-lock.yaml")
 _REQ_LINE = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*(.*)$")
+# pip VCS / direct-URL requirements (git+https://..., https://...#egg=name): the
+# `_REQ_LINE` name regex would split the scheme into a bogus "git" dependency, so
+# detect and skip these -- a VCS/URL requirement carries no PyPI registry version
+# to pin and is not an unpinned-dependency finding.
+_URL_REQUIREMENT_RE = re.compile(r"^(?:[A-Za-z][A-Za-z0-9.+-]*\+)?(?:https?|git|ssh|file|hg|svn|bzr)://", re.IGNORECASE)
 _EXACT_VERSION_RE = re.compile(r"^\s*\d+(?:\.\d+)+(?:[-+][0-9A-Za-z.-]+)?\s*$")
 _ADVISORY_SEVERITY = {
     "critical": "P0",
@@ -93,6 +98,8 @@ def parse_requirements(text: str) -> list:
         line = raw.strip()
         if not line or line.startswith("#") or line.startswith("-"):
             continue
+        if _URL_REQUIREMENT_RE.match(line):
+            continue  # VCS/URL requirement: no PyPI version to pin, not a "git" dep
         line = line.split(" #", 1)[0].strip()
         match = _REQ_LINE.match(line)
         if not match:
