@@ -157,6 +157,10 @@ class ValidatePlanwrightPlanTests(unittest.TestCase):
         errors = self._errors(render(Mode="repair",
                                      Evidence="the loop is wrong somewhere"))
         self.assertTrue(any("repair Evidence lacks a file:line anchor" in e for e in errors), errors)
+        errors = self._errors(render(Mode="repair",
+                                     Evidence="src/ghost.py:5 is the wrong call site."))
+        self.assertTrue(any("repair Evidence cites 'src/ghost.py', which does not exist" in e
+                            for e in errors), errors)
 
     def test_placeholder_verification_fails(self) -> None:
         errors = self._errors(render(Verification="TODO"))
@@ -213,6 +217,10 @@ class ValidatePlanwrightPlanTests(unittest.TestCase):
         # A non-repair Evidence anchor to a missing file is advisory by default,
         # promoted to a failure under --strict.
         plan = render(Evidence="src/ghost.py:5 is the bad call site.",
+                      Surfaces="src/app.py")
+        self.assertEqual(self._exit_code(plan), 0)
+        self.assertEqual(self._exit_code(plan, strict=True), 1)
+        plan = render(Evidence="src/app.py:99 cites a line beyond the fixture.",
                       Surfaces="src/app.py")
         self.assertEqual(self._exit_code(plan), 0)
         self.assertEqual(self._exit_code(plan, strict=True), 1)
