@@ -149,11 +149,11 @@ def available_confinement_controls() -> tuple[str, ...]:
     controls: list[str] = []
     if os.name == "posix":
         controls.append("process_group")
-        try:
-            import resource  # noqa: F401
-        except ImportError:
-            pass
-        else:
+        # Probe importability without binding the name -- an `import resource` here
+        # is flagged unused by pyflakes (which ignores the ruff noqa), so the engine
+        # would not be clean under its own QualityAnalyzer. find_spec is equivalent:
+        # _establish_confinement does the real import only when this returns a spec.
+        if importlib.util.find_spec("resource") is not None:
             controls.append("resource_limits")
     return tuple(controls)
 
