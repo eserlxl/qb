@@ -52,8 +52,13 @@ _dependency = _load_sibling("qb_analyzer_dependency", "analyzer_dependency.py")
 _license = _load_sibling("qb_analyzer_license", "analyzer_license.py")
 _config = _load_sibling("qb_analyzer_config", "analyzer_config.py")
 _breadth = _load_sibling("qb_analyzer_breadth", "analyzer_breadth.py")
+_store = _load_sibling("qb_run_store", "run_store.py")
 
 serialize_finding = _fs.serialize_finding
+# The same central redaction RunStore.write_findings applies: this lower-level CLI
+# path writes findings.jsonl directly, so it must enforce the no-secret-value
+# invariant itself rather than relying on a value-free analyzer set.
+redact = _store.redact
 validate_finding = _fs.validate_finding
 SEVERITIES = _fs.SEVERITIES
 
@@ -177,7 +182,7 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
         category_counts[finding.category] = category_counts.get(finding.category, 0) + 1
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    findings_text = "".join(serialize_finding(finding) + "\n" for finding in findings)
+    findings_text = "".join(serialize_finding(redact(finding.to_dict())) + "\n" for finding in findings)
     (output_dir / FINDINGS_FILENAME).write_text(findings_text, encoding="utf-8")
 
     summary = {
