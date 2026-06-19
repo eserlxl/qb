@@ -85,6 +85,42 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(report["totals"]["precision"], 5 / 6)
         self.assertEqual(report["per_analyzer"]["command-injection"]["precision"], 0.5)
 
+    def test_threshold_gate_pass_fail_and_capability_aware(self) -> None:
+        report = self._build_report(CORPUS)  # deterministic: totals precision/recall 1.0
+        # Met bars -> pass, no failures.
+        ok = self.harness.evaluate_thresholds(report, min_precision=1.0, min_recall=1.0)
+        self.assertTrue(ok["passed"])
+        self.assertEqual(ok["failures"], [])
+        # Unmet bars -> fail with a deterministic, sorted failure summary.
+        bad = {"totals": {"precision": 0.5, "recall": 0.5},
+               "per_analyzer": {}, "per_category": {}, "capability_skipped": []}
+        res = self.harness.evaluate_thresholds(bad, min_precision=0.9, min_recall=0.9)
+        self.assertFalse(res["passed"])
+        self.assertEqual(
+            [(f["scope"], f["metric"]) for f in res["failures"]],
+            [("totals", "precision"), ("totals", "recall")],
+        )
+        # Capability-aware: an analyzer marked capability_skipped (absent optional
+        # tool) must not be scored as a failure even with a failing metric.
+        skipped = {"totals": {"precision": 1.0, "recall": 1.0},
+                   "per_analyzer": {"quality-correctness": {"precision": 0.0, "recall": 0.0}},
+                   "per_category": {}, "capability_skipped": ["quality-correctness"]}
+        cap = self.harness.evaluate_thresholds(
+            skipped, per_analyzer={"quality-correctness": {"min_precision": 1.0, "min_recall": 1.0}})
+        self.assertTrue(cap["passed"], "an absent-tool analyzer must not fail the gate")
+
+    def test_main_gate_exit_codes(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            out = str(Path(d) / "report.json")
+            # A passing corpus with no bars requested exits 0.
+            self.assertEqual(self.harness.main(["--corpus", str(CORPUS), "--out", out]), 0)
+            # An unmet bar fails closed with a non-zero exit code (totals precision
+            # over the full registry is well below 0.999).
+            self.assertEqual(
+                self.harness.main(["--corpus", str(CORPUS), "--out", out, "--min-precision", "0.999"]),
+                1,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
