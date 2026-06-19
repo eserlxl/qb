@@ -46,8 +46,16 @@ The supported, deliberately stdlib-only controls are named by
 
 - **`process_group`** — start the child in a new session/process group
   (`start_new_session`).
-- **`resource_limits`** — apply conservative POSIX resource hardening
-  (`RLIMIT_CORE = 0`) via a `preexec_fn`.
+- **`resource_limits`** — apply conservative POSIX resource caps via a
+  `preexec_fn`, from `DEFAULT_RLIMITS`: `RLIMIT_CORE = 0` (no core dumps),
+  `RLIMIT_FSIZE = 8 GiB` (bounds a runaway single-file write), and
+  `RLIMIT_CPU = 3600s` (a CPU-seconds backstop to the wall-clock timeout). Each
+  is applied best-effort — a cap the host does not expose is skipped, never
+  fatal. `RLIMIT_AS` (virtual memory) and `RLIMIT_NPROC` (process count) are
+  deliberately **not** default — `RLIMIT_AS` breaks sanitizers/JVMs that reserve
+  large virtual address space and `RLIMIT_NPROC` is per-UID — but a caller may
+  request them through `ConfinementSpec.rlimits`. This bounds disk/CPU
+  exhaustion; it is **not** memory, filesystem, network, or syscall isolation.
 
 `available_confinement_controls()` reports which of those the current host can
 actually establish (both on POSIX with the `resource` module; none off POSIX).

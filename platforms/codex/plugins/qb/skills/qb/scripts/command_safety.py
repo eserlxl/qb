@@ -54,6 +54,25 @@ _SAFE_ENV_PREFIXES = ("LC_",)
 AUTO_RUN_REPO_SCRIPTS = False
 SUPPORTED_CONFINEMENT_CONTROLS = frozenset({"process_group", "resource_limits"})
 
+# Conservative POSIX resource caps applied to a confined child by default. These
+# are generous backstops against pathological exhaustion (runaway disk writes,
+# unbounded CPU spin), not tight quotas, so a normal verification command (test
+# runner, build) is unaffected. Each is applied best-effort: a limit the host
+# does not expose, or one already lower than the value, is skipped rather than
+# failing the run (see ``_establish_confinement``).
+#
+# RLIMIT_AS (virtual address space) and RLIMIT_NPROC (process count) are
+# deliberately NOT in the defaults: RLIMIT_AS breaks sanitizers/JVMs that reserve
+# huge *virtual* memory without using it, and RLIMIT_NPROC is per-real-UID (it
+# would throttle the whole user, not just this child). A caller that knows its
+# command is safe can request them via ``ConfinementSpec.rlimits``.
+_GiB = 1024 ** 3
+DEFAULT_RLIMITS: tuple[tuple[str, tuple[int, int]], ...] = (
+    ("RLIMIT_CORE", (0, 0)),                      # no core dumps
+    ("RLIMIT_FSIZE", (8 * _GiB, 8 * _GiB)),       # cap any single-file write at 8 GiB
+    ("RLIMIT_CPU", (3600, 3600)),                 # 1h CPU-seconds backstop to the wall-clock timeout
+)
+
 
 def _load_sibling(module_name: str, filename: str):
     if module_name in sys.modules:
@@ -107,6 +126,7 @@ class ConfinementSpec:
     enabled: bool = True
     require: tuple[str, ...] = ("process_group",)
     resource_limits: bool = True
+    rlimits: tuple[tuple[str, tuple[int, int]], ...] = DEFAULT_RLIMITS
     opt_out_reason: str | None = None
 
 
@@ -195,8 +215,20 @@ def _establish_confinement(spec: ConfinementSpec) -> tuple[tuple[str, ...], obje
     if spec.resource_limits and "resource_limits" in available:
         import resource
 
+        rlimits = spec.rlimits
+
         def _limit_child() -> None:
-            resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+            # Apply each cap best-effort: an rlimit the host does not expose, or a
+            # value the platform rejects, is skipped so confinement degrades to the
+            # caps it can set rather than crashing the child before exec.
+            for name, value in rlimits:
+                limit = getattr(resource, name, None)
+                if limit is None:
+                    continue
+                try:
+                    resource.setrlimit(limit, value)
+                except (ValueError, OSError):
+                    pass
 
         preexec_fn = _limit_child
         established.append("resource_limits")
