@@ -25,6 +25,7 @@ from tests.qb_monorepo import REPO_ROOT
 
 BUMP = REPO_ROOT / "scripts" / "bump-version.sh"
 BASELINE = REPO_ROOT / "BASELINE.md"
+VERSION = REPO_ROOT / "VERSION"
 
 
 def _sha(path) -> str:
@@ -51,6 +52,12 @@ class BaselineBumpLockstepTests(unittest.TestCase):
         return proc.stdout
 
     def test_dry_run_reports_baseline_update(self) -> None:
+        current = VERSION.read_text(encoding="utf-8").strip()
+        text = BASELINE.read_text(encoding="utf-8")
+        self.assertIn(f"## Regression reference (v{current})", text)
+        self.assertIn(f"| Version (`VERSION`) | `{current}` |", text)
+        self.assertRegex(text, r"Expected test functions\s*\|\s*510\b")
+        self.assertIn("Any deviation from the version, exit status, counts, or guard set above", text)
         out = self._dry_run("minor")
         self.assertIn(
             "BASELINE.md",

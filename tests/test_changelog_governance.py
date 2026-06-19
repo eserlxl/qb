@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 import unittest
 
-from tests.qb_monorepo import ALL_PACKAGES
+from tests.qb_monorepo import ALL_PACKAGES, REPO_ROOT
 
 _VERSION_HEADER = re.compile(r"^## \[[0-9]+\.[0-9]+\.[0-9]+\]", re.MULTILINE)
 _RECOGNIZED_SECTIONS = ("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security")
@@ -39,11 +39,16 @@ def _real_bullet(line: str) -> bool:
 
 class ChangelogGovernanceTest(unittest.TestCase):
     def test_latest_section_has_a_real_recognized_subsection(self):
+        root_version = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
         for pkg in ALL_PACKAGES:
             changelog = pkg["root"] / "CHANGELOG.md"
             self.assertTrue(changelog.is_file(), f"missing changelog: {changelog}")
             section = _latest_section(changelog.read_text(encoding="utf-8"))
             self.assertTrue(section, f"no '## [x.y.z]' version section in {changelog}")
+            self.assertTrue(
+                section.startswith(f"## [{root_version}]"),
+                f"{changelog} latest section is not for root VERSION {root_version}",
+            )
             self.assertTrue(
                 any(_SUBSECTION.match(line) for line in section.splitlines()),
                 f"{changelog} latest version section has no recognized "
