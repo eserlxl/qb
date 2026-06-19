@@ -113,7 +113,9 @@ def run_campaign(repo, declared_level, output_dir, *, prior_telemetry=None, enab
         evidence=evidence,
     )
     output_dir = Path(output_dir)
-    _store.RunStore(output_dir).open(overwrite=True).write_telemetry(telemetry)
+    run_store = _store.RunStore(output_dir).open(overwrite=True)
+    run_store.write_telemetry(telemetry)
+    run_store.append_telemetry_aggregate(telemetry)
     return CampaignRun(repo=repo.name, declared_level=declared_level, results=results,
                        report=report, telemetry=telemetry, output_dir=output_dir)
 

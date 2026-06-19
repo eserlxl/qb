@@ -154,6 +154,22 @@ class RunStore:
         (self.root / TELEMETRY_FILENAME).write_text(
             json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
+    def append_telemetry_aggregate(self, record: dict) -> dict:
+        """Append this run's telemetry into the store-local multi-run aggregate
+        series (``telemetry-aggregate.json``), returning the updated series.
+
+        The aggregate is a declared REQUIRED_SUBPATH, but ``write_telemetry`` only
+        emits the single-run ``telemetry.json``; without this call a real run store
+        would violate ``validate_store_layout`` and ``report.trend_direction`` would
+        have no series to read. ``append_or_update`` redacts (via ``_copy_run``) and
+        replaces an entry with the same ``run_id`` in place, and ``open(overwrite=True)``
+        preserves this file, so the series accumulates across runs.
+        """
+        if "schema_version" not in dict(record):
+            raise RunStoreError("telemetry record requires schema_version")
+        return _telemetry_aggregate.append_or_update(
+            self.root / AGGREGATE_TELEMETRY_FILENAME, record)
+
     def write_self_audit(self, record: dict):
         """Persist a redacted self-audit evidence record (the QB-audits-QB
         reconciliation result: clean flag, accepted count, unaccepted ids)

@@ -99,12 +99,17 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
         # re-run overwrites rather than duplicates). Even report-only A0 records the
         # detection slice; the action/cost/quality slices stay unmeasured by default
         # (no fixes applied, no cost forwarded by the deterministic headless core).
-        store.write_telemetry(_telemetry.build_telemetry(
+        telemetry_record = _telemetry.build_telemetry(
             run_id=run_id,
             autonomy_level=policy.autonomy_level,
             findings=findings,
             evidence=store.read_evidence(),
-        ))
+        )
+        store.write_telemetry(telemetry_record)
+        # Persist the run into the store-local multi-run series too, so the store
+        # satisfies its own REQUIRED_SUBPATHS layout and the report emitted just
+        # below sees a non-empty aggregate to derive trend_direction from.
+        store.append_telemetry_aggregate(telemetry_record)
         _report.emit(store, provenance=_report.build_provenance(policy))
         return EXIT_FINDINGS if findings else EXIT_CLEAN
     except Exception as exc:  # fail-closed: never report a crashed run as clean

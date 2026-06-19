@@ -100,6 +100,34 @@ class RunStoreTests(unittest.TestCase):
             self._write_aggregate(store)
             self.assertEqual(self.rs.validate_store_layout(store.root), [])
 
+    def test_append_telemetry_aggregate_satisfies_layout_and_accumulates(self) -> None:
+        # The run paths emit telemetry.json + append the run into the multi-run series;
+        # append_telemetry_aggregate is what makes a real run store satisfy its own
+        # REQUIRED_SUBPATHS layout, and the series accumulates one entry per run.
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            store.write_findings([self._finding()])
+            store.write_summary({"total_findings": 1})
+            store.write_telemetry({"schema_version": 1, "run_id": "r1"})
+            # write_telemetry alone leaves the aggregate absent (the gap this fixes).
+            self.assertIn(f"missing_store_path={self.rs.AGGREGATE_TELEMETRY_FILENAME}",
+                          self.rs.validate_store_layout(store.root))
+            store.append_telemetry_aggregate({"schema_version": 1, "run_id": "r1"})
+            self.assertEqual(self.rs.validate_store_layout(store.root), [])
+            agg_path = store.root / self.rs.AGGREGATE_TELEMETRY_FILENAME
+            first = self.rs._telemetry_aggregate.read_aggregate(agg_path)
+            self.assertEqual([r["run_id"] for r in first["runs"]], ["r1"])
+            # a second, differing run appends a second entry (same run_id replaces in place).
+            store.append_telemetry_aggregate({"schema_version": 1, "run_id": "r2"})
+            second = self.rs._telemetry_aggregate.read_aggregate(agg_path)
+            self.assertEqual([r["run_id"] for r in second["runs"]], ["r1", "r2"])
+
+    def test_append_telemetry_aggregate_requires_schema_version(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            store = self._store(d)
+            with self.assertRaises(self.rs.RunStoreError):
+                store.append_telemetry_aggregate({"run_id": "no-version"})
+
     def test_findings_round_trip_sorted(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             store = self._store(d)

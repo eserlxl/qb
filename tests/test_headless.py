@@ -63,10 +63,17 @@ class HeadlessTests(unittest.TestCase):
             code = self.hl.run_headless(repo, output_dir=out)
             self.assertEqual(code, self.hl.EXIT_FINDINGS)
 
-            # full store + reports present
+            # full store + reports present, including the per-run telemetry and the
+            # multi-run aggregate series the run path now persists (REQUIRED_SUBPATHS).
             for name in ("findings.jsonl", "evidence", "run-log.jsonl", "summary.json",
-                         "report.json", "report.sarif", "summary.txt"):
+                         "report.json", "report.sarif", "summary.txt",
+                         "telemetry.json", "telemetry-aggregate.json"):
                 self.assertTrue((out / name).exists(), f"missing output: {name}")
+
+            # the aggregate carries this run's record (not just an empty series).
+            aggregate = json.loads((out / "telemetry-aggregate.json").read_text())
+            self.assertGreaterEqual(len(aggregate.get("runs", [])), 1,
+                                    "headless run did not append its telemetry to the aggregate series")
 
             report = json.loads((out / "report.json").read_text())
             self.assertIn("provenance", report)
