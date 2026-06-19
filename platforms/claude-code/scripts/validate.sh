@@ -132,7 +132,69 @@ if problems:
     sys.exit(1)
 PY
 
-# 6) Unit tests (validator behavior + skill-content invariants).
+# 6) Tracked-file secret hygiene over the package (length-bounded patterns so
+#    normal filenames are not flagged). The bundled `tests/` tree is skipped:
+#    its fixtures intentionally embed secret-shaped literals to exercise the
+#    engine's own secret detector, so scanning them would always false-positive.
+python3 - <<'PY'
+from pathlib import Path
+import re
+import sys
+
+ignored_parts = {
+    ".git",
+    "tests",
+    "__MACOSX",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    "artifacts",
+    "build",
+    "dist",
+    "logs",
+    "tmp",
+}
+blocked_suffixes = {".key", ".pem", ".pyc", ".zip", ".png", ".jpg", ".jpeg", ".gif"}
+
+secret_patterns = [
+    ("openrouter_api_key", re.compile(r"\bsk-or-v1-[A-Za-z0-9_-]{20,}\b")),
+    ("openai_api_key", re.compile(r"\bsk-(?!or-v1-)[A-Za-z0-9_-]{20,}\b")),
+    ("github_pat", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b")),
+    ("github_legacy_pat", re.compile(r"\bghp_[A-Za-z0-9]{20,}\b")),
+    ("aws_access_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("private_key", re.compile(r"BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY")),
+    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b")),
+]
+
+findings = []
+for path in Path(".").rglob("*"):
+    if not path.is_file():
+        continue
+    if ignored_parts.intersection(path.parts):
+        continue
+    if path.suffix in blocked_suffixes:
+        continue
+    if path.name == ".DS_Store" or path.name.startswith(".env"):
+        continue
+    if path.name.endswith(".local") or ".local." in path.name:
+        continue
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        continue
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        for name, pattern in secret_patterns:
+            if pattern.search(line):
+                findings.append(f"{path}:{line_number}: {name}")
+
+if findings:
+    print("tracked_secret_hygiene_failed")
+    for finding in findings:
+        print(finding)
+    sys.exit(1)
+PY
+
+# 7) Unit tests (validator behavior + skill-content invariants).
 python3 -m unittest discover -s tests
 
 echo "qb_repo_validation=passed"
