@@ -68,6 +68,42 @@ class BreadthAnalyzerTests(unittest.TestCase):
             self.assertEqual(finding.fix_strategy, "manual")
             self.assertEqual(self.ai.validate_finding(finding), [])
 
+    def test_write_all_permissions_is_flagged(self) -> None:
+        findings = self._analyze({
+            ".github/workflows/ci.yml": (
+                "name: ci\n"
+                "permissions: write-all\n"
+                "jobs:\n"
+                "  test:\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@v4.2.2\n"
+            )
+        })
+        self.assertEqual(len(findings), 1)
+        finding = findings[0]
+        self.assertEqual(finding.evidence, ".github/workflows/ci.yml:2")
+        self.assertEqual(finding.category, "dependency")
+        self.assertEqual(finding.severity, "P2")
+        self.assertIn("write-all", finding.rationale)
+        self.assertEqual(self.ai.validate_finding(finding), [])
+
+    def test_scoped_permissions_are_clean(self) -> None:
+        # The narrow, intended grant (contents: read) must not be flagged.
+        self.assertEqual(
+            self._analyze({
+                ".github/workflows/ci.yml": (
+                    "name: ci\n"
+                    "permissions:\n"
+                    "  contents: read\n"
+                    "jobs:\n"
+                    "  t:\n"
+                    "    steps:\n"
+                    "      - uses: actions/checkout@v4.2.2\n"
+                )
+            }),
+            [],
+        )
+
     def test_full_semver_and_sha_refs_are_clean(self) -> None:
         findings = self._analyze({
             ".github/workflows/ci.yml": (

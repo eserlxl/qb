@@ -83,6 +83,7 @@ CONFIDENCE_POLICY: dict[str, dict[str, str]] = {
     },
     "workflow-actions": {
         "broad-action-ref": "medium",
+        "broad-permissions": "medium",
     },
 }
 

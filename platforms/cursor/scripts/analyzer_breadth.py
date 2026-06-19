@@ -38,6 +38,11 @@ confidence_for_rule = _core.confidence_for_rule
 _USES_RE = re.compile(r"^\s*-\s*uses\s*:\s*['\"]?(?P<spec>[^'\"\s#]+)")
 _FULL_SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 _FULL_SEMVER_RE = re.compile(r"^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
+# `permissions: write-all` grants the broadest possible GITHUB_TOKEN scope to a
+# job/workflow; a narrower per-scope grant is almost always what is intended.
+_PERMISSIONS_WRITE_ALL_RE = re.compile(
+    r"^\s*permissions\s*:\s*['\"]?write-all['\"]?\s*(?:#.*)?$"
+)
 
 
 def _is_workflow_file(root: Path, path: Path) -> bool:
@@ -85,6 +90,7 @@ class WorkflowActionAnalyzer:
     )
 
     _RULE = "github-action-broad-ref"
+    _RULE_PERMISSIONS = "github-action-broad-permissions"
 
     def analyze(self, repo_root: str, config) -> list:
         root = Path(repo_root).resolve()
@@ -98,6 +104,28 @@ class WorkflowActionAnalyzer:
                 continue
             rel = path.relative_to(root).as_posix()
             for line_number, raw in enumerate(text.splitlines(), start=1):
+                if _PERMISSIONS_WRITE_ALL_RE.match(raw):
+                    evidence = f"{rel}:{line_number}"
+                    finding = Finding(
+                        id=compute_finding_id("dependency", evidence, self._RULE_PERMISSIONS),
+                        category="dependency",
+                        severity="P2",
+                        confidence=confidence_for_rule(self.descriptor.id, "broad-permissions"),
+                        evidence=evidence,
+                        rationale=(
+                            "GitHub Actions workflow grants 'permissions: write-all', the "
+                            "broadest GITHUB_TOKEN scope; a compromised step would inherit "
+                            "write access to the entire repository."
+                        ),
+                        suggested_fix=(
+                            "Replace write-all with the narrowest per-scope permissions the "
+                            "workflow needs (e.g. 'contents: read' plus only the scopes used)."
+                        ),
+                        fix_strategy="manual",
+                    )
+                    if not validate_finding(finding):
+                        findings.append(finding)
+                    continue
                 match = _USES_RE.match(raw)
                 if not match:
                     continue

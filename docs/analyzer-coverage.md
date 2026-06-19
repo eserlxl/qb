@@ -32,8 +32,12 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   `package.json` `dependencies` / `devDependencies` / `optionalDependencies`,
   and missing npm lockfiles in the `dependency` category.
 - `WorkflowActionAnalyzer` covers missing, branch, and broad major-version
-  GitHub Actions `uses:` refs in workflow files in the `dependency` category;
-  explicit full semver tags and 40-character commit SHAs are treated as clean.
+  GitHub Actions `uses:` refs in workflow files in the `dependency` category
+  (`github-action-broad-ref`, medium confidence, offline); explicit full semver
+  tags and 40-character commit SHAs are treated as clean. It also flags a
+  `permissions: write-all` over-grant (`github-action-broad-permissions`, medium
+  confidence, offline) in the `dependency` category; a narrow per-scope grant
+  such as `contents: read` is treated as clean.
 - `LicenseAnalyzer` covers missing or placeholder repository-root license files
   in the `license` category.
 - `ConfigHygieneAnalyzer` covers committed dotenv files and credential-bearing

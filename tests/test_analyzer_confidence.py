@@ -73,6 +73,7 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
             ("license-hygiene", "empty-license"): "medium",
             ("config-hygiene", "committed-config"): "medium",
             ("workflow-actions", "broad-action-ref"): "medium",
+            ("workflow-actions", "broad-permissions"): "medium",
         }
         for key, band in expected.items():
             with self.subTest(key=key):
