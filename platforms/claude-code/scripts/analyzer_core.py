@@ -217,6 +217,9 @@ SECRET_PATTERNS = [
     ("private_key", re.compile(r"BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY")),
     ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b")),
     ("stripe_secret_key", re.compile(r"\bsk_(?:live|test)_[A-Za-z0-9]{20,}\b")),
+    # Azure storage account key: 64 bytes base64 (86 chars + "==") preceded by the
+    # AccountKey= context, so the anchor bounds false positives on bare base64 blobs.
+    ("azure_storage_key", re.compile(r"AccountKey=[A-Za-z0-9+/]{86}==")),
 ]
 
 

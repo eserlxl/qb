@@ -128,7 +128,8 @@ class ValidatorRefactorNonRegressionTests(unittest.TestCase):
         self.assertEqual(
             names,
             ["openai_api_key", "github_pat", "github_legacy_pat",
-             "aws_access_key", "private_key", "slack_token", "stripe_secret_key"],
+             "aws_access_key", "private_key", "slack_token", "stripe_secret_key",
+             "azure_storage_key"],
         )
 
     def test_severity_counter_is_delegated_and_correct(self) -> None:
