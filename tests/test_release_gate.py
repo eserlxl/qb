@@ -283,12 +283,6 @@ class RollbackDrillTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
             _init_autofix_repo(repo)
-            policy = policy_mod.parse_policy({
-                "autonomy_level": "A2",
-                "auto_fixable_categories": ["quality"],
-                "default_min_confidence": "medium",
-                "write_allowlist": ["*.txt"],
-            })
             finding = fixer.Finding(
                 id=fixer.compute_finding_id("quality", "style.txt:1", "lint"),
                 category="quality", severity="P3", confidence="medium",
@@ -296,14 +290,38 @@ class RollbackDrillTests(unittest.TestCase):
                 fix_strategy="autofix",
             )
             plan = fixer.plan_fix(finding, repo)
-            items = [(plan, lambda iso: iso.write_file("style.txt", "clean\n"))]
+
+            def _apply_edge_case_changes(iso):
+                iso.write_file("style.txt", "clean\n")
+                (Path(iso.worktree_path) / "a.txt").unlink()
+                (Path(iso.worktree_path) / "binary.dat").write_bytes(b"\x00\xffqb")
+                byproduct = Path(iso.worktree_path) / "__pycache__"
+                byproduct.mkdir()
+                (byproduct / "ignored.pyc").write_bytes(b"cache")
+
+            policy = policy_mod.parse_policy({
+                "autonomy_level": "A2",
+                "auto_fixable_categories": ["quality"],
+                "default_min_confidence": "medium",
+                "write_allowlist": ["style.txt", "a.txt", "binary.dat"],
+            })
+            items = [(plan, _apply_edge_case_changes)]
             good_telemetry = self._telemetry(9, 1)
 
             results, _report = budget.run_session(policy, repo, items, telemetry=good_telemetry)
             self.assertEqual(results[0]["earned_ceiling"], "A2")
             self.assertEqual(results[0]["level"], "A2")
-            self.assertEqual(results[0]["promoted"], ["style.txt"])
+            self.assertEqual(
+                set(results[0]["promoted"]),
+                {"a.txt", "binary.dat", "style.txt"},
+            )
             self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "clean\n")
+            self.assertFalse((repo / "a.txt").exists(), "tracked deletions must promote")
+            self.assertEqual((repo / "binary.dat").read_bytes(), b"\x00\xffqb")
+            self.assertFalse(
+                (repo / "__pycache__").exists(),
+                "incidental byproducts must not promote",
+            )
 
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
@@ -360,6 +378,41 @@ class RollbackDrillTests(unittest.TestCase):
         self.assertEqual(result["promoted"], [])
         self.assertIsNone(result["changeset"])
         self.assertEqual(content, "messy\n")
+
+        policy_mod = _load("qb_policy_for_release_gate_test", POLICY_PATH)
+        fixer = _load("qb_fixer_for_release_gate_test", FIXER_PATH)
+        orch = _load("qb_orchestrator_for_release_gate_review_test", ORCH_PATH)
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            _init_autofix_repo(repo)
+            policy = policy_mod.parse_policy({
+                "autonomy_level": "A2",
+                "auto_fixable_categories": ["quality"],
+                "default_min_confidence": "medium",
+                "write_allowlist": ["*.txt"],
+            })
+            finding = fixer.Finding(
+                id=fixer.compute_finding_id("quality", "style.txt:1", "lint"),
+                category="quality", severity="P3", confidence="medium",
+                evidence="style.txt:1", rationale="x", suggested_fix="y",
+                fix_strategy="autofix",
+            )
+            plan = fixer.plan_fix(finding, repo)
+            result = orch.run_finding(
+                policy,
+                repo,
+                plan,
+                lambda iso: iso.write_file("style.txt", "clean\n"),
+                telemetry=self._telemetry(9, 1),
+                review=lambda _finding: {
+                    "promote": False,
+                    "reason": "review-demoted",
+                },
+            )
+            self.assertEqual(result["outcome"], "blocked")
+            self.assertEqual(result["reason"], "review-demoted")
+            self.assertEqual(result["promoted"], [])
+            self.assertEqual((repo / "style.txt").read_text(encoding="utf-8"), "messy\n")
 
 
 if __name__ == "__main__":
