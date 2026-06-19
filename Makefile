@@ -1,4 +1,4 @@
-.PHONY: sync check test baseline self-audit install-hooks release-manifest export-sanitized precision trends
+.PHONY: sync check test coverage baseline self-audit install-hooks release-manifest export-sanitized precision trends
 
 sync:
 	bash scripts/sync.sh
@@ -21,6 +21,20 @@ check:
 
 test:
 	python3 -m unittest discover -s tests -v
+
+# coverage -- line-coverage of the QB engine source (shared/scripts) over the test
+# suite. coverage.py is an optional dev tool (like the quality analyzer's
+# ruff/pyflakes): when installed this emits a real line-coverage report; when
+# absent the target stays dormant, prints how to install it, and exits 0 so it
+# never breaks a clean tree. Not part of `make check` -- a measurement, not a gate.
+coverage:
+	@if python3 -c "import coverage" 2>/dev/null; then \
+		python3 -m coverage run --source=shared/scripts -m unittest discover -s tests -p 'test_*.py'; \
+		python3 -m coverage report; \
+	else \
+		echo "coverage: coverage.py not installed (optional dev tool); skipping measurement."; \
+		echo "coverage: install it for a line-coverage report -> pip install coverage"; \
+	fi
 
 # precision -- run the labelled-corpus precision/recall gate at the project's
 # threshold bars (tests/fixtures/precision-thresholds.json). Exits non-zero if any
