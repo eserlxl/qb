@@ -50,6 +50,27 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   adapter can emit `correctness` findings only when `pyflakes` is already
   installed.
 
+## Run-level capability report
+
+Because some coverage is environment-dependent (the `ruff` / `pyflakes` adapters
+run only when their tool is installed), each audit run records a deterministic
+**capability report** so coverage is observable rather than silently variable.
+
+- **Artifact.** `run_audit` writes it into the audit output directory as the
+  `capability_report` field of `summary.json` (alongside `findings.jsonl`), keyed
+  by analyzer id: `{ "<analyzer-id>": { "ran": [<adapter>, ...], "skipped":
+  [{ "adapter": "<name>", "reason": "tool-unavailable" }, ...] } }`. Ordering is
+  stable (`json.dumps(..., sort_keys=True)`), so two runs on the same host are
+  byte-identical.
+- **Human-readable.** The text run report carries a `coverage:` line listing how
+  many analyzers ran, which were skipped (with reason), and any `tool-unavailable`
+  adapter.
+- **Reading a caveat.** An adapter under `skipped` with reason `tool-unavailable`
+  means its optional tool was absent on the run host — a recorded coverage caveat,
+  **not** a failure. An absent optional tool never changes the engine exit code,
+  so two hosts with different optional-tool availability produce visibly different,
+  explainable capability reports rather than indistinguishable green output.
+
 ## Impact-ranked coverage gaps
 
 1. **Project manifests beyond `requirements.txt`, `pyproject.toml`, and bounded `package.json`
@@ -59,7 +80,7 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
      `package.json` `dependencies` / `devDependencies` / `optionalDependencies`
      with the stdlib JSON parser for exact npm pins, and checks that
      `package.json` has one recognized lockfile.
-   - Gap: `poetry.lock`, `Pipfile.lock`, `go.mod`, `Cargo.toml`,
+   - Gap: `poetry.lock`, `Pipfile.lock`, `go.mod`, `Cargo.lock`,
      `peerDependencies`, npm alias/workspace/file specs, and lockfile contents
      are not inventoried.
    - Candidate follow-up: extend existing dependency parsing before adding
