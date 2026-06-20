@@ -151,6 +151,48 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
                     f"{analyzer_id}:{kind} is heuristic and must never be banded high",
                 )
 
+    def test_qb_ignore_suppression_is_recorded_in_summary(self) -> None:
+        # A valid qb-ignore marker (rule key + reason) withholds the finding but
+        # records it in run_audit's summary["analyzers_suppressed"] -- a silently
+        # dropped suppression would be an invisible false-negative. An invalid
+        # marker (no reason) is ignored, so the finding emits normally.
+        registry = self.runner.AnalyzerRegistry()
+        registry.register(self.runner.CommandInjectionAnalyzer())
+
+        def _audit(root: Path):
+            out = root / "_out"
+            return self.runner.run_audit(
+                str(root), config=self.cfg, registry=registry, output_dir=str(out))
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            _write(root, "app.py",
+                   "# qb-ignore: system-shell-call reviewed false positive\n"
+                   "os.system(cmd)\n")
+            result = _audit(root)
+        suppressed = result["summary"]["analyzers_suppressed"]
+        self.assertEqual(len(suppressed), 1)
+        self.assertEqual(suppressed[0]["id"], "command-injection")
+        self.assertEqual(suppressed[0]["rule"], "system-shell-call")
+        self.assertEqual(suppressed[0]["reason"], "reviewed false positive")
+        self.assertEqual(suppressed[0]["evidence"], "app.py:2")
+        self.assertFalse(
+            [f for f in result["findings"] if f.evidence == "app.py:2"],
+            "a suppressed finding must be withheld from findings",
+        )
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            _write(root, "app.py",
+                   "# qb-ignore: system-shell-call\n"
+                   "os.system(cmd)\n")
+            result = _audit(root)
+        self.assertEqual(result["summary"]["analyzers_suppressed"], [])
+        self.assertTrue(
+            [f for f in result["findings"] if f.evidence == "app.py:2"],
+            "an invalid qb-ignore marker (no reason) must not suppress the finding",
+        )
+
     def test_secret_findings_use_high_confidence_policy(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
