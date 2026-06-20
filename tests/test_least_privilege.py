@@ -203,6 +203,24 @@ class LeastPrivilegeTests(unittest.TestCase):
                 "an unparseable engine module must be a supply-chain violation",
             )
 
+    def test_full_execution_sandbox_certification_is_fail_closed(self) -> None:
+        # The full-execution-sandbox certification signal is DISTINCT from process-group
+        # confinement and defaults to NOT certified (fail-closed): nothing certifies a
+        # full sandbox today, so untrusted-code A2/A3 can never rest on it.
+        policy = _load("qb_policy_cert_under_test", SHARED_SCRIPTS / "policy.py")
+        cs = _load("qb_cmd_safety_cert_under_test", SHARED_SCRIPTS / "command_safety.py")
+        self.assertFalse(
+            policy.full_execution_sandbox_certified(),
+            "full execution sandbox must default to NOT certified (fail-closed)",
+        )
+        # Even when process-group confinement is available, a full execution sandbox is
+        # NOT thereby certified -- the two signals are distinct.
+        if "process_group" in cs.available_confinement_controls():
+            self.assertFalse(
+                policy.full_execution_sandbox_certified(),
+                "process-confinement availability must not certify a full execution sandbox",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -35,12 +35,12 @@ python3 -m unittest discover -s tests -v
 | Metric | Baseline value |
 |---|---|
 | Test modules (`tests/test_*.py`) | 80 |
-| Test functions | 632 |
+| Test functions | 633 |
 | Failures | 0 |
 | Errors | 0 |
 | Exit status | 0 |
 
-A run reporting anything other than 80 modules or 632 passing test cases, or any
+A run reporting anything other than 80 modules or 633 passing test cases, or any
 failure or error, is a regression against this reference.
 
 **Same-change update rule:** adding or removing a test module or test case must
@@ -87,7 +87,7 @@ localized to one guard.
 | `bash platforms/cursor/scripts/validate.sh` | The Cursor package validates the same per-host contract. |
 | `bash platforms/antigravity/scripts/validate.sh` | The Antigravity (planning-only) package validates its own contract. |
 | `cd platforms/codex && bash scripts/validate.sh` | The Codex package validates the same per-host contract. |
-| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (80 modules / 632 functions) passes. |
+| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (80 modules / 633 functions) passes. |
 
 A red `make check` is diagnosed by re-running the failing sub-step in isolation;
 each command above is self-contained.
@@ -242,7 +242,7 @@ discovery).
 | Version (`VERSION`) | `0.19.0` |
 | Expected `make check` exit status | `0` |
 | Expected test modules | 80 |
-| Expected test functions | 632 |
+| Expected test functions | 633 |
 | Expected failures / errors | 0 / 0 |
 
 Baseline guard set (each individually runnable — see **Guard-to-test mapping**):

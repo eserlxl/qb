@@ -38,6 +38,24 @@ def sandbox_autonomy_ceiling(*, sandbox_available: bool) -> str:
     """
     return A3 if sandbox_available else A1
 
+
+def full_execution_sandbox_certified() -> bool:
+    """Whether a full execution sandbox is certified on this host (fail-closed).
+
+    Full execution sandboxing -- filesystem, network, and syscall/process isolation
+    for arbitrary analyzed code -- is a governed, not-yet-shipped boundary (Phase 1.1
+    direction B). It is DISTINCT from command_safety.available_confinement_controls(),
+    which reports the shipped *process confinement* (a new session/process group plus
+    resource limits) -- process confinement is not full execution sandboxing.
+
+    No code path certifies a full execution sandbox today, so this returns False
+    (fail-closed) until a certified sandbox runtime (Phase 1.4, direction A) lands and
+    flips it. A2/A3 autonomy over untrusted code must gate on this signal, not on mere
+    process-confinement availability.
+    """
+    return False
+
+
 SCHEMA_VERSION = 2
 
 # The CLOSED set of permitted top-level policy keys. Unknown key => parse error.
