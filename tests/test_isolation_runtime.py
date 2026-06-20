@@ -114,6 +114,14 @@ class IsolationRuntimeTests(unittest.TestCase):
                     isolation.write_file("evil.py", "x = 1\n")
                 with self.assertRaises(ValueError):
                     isolation.write_file("../escape.py", "x = 1\n")
+                # A symlink component pointing outside the worktree must also be
+                # refused: resolve_within (called before the allowlist) follows the
+                # link, so this catches a symlink escape that a textual ../ check
+                # alone would miss.
+                with tempfile.TemporaryDirectory() as outside:
+                    (Path(isolation.worktree_path) / "link").symlink_to(outside)
+                    with self.assertRaises(ValueError):
+                        isolation.write_file("link/escape.py", "x = 1\n")
 
 
 if __name__ == "__main__":
