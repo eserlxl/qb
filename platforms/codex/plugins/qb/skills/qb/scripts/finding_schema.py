@@ -124,11 +124,14 @@ CATEGORIES: frozenset[str] = frozenset({
 })
 FIX_STRATEGIES: frozenset[str] = frozenset({"autofix", "propose", "manual", "none"})
 
-# Repository-relative locator: "path:line" or "path:start-end". Line numbers are
+# Repository-relative locator: "path:line" or "path:start-end". The path segment
+# may contain spaces (a repository can have paths like "dir with space/file.py");
+# the trailing ":line" keeps the locator unambiguous, and validate_finding splits
+# it off with rsplit(":", 1) so a path may even contain a colon. Line numbers are
 # 1-based positive integers (SARIF 2.1.0 region.startLine must be >= 1), so a
 # leading zero / line 0 is non-conformant; an inverted range (start > end) is
 # caught in validate_finding.
-EVIDENCE_RE = re.compile(r"^\S+:[1-9]\d*(?:-[1-9]\d*)?$")
+EVIDENCE_RE = re.compile(r"^.+:[1-9]\d*(?:-[1-9]\d*)?$")
 
 # Serialized (on-disk) key names for the underscore-named Python attributes.
 _DISK_KEYS = {

@@ -112,6 +112,25 @@ class FindingSchemaConformanceTests(unittest.TestCase):
         )
         self.assertEqual(self.mod.validate_finding(self.mod.Finding(**kwargs)), [])
 
+    def test_evidence_path_with_spaces_is_accepted(self) -> None:
+        # A repo-relative path can contain spaces ("dir with space/file.py"); the
+        # analyzers build evidence as f"{rel}:{line}" directly from that path, so the
+        # schema must accept it -- the trailing ":line" keeps the locator unambiguous.
+        kwargs = _valid_kwargs(self.mod)
+        kwargs["evidence"] = "dir with space/file.py:10"
+        kwargs["id"] = self.mod.compute_finding_id(
+            kwargs["category"], kwargs["evidence"], "hardcoded-openai-key"
+        )
+        self.assertEqual(self.mod.validate_finding(self.mod.Finding(**kwargs)), [])
+
+    def test_evidence_path_with_spaces_and_range_is_accepted(self) -> None:
+        kwargs = _valid_kwargs(self.mod)
+        kwargs["evidence"] = "a b/c d/module name.py:113-120"
+        kwargs["id"] = self.mod.compute_finding_id(
+            kwargs["category"], kwargs["evidence"], "hardcoded-openai-key"
+        )
+        self.assertEqual(self.mod.validate_finding(self.mod.Finding(**kwargs)), [])
+
     def test_line_zero_evidence_is_rejected(self) -> None:
         # SARIF region.startLine must be >= 1, so line 0 is non-conformant.
         kwargs = _valid_kwargs(self.mod)
