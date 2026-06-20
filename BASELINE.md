@@ -15,8 +15,8 @@ The gate of record is `make check`, run on a clean working tree.
 | Command | `make check` |
 | Observed exit status | `0` |
 | Version (`VERSION`) | `0.18.0` |
-| Commit | `cf097fb` |
-| Date | 2026-06-19 |
+| Commit | `71524af` |
+| Date | 2026-06-20 |
 
 `make check` composes `bash scripts/sync.sh --check`, the four per-host
 `platforms/<host>/scripts/validate.sh` validators, then
