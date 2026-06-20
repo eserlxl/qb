@@ -84,6 +84,38 @@ class InstallHooksContractTests(unittest.TestCase):
         self.assertIn("make", payload)
         self.assertIn("check", payload)
 
+    def test_repeated_install_is_idempotent(self) -> None:
+        # Re-running the installer is a common operator action (e.g. after pulling an
+        # updated hook). A second install must succeed and leave exactly one
+        # byte-identical, executable pre-push hook -- never error or duplicate.
+        first = self._run()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        payload_after_first = self.hook_dst.read_bytes()
+        second = self._run()
+        self.assertEqual(
+            second.returncode, 0,
+            f"a repeated install must succeed (idempotent): {second.stderr}",
+        )
+        self.assertTrue(self.hook_dst.is_file(), "hook missing after repeated install")
+        self.assertEqual(
+            self.hook_dst.read_bytes(), payload_after_first,
+            "repeated install must leave the hook byte-identical, not duplicated",
+        )
+        self.assertTrue(
+            self.hook_dst.stat().st_mode & stat.S_IXUSR,
+            "hook must stay executable after a repeated install",
+        )
+        # Exactly one pre-push hook -- no pre-push.1 / backup duplication. (Ignore
+        # git's own pre-push.sample default written by `git init`.)
+        pre_push_files = sorted(
+            p.name for p in (self.tmp / ".git" / "hooks").glob("pre-push*")
+            if p.is_file() and not p.name.endswith(".sample")
+        )
+        self.assertEqual(
+            pre_push_files, ["pre-push"],
+            f"repeated install must not duplicate the hook: {pre_push_files}",
+        )
+
     def test_uninstall_removes_installed_hook(self) -> None:
         self._run()  # install first
         self.assertTrue(self.hook_dst.is_file(), "precondition: hook installed")
