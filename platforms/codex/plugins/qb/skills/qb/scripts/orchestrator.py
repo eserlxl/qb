@@ -53,6 +53,7 @@ _gate = _load_sibling("qb_verification_gate", "verification_gate.py")
 _cs = _load_sibling("qb_command_safety", "command_safety.py")
 _release = _load_sibling("qb_release_gate", "release_gate.py")
 _lp = _load_sibling("qb_least_privilege", "least_privilege.py")
+_run_store = _load_sibling("qb_run_store", "run_store.py")
 
 ActionDescriptor = _policy.ActionDescriptor
 evaluate = _policy.evaluate
@@ -168,8 +169,13 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
         confidence=getattr(finding, "confidence", "low"),
         target_path=_evidence_path(finding),
     )
+    # Auditable trust premise this run operated under (Phase 1.3): trusted-code-only
+    # under the governed direction-B default, sandbox-certified once a full sandbox
+    # lands. Persisted into the run record so the premise is captured, not inferred.
+    trust_premise = _run_store.trust_premise(
+        sandbox_certified=sandbox_certified, code_trusted=True)
     result = {"level": level, "declared_level": declared, "earned_ceiling": earned,
-              "clamp_reason": clamp_reason,
+              "clamp_reason": clamp_reason, "trust_premise": trust_premise,
               "outcome": None, "reason": None, "promoted": [], "changeset": None, "evidence": None}
 
     # A0 is report-only: never open isolation, never write. (Only a declared A0 lands

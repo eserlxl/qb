@@ -87,6 +87,26 @@ def redact(value):
     return value
 
 
+def trust_premise(*, sandbox_certified: bool, code_trusted: bool = True) -> str:
+    """Canonical, auditable trust premise a run operated under (Phase 1.3).
+
+    Recorded in the .qb/audit/ run record so a later reader can verify the trust
+    assumptions a run rested on rather than infer them:
+
+    * ``"sandbox-certified"`` -- a certified full execution sandbox was in force, so
+      autonomy did not depend on the code being trusted.
+    * ``"trusted-code-only"`` -- the governed direction-B default: A2/A3 rested on the
+      SECURITY.md trusted-code precondition, not on full execution sandboxing.
+    * ``"untrusted-uncertified"`` -- neither held, so autonomy is fail-closed (capped).
+
+    A fixed enum string, never a secret; written through the run store's redaction
+    like every other field.
+    """
+    if sandbox_certified:
+        return "sandbox-certified"
+    return "trusted-code-only" if code_trusted else "untrusted-uncertified"
+
+
 class RunStoreError(Exception):
     pass
 

@@ -254,6 +254,20 @@ class LeastPrivilegeTests(unittest.TestCase):
             "trusted code without process confinement clamps to A1",
         )
 
+    def test_run_record_trust_premise_is_captured(self) -> None:
+        # Phase 1.3: the run record carries the operative trust premise (auditable, not
+        # inferred). Governed direction-B default is trusted-code-only; a certified full
+        # sandbox records sandbox-certified; neither -> fail-closed untrusted-uncertified.
+        rs = _load("qb_run_store_premise_under_test", SHARED_SCRIPTS / "run_store.py")
+        self.assertEqual(
+            rs.trust_premise(sandbox_certified=False, code_trusted=True), "trusted-code-only")
+        self.assertEqual(
+            rs.trust_premise(sandbox_certified=True, code_trusted=False), "sandbox-certified")
+        self.assertEqual(
+            rs.trust_premise(sandbox_certified=False, code_trusted=False), "untrusted-uncertified")
+        # The premise is a redaction-safe fixed enum (no secret value can leak through it).
+        self.assertEqual(rs.redact(rs.trust_premise(sandbox_certified=False)), "trusted-code-only")
+
 
 if __name__ == "__main__":
     unittest.main()
