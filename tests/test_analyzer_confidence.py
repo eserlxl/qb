@@ -55,6 +55,28 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
                 )
                 self.assertEqual(invalid, [])
 
+    def test_every_command_injection_rule_kind_is_banded(self) -> None:
+        # Enumerate command-injection rule kinds from the analyzer's OWN source of
+        # truth (command_safety._RULES, the table scan_text_for_command_risks
+        # walks) -- not a hand-maintained duplicate -- and assert each carries a
+        # CONFIDENCE_POLICY band, so a new pattern added to _RULES without a
+        # reviewed band fails `make check` instead of only raising KeyError at
+        # runtime. command-injection passes each rule_key straight to
+        # confidence_for_rule, so the rule_key IS the policy rule kind here.
+        emittable = {rule_key for rule_key, *_rest in self.runner._cs._RULES}
+        self.assertTrue(emittable, "command_safety._RULES is empty")
+        banded = set(self.core.CONFIDENCE_POLICY["command-injection"])
+        self.assertEqual(
+            sorted(emittable - banded), [],
+            "command-injection rule kind(s) emittable from _RULES but unbanded",
+        )
+        for rule_key in sorted(emittable):
+            with self.subTest(rule_key=rule_key):
+                self.assertIn(
+                    self.core.confidence_for_rule("command-injection", rule_key),
+                    self.schema.CONFIDENCE_BANDS,
+                )
+
     def test_policy_declares_current_producer_rule_bands(self) -> None:
         expected = {
             ("secret-hygiene", "secret-pattern"): "high",
