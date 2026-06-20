@@ -88,6 +88,20 @@ class M7ReadinessChecklistTests(unittest.TestCase):
                 f"the M7 readiness checklist omits production-gate conjunct {conjunct!r}",
             )
 
+    def test_no_row_cites_a_qb_planning_file(self) -> None:
+        # Grounding floor: readiness must rest on committed gates, never a `.qb/`
+        # planning note (main-planning.md / sub-plans) -- the chat-memory failure
+        # mode the project exists to eliminate. A captured-evidence path under
+        # `.qb/audit/` is the only permitted `.qb/` reference.
+        for row in self.rows:
+            with self.subTest(row=row[:48]):
+                for ref in re.findall(r"`([^`]+)`", row):
+                    if ".qb/" in ref:
+                        self.assertTrue(
+                            ref.startswith(".qb/audit/"),
+                            f"checklist row cites a .qb/ planning file as evidence: {ref}",
+                        )
+
 
 if __name__ == "__main__":
     unittest.main()
