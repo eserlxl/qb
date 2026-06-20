@@ -401,6 +401,7 @@ full execution sandboxing for arbitrary untrusted code is not yet shipped.
 ## Attribution
 
 QB is an independent project inspired by Alican Kiraz's
+[ClaudeQB](https://github.com/alicankiraz1/ClaudeQB),
 [CursorQB](https://github.com/alicankiraz1/CursorQB),
 [CodexQB](https://github.com/alicankiraz1/CodexQB), and
 [AntigravityQB](https://github.com/alicankiraz1/AntigravityQB). It now diverges
