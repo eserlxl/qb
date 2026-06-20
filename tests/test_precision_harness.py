@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
 import sys
 import tempfile
@@ -184,6 +185,37 @@ class PrecisionHarnessTests(unittest.TestCase):
         cap = self.harness.evaluate_thresholds(
             skipped, per_analyzer={"quality-correctness": {"min_precision": 1.0, "min_recall": 1.0}})
         self.assertTrue(cap["passed"], "an absent-tool analyzer must not fail the gate")
+
+    def test_configured_bars_are_met_and_pinned(self) -> None:
+        thresholds_path = REPO_ROOT / "tests/fixtures/precision-thresholds.json"
+        config = json.loads(thresholds_path.read_text(encoding="utf-8"))
+
+        # (1) Pin the configured bars so an un-justified WEAKENING fails this
+        # test. A weaker bar would still pass the gate (it is easier to meet),
+        # so the gate alone cannot catch a weakening -- only pinned values can.
+        self.assertIsNone(config.get("min_precision"),
+                          "totals precision is intentionally ungated (see _comment)")
+        self.assertEqual(config["min_recall"], 1.0)
+        for analyzer in ("command-injection", "dependency-audit",
+                         "secret-hygiene", "workflow-actions"):
+            self.assertEqual(
+                config["per_analyzer"][analyzer],
+                {"min_precision": 1.0, "min_recall": 1.0},
+                f"{analyzer} bar weakened from its configured 1.0",
+            )
+
+        # (2) The live corpus meets those configured bars under the real default
+        # registry -- exactly what `make precision` gates on: empty failures.
+        report = self.harness.build_report(CORPUS)
+        gate = self.harness.evaluate_thresholds(
+            report,
+            min_precision=config.get("min_precision"),
+            min_recall=config.get("min_recall"),
+            per_analyzer=config.get("per_analyzer"),
+            per_category=config.get("per_category"),
+        )
+        self.assertTrue(gate["passed"], gate["failures"])
+        self.assertEqual(gate["failures"], [])
 
     def test_capability_exemption_is_not_a_loophole(self) -> None:
         # The capability_skipped exemption must apply ONLY to a genuinely-absent
