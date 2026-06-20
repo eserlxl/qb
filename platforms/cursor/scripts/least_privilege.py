@@ -116,12 +116,22 @@ def _top_level_import_roots(source: str):
 
 
 def assert_dependency_free_core(scripts_dir) -> list:
-    """Return [(file, module), ...] for any non-stdlib import in the engine (empty == clean)."""
+    """Return [(file, module), ...] for any non-stdlib import in the engine (empty == clean).
+
+    A module that cannot be read or parsed is reported as ``(file, "<unanalyzable>")``
+    rather than skipped: it cannot be proven dependency-free, so the check fails
+    closed (a non-empty result denies ``supply_chain_ok``).
+    """
     violations = []
     for path in sorted(Path(scripts_dir).glob("*.py")):
         try:
             roots = _top_level_import_roots(path.read_text(encoding="utf-8"))
         except (SyntaxError, OSError):
+            # Fail-closed: a module we cannot read or parse cannot be PROVEN
+            # dependency-free, so report it as a violation rather than skipping
+            # it. An unreadable/malformed engine module must deny the
+            # supply-chain conjunct, not pass it silently.
+            violations.append((path.name, "<unanalyzable>"))
             continue
         for root in sorted(roots):
             if root not in _ALLOWED_IMPORT_ROOTS:

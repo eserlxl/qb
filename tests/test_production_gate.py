@@ -208,6 +208,17 @@ class ProductionGateSignalsTests(unittest.TestCase):
             (Path(d) / "tainted.py").write_text("import requests\n", encoding="utf-8")
             self.assertFalse(self.sig.supply_chain_ok(d))
 
+    def test_supply_chain_fails_closed_on_unparseable_module(self) -> None:
+        # Fail-closed: a module that cannot be read/parsed cannot be proven
+        # dependency-free, so it must DENY the supply-chain conjunct rather than
+        # be silently skipped (which would let a corrupt engine file pass clean).
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "broken.py").write_text("def f(:\n", encoding="utf-8")
+            self.assertFalse(
+                self.sig.supply_chain_ok(d),
+                "an unparseable engine module must fail the supply-chain check closed",
+            )
+
     def test_each_missing_signal_fails_the_gate(self) -> None:
         # Fail-closed: an absent telemetry record / recoverability record / findings
         # inventory each deny their conjunct (so the composite gate cannot pass).

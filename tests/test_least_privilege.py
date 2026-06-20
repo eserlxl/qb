@@ -192,6 +192,17 @@ class LeastPrivilegeTests(unittest.TestCase):
         violations = self.lp.assert_dependency_free_core(SHARED_SCRIPTS)
         self.assertEqual(violations, [], f"non-stdlib imports in engine core: {violations}")
 
+    def test_unparseable_module_is_reported_as_violation(self) -> None:
+        # Fail-closed: a module that cannot be parsed cannot be proven
+        # dependency-free, so it must be reported as a violation (not skipped).
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "broken.py").write_text("def f(:\n", encoding="utf-8")
+            violations = self.lp.assert_dependency_free_core(Path(d))
+            self.assertEqual(
+                violations, [("broken.py", "<unanalyzable>")],
+                "an unparseable engine module must be a supply-chain violation",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
