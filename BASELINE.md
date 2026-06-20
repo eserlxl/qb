@@ -14,7 +14,7 @@ The gate of record is `make check`, run on a clean working tree.
 |---|---|
 | Command | `make check` |
 | Observed exit status | `0` |
-| Version (`VERSION`) | `0.18.0` |
+| Version (`VERSION`) | `0.19.0` |
 | Commit | `9ab9e4a` |
 | Date | 2026-06-20 |
 
@@ -231,7 +231,7 @@ Two intentional baseline states are recorded as known caveats, not silent gaps:
   hosts do. This is an intended asymmetry, not a defect.
   *Addressed in Phase 5 (multi-host parity).*
 
-## Regression reference (v0.18.0)
+## Regression reference (v0.19.0)
 
 The frozen reference any future run is compared against. A single `make baseline`
 re-runs the whole net (fan-out + byte-equality + per-host validation + full test
@@ -239,7 +239,7 @@ discovery).
 
 | Field | Reference value |
 |---|---|
-| Version (`VERSION`) | `0.18.0` |
+| Version (`VERSION`) | `0.19.0` |
 | Expected `make check` exit status | `0` |
 | Expected test modules | 79 |
 | Expected test functions | 629 |

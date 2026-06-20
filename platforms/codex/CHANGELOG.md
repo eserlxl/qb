@@ -5,6 +5,16 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-06-20
+
+### Added
+- Dependency analyzer now audits Cargo `[workspace.dependencies]` and `[target.*.dependencies]` tables and PEP 735 `[dependency-groups]`, and flags a `pyproject.toml` that declares dependencies without a Python lockfile (`poetry.lock` / `pdm.lock` / `uv.lock` / `Pipfile.lock`) — extending the unpinned-dependency and missing-lockfile supply-chain checks across the Rust and Python ecosystems.
+- Workflow-action analyzer now detects `uses:` in the named-step form (`- name:` then an indented `uses:`) and in reusable-workflow calls, not only the first-key `- uses:` form, so a named step's unpinned action is no longer missed.
+
+### Fixed
+- Dependency analyzer no longer raises on a TOML-valid `pyproject.toml` whose `project` or `tool` is a scalar (the offline tier fails closed to no findings), and no longer reports a false unpinned finding for a Poetry git/path dependency declared as an inline table without a version.
+- The policy loader (`load_policy`) now fails closed to the default A0 policy on a malformed-field coercion error (for example a non-numeric `schema_version`), honoring its documented "fail closed on any problem" contract instead of raising.
+
 ## [0.18.0] - 2026-06-20
 
 ### Added

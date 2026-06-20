@@ -2,7 +2,7 @@
 name: qb-implementer
 description: Gated Step 4 of the QB workflow - implement one bounded, reversible, testable slice from an audited plan. Use after the Step 3 audit when the user approves implementation, or via /qb-implement. Runs only when the audit is PASS or PASS_WITH_WARNINGS with no P0/P1 findings; otherwise it stops and recommends repair. Selects a single READY sub-plan, defines the validation command first, makes a minimal change, and verifies before claiming done.
 metadata:
-  version: "0.18.0"
+  version: "0.19.0"
 ---
 
 # QB Implementer (Step 4, gated)

@@ -2,7 +2,7 @@
 name: qb-runner
 description: Run the QB audit -> harden -> report loop over a repository at a given autonomy level, launched as a Cursor goal by the qb-harden command. Audits read-only, applies only verified fixes in git isolation at A2+, and writes the .qb/audit/ store and reports. Never commits, pushes, or opens PRs.
 metadata:
-  version: "0.18.0"
+  version: "0.19.0"
 ---
 
 # QB Runner (Cursor goal)

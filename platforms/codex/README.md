@@ -1,7 +1,7 @@
 # QB
 
 [![validate](https://github.com/eserlxl/qb/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/eserlxl/qb/actions/workflows/validate.yml)
-[![version](https://img.shields.io/badge/version-0.18.0-2563EB)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.19.0-2563EB)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 
 **Repo-aware planning for Codex.** QB turns a project repository into a durable planning package: main plan, existing-project assessment, phase sub-plans, QA audit, and a gated implementation handoff.
