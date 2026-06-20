@@ -32,7 +32,8 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   `package.json` `dependencies` / `devDependencies` / `optionalDependencies`,
   unpinned `Cargo.toml` `dependencies` / `dev-dependencies` / `build-dependencies`
   (Cargo semantics: a bare/caret/wildcard spec is unpinned, only `=X.Y.Z` is an
-  exact pin), and missing npm lockfiles in the `dependency` category
+  exact pin), missing npm lockfiles, and a `Cargo.toml` present without a
+  `Cargo.lock`, in the `dependency` category
   (`manifest-hygiene` rule kind, medium confidence, offline).
 - `WorkflowActionAnalyzer` covers missing, branch, and broad major-version
   GitHub Actions `uses:` refs in workflow files in the `dependency` category
@@ -79,8 +80,9 @@ run only when their tool is installed), each audit run records a deterministic
      `pyproject.toml` dependency declarations for exact Python pins, parses
      `package.json` `dependencies` / `devDependencies` / `optionalDependencies`
      with the stdlib JSON parser for exact npm pins, and checks that
-     `package.json` has one recognized lockfile.
-   - Gap: `poetry.lock`, `Pipfile.lock`, `go.mod`, `Cargo.lock`,
+     `package.json` has one recognized lockfile and that a `Cargo.toml` is
+     accompanied by a `Cargo.lock`.
+   - Gap: `poetry.lock`, `Pipfile.lock`, `go.mod`,
      `peerDependencies`, npm alias/workspace/file specs, and lockfile contents
      are not inventoried.
    - Candidate follow-up: extend existing dependency parsing before adding

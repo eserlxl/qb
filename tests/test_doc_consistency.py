@@ -190,6 +190,32 @@ class DocConsistencyTest(unittest.TestCase):
         declared = _backtick_values(match.group("body"))
         self.assertEqual(declared, FINDING_CATEGORIES)
 
+    def test_coverage_doc_cargo_lockfile_claim_matches_engine(self):
+        # Pin the doc's Cargo.lock coverage claim to the engine: the Current
+        # coverage statement documents the check, and DependencyAnalyzer actually
+        # emits the missing-cargo-lockfile finding for a Cargo.toml without a lock.
+        import tempfile
+        from pathlib import Path
+
+        text = self._read(ANALYZER_COVERAGE_DOC)
+        statement, _, _ = text.partition("## Impact-ranked coverage gaps")
+        self.assertIn(
+            "Cargo.lock", statement,
+            "the Current coverage statement must document the Cargo.lock check",
+        )
+        dep = next(a for a in audit_runner.build_default_registry().analyzers()
+                   if type(a).__name__ == "DependencyAnalyzer")
+        cfg = audit_runner.AnalyzerConfig(allow_networked=False)
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, "Cargo.toml").write_text(
+                '[package]\nname = "x"\nversion = "0.1.0"\n', encoding="utf-8")
+            findings = dep.analyze(d, cfg)
+        self.assertTrue(
+            any(f.evidence == "Cargo.toml:1" and f.category == "dependency"
+                for f in findings),
+            "DependencyAnalyzer must emit the Cargo.lock-missing finding the doc documents",
+        )
+
     def test_prose_producer_count_word_matches_registry(self):
         # The spelled-out "<N> producer analyzers" count in narrative contract
         # docs (BASELINE.md, the root README, the analyzer-coverage doc, and the
