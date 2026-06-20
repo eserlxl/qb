@@ -17,7 +17,7 @@ The bundled prompts are:
 - `references/assessment-planner.md` for Step 1.5 existing-project assessment.
 - `references/second-planner.md` for Step 2 phase sub-planning.
 - `references/third-planner.md` for Step 3 sub-plan QA and coverage audit.
-- `references/fourth-planner.md` for the Step 4 implementation Antigravity task handoff prompt template.
+- `references/handoffs/run-step2.md`, `references/handoffs/run-step3.md`, and `references/handoffs/run-step4.md` for the single-source Step 2/3/4 Antigravity task handoff prompts (each carries `contract_version` frontmatter). `references/fourth-planner.md` points to `run-step4.md` for the Step 4 implementation contract.
 
 Planning behavior references:
 
@@ -96,13 +96,7 @@ When Step 1.5 applies:
 
 ## Step 2 Handoff
 
-After Step 1 feedback is handled, ask whether the user wants to continue to Step 2. If yes, tell the user to copy the following text, open a new Antigravity task, and send it:
-
-```text
-Use the qb skill. Run Step 2 according to references/second-planner.md.
-
-Read all main phases in .qb/main-planning.md. If .qb/assessment.md, .qb/project-ontology.md, or .qb/planning-ledger.md exists, read it fully as supporting evidence and account for it in the sub-phase plans. Plan in a vibecoding-first style: small reversible slices, fast validation signals, explicit deferrals, security boundaries, and Antigravity task readiness. For each phase, create phase-<n>-plans folders and detailed phase-<n>.<m>-*.md sub-plan files under .qb. Do not stop until all phases are covered. Modify only .qb.
-```
+After Step 1 feedback is handled, ask whether the user wants to continue to Step 2. If yes, print the Copy Block from the single-source handoff `references/handoffs/run-step2.md` and tell the user to copy that text, open a new Antigravity task, and send it.
 
 When executing Step 2 directly:
 
@@ -114,17 +108,11 @@ When executing Step 2 directly:
    `python3 skills/qb/scripts/validate_planner_docs.py --root . --mode step2 --strict`
    If no script path is accessible, perform equivalent all-file validation and report that fallback clearly.
 6. Do not modify files outside `.qb/`.
-7. After the Step 2 summary, print the Step 3 Antigravity task handoff block from this skill.
+7. After the Step 2 summary, print the Copy Block from `references/handoffs/run-step3.md`.
 
 ## Step 3 Handoff
 
-After Step 2 is complete, ask whether the user wants to continue to Step 3. If yes, tell the user to copy the following text, open a new Antigravity task, and send it:
-
-```text
-Use the qb skill. Run Step 3 according to references/third-planner.md.
-
-Audit .qb/main-planning.md, .qb/sub-planning-index.md, .qb/phase-*-plans/*.md, and any supporting .qb/assessment.md, .qb/project-ontology.md, or .qb/planning-ledger.md. Analyze main-phase coverage, file naming, sequencing, required section structure, index consistency, content quality, scope drift, readiness realism, ontology consistency, planning-history continuity, security/governance, vibecoding slice quality, and Step 4 readiness. Do not fix any plan files; produce only .qb/sub-planning-audit.md. Do not stop until all phases and sub-plans have been reviewed.
-```
+After Step 2 is complete, ask whether the user wants to continue to Step 3. If yes, print the Copy Block from the single-source handoff `references/handoffs/run-step3.md` and tell the user to copy that text, open a new Antigravity task, and send it.
 
 When executing Step 3 directly:
 
@@ -135,7 +123,7 @@ When executing Step 3 directly:
    If no script path is accessible, perform equivalent all-file validation and report that fallback clearly.
 4. Follow audit, file-boundary, validation, and stopping rules exactly.
 5. Modify only `.qb/sub-planning-audit.md`.
-6. After the Step 3 summary, print the Step 4 handoff prompt from `references/fourth-planner.md` only if the audit permits implementation.
+6. After the Step 3 summary, print the Step 4 handoff prompt from `references/handoffs/run-step4.md` only if the audit permits implementation.
 
 ## Step 4 Handoff
 
@@ -143,11 +131,11 @@ Step 4 is not a QB planning step and must not be executed automatically by this 
 
 When Step 3 completes:
 
-1. Read `references/fourth-planner.md`.
+1. Read `references/handoffs/run-step4.md` (the single-source Step 4 contract).
 2. Run the bundled validator when available. When manually validating from a QB repository checkout, use:
    `python3 skills/qb/scripts/validate_planner_docs.py --root . --mode step4`
    If no script path is accessible, perform equivalent all-file validation and report that fallback clearly.
-3. If validation passes, print the Step 4 Antigravity task copy block and remind the user to watch token use.
+3. If validation passes, print the Copy Block from `references/handoffs/run-step4.md` and remind the user to watch token use.
 4. If validation fails because the audit is `BLOCKED` or contains P0/P1 findings, do not print the Step 4 prompt; print the minimal repair or unblock prompt instead.
 5. If validation passes with non-blocking warnings, print the Step 4 prompt and state that the implementation run must keep P2/P3 warnings visible.
 6. The Step 4 prompt should execute the READY/READY_WITH_WARNINGS queue continuously in small verified slices. It should not stop after the first successful slice unless a stop gate is hit.

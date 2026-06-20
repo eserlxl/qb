@@ -69,8 +69,11 @@ previously ungoverned and `probe-policy.md` is a newer addition:
 | `planning-ledger.md` | Antigravity-only | Describes an optional `.qb/` planning-memory artifact used by Antigravity's planner steps. |
 | `assessment-and-budget.md` | Antigravity-only | Supports the Antigravity Step-1.5 `assessment-planner.md` prompt. |
 | `probe-policy.md` | Antigravity-only | Tiered evidence-probe discipline for the dedicated planning host's Step-1.5 assessment; the engine hosts keep a leaner read-only assessment surface. |
+| `handoffs/run-step2.md` | Antigravity-only | Single-source Step-2 task-handoff prompt; the engine hosts carry their Step-2 handoff inline and do not use a `handoffs/` directory. |
+| `handoffs/run-step3.md` | Antigravity-only | Single-source Step-3 task-handoff prompt; Antigravity-specific (text-only task handoffs). |
+| `handoffs/run-step4.md` | Antigravity-only | Single-source Step-4 implementation contract (copy block, per-slice checklist, stop gates, resume/recovery); referenced by `fourth-planner.md`. |
 
-**Conservative default.** All seven are classified **intended Antigravity-only** (so
+**Conservative default.** All ten are classified **intended Antigravity-only** (so
 no reconcile/move is required — Phase 5.4's reconcile step is a no-op). This is a
 deliberate, reversible governance decision: a maintainer may later reclassify any
 of these to *reconcile-into-shared* (moving it to `shared/references/` with a

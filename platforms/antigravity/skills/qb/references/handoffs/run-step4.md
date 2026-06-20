@@ -1,0 +1,76 @@
+---
+contract_version: 1
+---
+
+# Step 4 Implementation Handoff
+
+Single source for the Step 4 implementation handoff: the audit-status print gates, the copy
+block, the per-slice implementation contract, operator notes, stop gates, and resume/recovery.
+Step 4 is not an auto-executed QB planning step.
+
+Use this only after Step 3 writes `.qb/sub-planning-audit.md` and the audit says Step 4 can
+begin. Print the copy block below for the user to paste into a new Antigravity task or
+conversation.
+
+## Print Gates
+
+- If the audit status is `BLOCKED`, do not print this prompt. Print the minimal unblock prompt
+  from the audit instead.
+- If the audit status is `PASS_WITH_WARNINGS` and any P0/P1 finding exists, do not print this
+  prompt. Print a repair prompt targeting those P0/P1 findings first.
+- If the audit status is `PASS_WITH_WARNINGS` with only P2/P3 findings, this prompt may be
+  printed, but state that the implementation run must keep those warnings visible.
+
+## Copy Block
+
+```text
+Treat .qb/main-planning.md, .qb/sub-planning-index.md, .qb/sub-planning-audit.md, .qb/phase-*-plans/*.md, and any .qb/assessment.md, .qb/project-ontology.md, or .qb/planning-ledger.md as source material. Build an ordered implementation queue from the audit's READY and READY_WITH_WARNINGS rows, preserving the index order. If the audit contains P0/P1 findings, stop before implementation and propose a repair prompt.
+
+If installed/available in Antigravity, use relevant skills, project rules, test guidance, and security review guidance by scope. If no supporting skill or helper agent is available, do not stop; continue using the audit, the active sub-plan, repo instructions, and existing validation commands with the same principles. Use GitHub publish/PR workflows only when explicitly requested. Use helper agents when they reduce context pollution or separate evidence gathering from implementation/review; do not use them for trivial single-file changes.
+
+Execute the queue continuously in this Antigravity task run. For non-trivial slices, use this helper agent pattern when available: explorer maps relevant files and risks; tester/verifier identifies validation path; implementer/worker makes the smallest change; reviewer/security reviews the diff and evidence. Only one writer should modify files per slice unless the user explicitly requests parallel branches.
+
+For each implementation slice:
+1. Name the active phase/sub-plan and the specific acceptance criterion being targeted.
+2. Read AGENTS.md, README.md, Makefile, repo instructions, the audit, the index, optional ontology/ledger files as needed, and only the active sub-plan plus required repo files.
+3. Run git status and stop if unrelated dirty changes or conflicts exist.
+4. Inspect relevant files before editing.
+5. Prefer adding or adjusting a focused failing test first when practical.
+6. Implement the smallest change that can satisfy the selected acceptance criterion.
+7. Run targeted validation first.
+8. Run the repo-level gate when targeted validation passes.
+9. Append or update `.qb/planning-ledger.md` with a concise implementation summary for the verified slice or stop event. If the ledger does not exist, create it using the structure from QB planning-ledger guidance.
+10. Summarize:
+   - files changed;
+   - acceptance criterion addressed;
+   - tests/commands run;
+   - evidence produced;
+   - remaining risks;
+   - ledger entry added or updated.
+11. Continue to the next acceptance criterion or the next READY/READY_WITH_WARNINGS sub-plan instead of stopping.
+
+Stop only when one of these stop gates is hit: P0/P1 or safety/security finding; failing test or unresolved regression; missing required source file; unclear contradiction between plan, audit, and repo reality; credential/live-environment/human-approval requirement; destructive external mutation requirement; unrelated dirty worktree or merge conflict; validation command unavailable with no equivalent fallback; scope would exceed the selected sub-plan; token/context budget too low to continue safely; or the user explicitly asks to stop. When stopping, write a concise handoff summary with completed slices, changed files, verification commands, blocker text, and the next queue item.
+
+Do not write secrets, tokens, private keys, or local credentials. Do not paste full logs into the ledger; store concise evidence paths or summaries. Watch token use: do not load every sub-plan into context; use the index/audit to navigate, read only the active sub-plan, and refresh queue status from the audit/index between slices. If context compaction or budget pressure is likely, summarize progress and continue only when the next slice can still be executed safely.
+```
+
+## Operator Notes
+
+- Keep each implementation slice small and reversible, but continue through the ordered queue after each verified slice.
+- Do not load every sub-plan into context unless the active slice requires cross-plan repair.
+- Prefer existing repo validation commands over invented commands.
+- Report exact blocker strings and separate code-delivery status from external config or credential blockers.
+- Keep `planning-ledger.md` concise; it is a replanning memory artifact, not a transcript dump.
+- Use `project-ontology.md` to preserve vocabulary, entity, workflow, boundary, integration, and invariant consistency for the active slice.
+- Do not batch unrelated sub-plans into one diff; keep each slice's diff scoped to its own sub-plan.
+- If targeted validation fails and the cause is unclear, stop before widening the edit; surface the failure instead of expanding scope to chase it.
+- Do not commit, push, open a PR, deploy, or mutate external systems unless the user explicitly asks in the Step 4 run.
+
+## Resume and Recovery
+
+If the implementation run is re-entered after an interruption, context compaction, or a fresh Antigravity task, re-establish ground truth before editing:
+
+- Re-read this template, the audit, the index, and the active sub-plan; do not trust a remembered plan.
+- Re-check `git status` and the current branch; stop on an unrelated dirty worktree or merge conflict.
+- Reconcile `.qb/planning-ledger.md` entries against real repo evidence; do not re-implement a slice the evidence already shows verified.
+- If the plan or audit no longer matches repo reality (plan-snapshot drift), stop and recommend a re-plan/re-audit instead of forcing the stale slice.
