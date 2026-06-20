@@ -182,6 +182,56 @@ class DependencyAnalyzerTests(unittest.TestCase):
             "Cargo.lock present must suppress the missing-cargo-lockfile finding",
         )
 
+    def test_go_mod_without_gosum_is_flagged(self) -> None:
+        # go.mod declares requirements but no go.sum -> reproducibility hygiene
+        # finding, mirroring the Cargo.toml/Cargo.lock rule.
+        expected_id = self.dep.compute_finding_id(
+            "dependency", "go.mod:1", "missing-go-lockfile")
+        body = "module example.com/x\n\ngo 1.21\n\nrequire github.com/foo/bar v1.2.3\n"
+        with tempfile.TemporaryDirectory() as d:
+            Path(d).joinpath("go.mod").write_text(body, encoding="utf-8")
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+        match = [f for f in findings if f.id == expected_id]
+        self.assertEqual(len(match), 1, "expected exactly one missing-go-lockfile finding")
+        self.assertEqual(match[0].category, "dependency")
+        self.assertEqual(match[0].evidence, "go.mod:1")
+        self.assertEqual(self.validate(match[0]), [])
+        # Determinism: a second analyze run yields the same stable finding id.
+        with tempfile.TemporaryDirectory() as d2:
+            Path(d2).joinpath("go.mod").write_text(body, encoding="utf-8")
+            again = self.dep.DependencyAnalyzer().analyze(d2, _cfg(False))
+        self.assertIn(expected_id, [f.id for f in again], "finding id must be stable across runs")
+
+    def test_go_sum_present_suppresses_missing_lockfile(self) -> None:
+        expected_id = self.dep.compute_finding_id(
+            "dependency", "go.mod:1", "missing-go-lockfile")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            root.joinpath("go.mod").write_text(
+                "module example.com/x\n\ngo 1.21\n\nrequire github.com/foo/bar v1.2.3\n",
+                encoding="utf-8")
+            root.joinpath("go.sum").write_text(
+                "github.com/foo/bar v1.2.3 h1:abc=\n", encoding="utf-8")
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+        self.assertFalse(
+            any(f.id == expected_id for f in findings),
+            "go.sum present must suppress the missing-go-lockfile finding",
+        )
+
+    def test_go_mod_without_requirements_is_clean(self) -> None:
+        # A go.mod with no module requirements does not need a go.sum -> no finding
+        # (false-positive control).
+        expected_id = self.dep.compute_finding_id(
+            "dependency", "go.mod:1", "missing-go-lockfile")
+        with tempfile.TemporaryDirectory() as d:
+            Path(d).joinpath("go.mod").write_text(
+                "module example.com/x\n\ngo 1.21\n", encoding="utf-8")
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+        self.assertFalse(
+            any(f.id == expected_id for f in findings),
+            "a go.mod with no requirements must not be flagged for a missing go.sum",
+        )
+
     def test_pyproject_dependencies_are_parsed_offline(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

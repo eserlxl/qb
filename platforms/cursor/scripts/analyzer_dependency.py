@@ -57,6 +57,12 @@ _LOCKFILES = ("package-lock.json", "yarn.lock", "pnpm-lock.yaml")
 # Recognized Python lockfiles: a pyproject.toml that declares dependencies but
 # ships none of these has non-reproducible installs (mirrors the npm/cargo checks).
 _PY_LOCKFILES = ("poetry.lock", "pdm.lock", "uv.lock", "Pipfile.lock")
+# A go.mod that declares module requirements but ships no go.sum has unpinned,
+# unverified module checksums (mirrors the npm/cargo/python lockfile checks). A
+# require line is `<module-path> vX.Y...` either single-line (`require x v1`) or
+# inside a `require ( ... )` block; the `module`/`go`/`toolchain` directives carry
+# no `vX` version token, so this never matches them.
+_GO_REQUIRE = re.compile(r"(?m)^\s*(?:require\s+)?[A-Za-z0-9._~/-]+\s+v\d")
 _REQ_LINE = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*(.*)$")
 # pip VCS / direct-URL requirements (git+https://..., https://...#egg=name): the
 # `_REQ_LINE` name regex would split the scheme into a bogus "git" dependency, so
@@ -436,6 +442,21 @@ class DependencyAnalyzer:
                 "so the resolved dependency versions are not reproducible.",
                 "Run `cargo generate-lockfile` (or `cargo build`) and commit Cargo.lock.",
             ))
+
+        gomod_path = root / "go.mod"
+        if gomod_path.is_file():
+            try:
+                gomod_text = gomod_path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                gomod_text = ""
+            if _GO_REQUIRE.search(gomod_text) and not (root / "go.sum").is_file():
+                findings.append(self._finding(
+                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                    "go.mod:1", "missing-go-lockfile",
+                    "Offline manifest audit: go.mod declares module requirements but no go.sum "
+                    "was found, so the resolved module versions and their checksums are not pinned.",
+                    "Run `go mod download` (or `go mod tidy`) and commit go.sum.",
+                ))
 
         # --- Networked tier (opt-in, fail-closed) ----------------------------
         allow_networked = bool(getattr(config, "allow_networked", False))

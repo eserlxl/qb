@@ -56,7 +56,7 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(
             first["totals"],
             {
-                "true_positive": 5,
+                "true_positive": 6,
                 "false_positive": 0,
                 "false_negative": 0,
                 "precision": 1.0,
@@ -81,7 +81,7 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(
             report["totals"],
             {
-                "true_positive": 5,
+                "true_positive": 6,
                 "false_positive": 0,
                 "false_negative": 0,
                 "precision": 1.0,
@@ -96,7 +96,7 @@ class PrecisionHarnessTests(unittest.TestCase):
                     "precision": 1.0, "recall": 1.0,
                 },
                 "dependency-audit": {
-                    "true_positive": 1, "false_positive": 0, "false_negative": 0,
+                    "true_positive": 2, "false_positive": 0, "false_negative": 0,
                     "precision": 1.0, "recall": 1.0,
                 },
                 "secret-hygiene": {
@@ -121,7 +121,7 @@ class PrecisionHarnessTests(unittest.TestCase):
                     "precision": None, "recall": None,
                 },
                 "dependency": {
-                    "true_positive": 3, "false_positive": 0, "false_negative": 0,
+                    "true_positive": 4, "false_positive": 0, "false_negative": 0,
                     "precision": 1.0, "recall": 1.0,
                 },
                 "injection": {
@@ -156,10 +156,10 @@ class PrecisionHarnessTests(unittest.TestCase):
 
             report = self._build_report(corpus)
 
-        self.assertEqual(report["totals"]["true_positive"], 5)
+        self.assertEqual(report["totals"]["true_positive"], 6)
         self.assertEqual(report["totals"]["false_positive"], 1)
         self.assertEqual(report["totals"]["false_negative"], 0)
-        self.assertEqual(report["totals"]["precision"], 5 / 6)
+        self.assertEqual(report["totals"]["precision"], 6 / 7)
         self.assertEqual(report["per_analyzer"]["command-injection"]["precision"], 0.5)
 
     def test_threshold_gate_pass_fail_and_capability_aware(self) -> None:

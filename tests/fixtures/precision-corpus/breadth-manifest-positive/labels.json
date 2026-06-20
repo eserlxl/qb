@@ -1,0 +1,11 @@
+{
+  "fixture": "breadth-manifest-positive",
+  "expected_findings": [
+    {
+      "analyzer_id": "dependency-audit",
+      "category": "dependency",
+      "evidence": "go.mod:1",
+      "rule_key": "missing-go-lockfile"
+    }
+  ]
+}
