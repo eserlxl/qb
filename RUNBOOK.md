@@ -328,3 +328,25 @@ Read this gate alongside [Recover](#recover), [Pause / Kill](#pause--kill), and
 [Trip responses](#trip-responses): treat authorization, operation, and recovery as one flow —
 the gate authorizes operation, the kill-switch and trip responses govern it while it
 runs, and the recover procedure undoes the whole run.
+
+### M7-eligible release
+
+The per-run production gate above proves **current operational** safety; it does not
+assert that the prior-phase gaps are jointly closed, so an operator could pass it while
+a Phase 1–5 readiness row is still open. **M7-eligible release** is therefore a single
+fail-closed conjunction of two parts:
+
+1. the six per-run `production_gate.PRODUCTION_GATE_CHECKS` conjuncts above
+   (`telemetry_emitted`, `rollback_drill_passed`, `least_privilege_ok`,
+   `supply_chain_ok`, `killswitch_proven`, `self_audit_clean`), **and**
+2. every prior-phase signal in the **M7 readiness checklist** (`BASELINE.md`,
+   Phases 0–5) being green — each re-derived from its committed gate, never a `.qb/`
+   planning note.
+
+Neither part alone is sufficient. **Any single false conjunct** — a production-gate
+conjunct **or** an un-green readiness row — denies M7-eligible release and is named.
+The release-gating decision is persisted redacted via `release_gate.persist_authorization`
+to `.qb/audit/release-authorization.json` (alongside `.qb/audit/production-gate.json`).
+Release eligibility **fails closed**, and passing it authorizes **operation only**: it
+never enables A3 auto-delivery (`A3_DEFAULT_ENABLED` is `False`) — tagging and publishing
+stay explicit, manual, operator-only actions (see [RELEASING.md](RELEASING.md)).

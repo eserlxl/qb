@@ -17,6 +17,14 @@ See also the [RUNBOOK](RUNBOOK.md) gate-of-record and release-integrity sections
    make check
    ```
 
+   For an **M7-eligible release**, `make check` (the gate of record) is necessary but
+   not sufficient: confirm the consolidated M7 release-gating conjunction — the six
+   `production_gate.PRODUCTION_GATE_CHECKS` conjuncts **and** every Phase 0–5 row of the
+   M7 readiness checklist (`BASELINE.md`) — holds fail-closed, per
+   [RUNBOOK.md](RUNBOOK.md) ("M7-eligible release"). Any single false conjunct denies M7
+   eligibility and is named; passing authorizes operation only, so the tagging and
+   publishing steps below stay manual, operator-only actions.
+
 3. **Bump the version and write the changelog entry** through the sanctioned bump
    path (never hand-edit version fields):
 
