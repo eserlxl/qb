@@ -106,6 +106,16 @@ class ConfinementUnavailable(ConfinementError):
     """Raised when a requested confinement control cannot be established."""
 
 
+class ProcessGroupKillError(ConfinementError):
+    """Raised when a timed-out child's process-group kill could not be delivered.
+
+    Signals partial containment: the group SIGKILL failed (e.g. PermissionError
+    under strict privileges), so descendants may survive even though the direct
+    child was best-effort killed. Surfaced rather than swallowed so a containment
+    failure can never pass silently.
+    """
+
+
 @dataclass(frozen=True)
 class ConfinementSpec:
     """Opt-in process-confinement controls for run_command.
@@ -281,9 +291,20 @@ def run_command(argv, cwd=None, timeout=None, env=None, confinement=None):
     try:
         stdout, stderr = proc.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
-        _kill_process_group(proc, start_new_session)
+        try:
+            _kill_process_group(proc, start_new_session)
+            containment_error = None
+        except ProcessGroupKillError as exc:
+            # Containment was partial: surface it on the timeout the caller sees
+            # (and chain it) rather than swallowing it, while still reporting the
+            # timeout with whatever output we captured.
+            containment_error = exc
         stdout, stderr = proc.communicate()
-        raise subprocess.TimeoutExpired(args, timeout, output=stdout, stderr=stderr)
+        timeout_exc = subprocess.TimeoutExpired(args, timeout, output=stdout, stderr=stderr)
+        if containment_error is not None:
+            timeout_exc.qb_containment_error = containment_error
+            raise timeout_exc from containment_error
+        raise timeout_exc
     completed = subprocess.CompletedProcess(args, proc.returncode, stdout, stderr)
     completed.qb_confinement = {
         "enabled": spec.enabled,
@@ -297,15 +318,27 @@ def _kill_process_group(proc, in_own_group) -> None:
     """SIGKILL the timed-out child's whole process group, reaping grandchildren.
 
     When the child leads its own session/group (``start_new_session``), kill the
-    group so descendants it spawned are not orphaned. Fall back to killing just
-    the child if the group is already gone or cannot be signalled.
+    group so descendants it spawned are not orphaned. A vanished group
+    (``ProcessLookupError``) means containment already held -- nothing left to
+    reap. But a group kill the OS *refused* (``PermissionError``/other ``OSError``)
+    is a partial-containment failure: descendants may survive. Best-effort kill the
+    direct child, then raise ``ProcessGroupKillError`` so the failure is surfaced,
+    never silently masked by the parent-only fallback.
     """
     if in_own_group and os.name == "posix":
         try:
             os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
             return
-        except (ProcessLookupError, PermissionError, OSError):
+        except ProcessLookupError:
+            # The group is already gone -- the grandchildren were reaped with the
+            # child; containment held. Fall through to a harmless best-effort kill
+            # of the (already-exited) direct child, exactly as before.
             pass
+        except (PermissionError, OSError) as exc:
+            proc.kill()  # best-effort: still kill the direct child we can reach
+            raise ProcessGroupKillError(
+                f"process-group kill failed for pid {proc.pid}: {exc}"
+            ) from exc
     proc.kill()
 
 

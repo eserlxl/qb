@@ -244,6 +244,72 @@ class CommandSafetyTests(unittest.TestCase):
                 "_kill_process_group must SIGKILL the whole process group",
             )
 
+    def test_group_kill_failure_is_surfaced_not_swallowed(self) -> None:
+        # When os.killpg is REFUSED (PermissionError under strict privileges /
+        # seccomp), the group SIGKILL did not land and grandchildren may survive.
+        # The handler must not silently degrade to a parent-only proc.kill(): it
+        # best-effort kills the direct child AND surfaces the partial-containment
+        # failure as ProcessGroupKillError, so containment can never fail silently.
+        if os.name != "posix":
+            self.skipTest("process-group kill is POSIX-only")
+
+        class _FakeProc:
+            def __init__(self) -> None:
+                self.pid = 424242
+                self.killed = False
+
+            def kill(self) -> None:
+                self.killed = True
+
+        def _refuse(*_args, **_kwargs):
+            raise PermissionError("operation not permitted")
+
+        proc = _FakeProc()
+        orig_getpgid = self.cs.os.getpgid
+        orig_killpg = self.cs.os.killpg
+        self.cs.os.getpgid = lambda pid: pid
+        self.cs.os.killpg = _refuse
+        try:
+            with self.assertRaises(self.cs.ProcessGroupKillError):
+                self.cs._kill_process_group(proc, True)
+        finally:
+            self.cs.os.getpgid = orig_getpgid
+            self.cs.os.killpg = orig_killpg
+        self.assertTrue(
+            proc.killed,
+            "the direct child must still be best-effort killed when the group kill is refused",
+        )
+
+    def test_group_kill_vanished_group_is_not_a_failure(self) -> None:
+        # A group that is already gone (ProcessLookupError) means the grandchildren
+        # were reaped with the child -- containment held. That must NOT be surfaced
+        # as a ProcessGroupKillError; it falls through to a best-effort proc.kill().
+        if os.name != "posix":
+            self.skipTest("process-group kill is POSIX-only")
+
+        class _FakeProc:
+            def __init__(self) -> None:
+                self.pid = 424243
+                self.killed = False
+
+            def kill(self) -> None:
+                self.killed = True
+
+        def _gone(*_args, **_kwargs):
+            raise ProcessLookupError("no such process")
+
+        proc = _FakeProc()
+        orig_getpgid = self.cs.os.getpgid
+        orig_killpg = self.cs.os.killpg
+        self.cs.os.getpgid = lambda pid: pid
+        self.cs.os.killpg = _gone
+        try:
+            self.cs._kill_process_group(proc, True)  # must not raise
+        finally:
+            self.cs.os.getpgid = orig_getpgid
+            self.cs.os.killpg = orig_killpg
+        self.assertTrue(proc.killed, "a vanished group still triggers the best-effort child kill")
+
     # --- path containment -------------------------------------------------
     def test_path_containment_accepts_within_and_rejects_escape(self) -> None:
         with tempfile.TemporaryDirectory() as d:
