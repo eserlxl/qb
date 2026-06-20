@@ -40,6 +40,17 @@ def _tracked_files(root: Path) -> list:
     return sorted(p for p in result.stdout.split("\0") if p)
 
 
+def _missing_tracked(root: Path) -> list:
+    """Tracked paths git knows but the worktree lacks (a partial/dirty tree).
+
+    ``build_manifest`` silently skips these so a printed manifest only inventories
+    what is present; ``--check`` uses this to fail closed instead, so a dirty tree
+    that has lost a tracked file can never produce a silently-incomplete manifest
+    that still self-verifies OK.
+    """
+    return [rel for rel in _tracked_files(root) if not (root / rel).is_file()]
+
+
 def _sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as fh:
@@ -93,7 +104,19 @@ def main(argv=None) -> int:
             sys.stdout.write(manifest)
         return 0
 
-    # --check: the manifest must be well-formed and match the tree.
+    # --check: the manifest must be well-formed and match the tree. A partial
+    # worktree (a tracked file deleted) fails closed -- otherwise build_manifest
+    # would silently omit it yet the count/semver self-check would still pass,
+    # undermining the release-integrity guarantee.
+    missing = _missing_tracked(Path(args.root))
+    if missing:
+        shown = ", ".join(missing[:5]) + (" ..." if len(missing) > 5 else "")
+        sys.stderr.write(
+            "release-manifest: --check failed: "
+            f"{len(missing)} tracked file(s) missing from the worktree: {shown}\n"
+        )
+        return 1
+
     version_line = next((l for l in manifest.splitlines() if l.startswith("version: ")), "")
     version = version_line[len("version: "):].strip()
     if not _SEMVER.match(version):

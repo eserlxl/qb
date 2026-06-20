@@ -122,6 +122,41 @@ class ReleaseIntegrityTest(unittest.TestCase):
             self.assertEqual(bad.returncode, 1, "changed tracked bytes must fail --check")
             self.assertIn("tree drifted", bad.stderr)
 
+    def test_release_manifest_check_fails_closed_on_missing_tracked_file(self):
+        # A dirty worktree that has lost a tracked file must fail --check rather
+        # than produce a silently-incomplete manifest that self-verifies OK -- the
+        # release-integrity guarantee fails closed.
+        self.assertTrue(MANIFEST.is_file(), "release manifest script missing")
+        with TemporaryDirectory() as d:
+            mini = Path(d) / "mini"
+            mini.mkdir()
+            subprocess.run(["git", "init", "-q"], cwd=str(mini), check=True)
+            (mini / "VERSION").write_text("1.2.3\n", encoding="utf-8")
+            (mini / "app.txt").write_text("original\n", encoding="utf-8")
+            (mini / "lib.txt").write_text("library\n", encoding="utf-8")
+            subprocess.run(["git", "add", "VERSION", "app.txt", "lib.txt"],
+                           cwd=str(mini), check=True)
+
+            # A clean tree self-verifies OK.
+            ok = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(mini), "--check"],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+
+            # Delete a tracked file from the worktree (git still tracks it).
+            (mini / "lib.txt").unlink()
+            bad = subprocess.run(
+                ["python3", str(MANIFEST), "--root", str(mini), "--check"],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(
+                bad.returncode, 1,
+                "a tracked file missing from the worktree must fail --check, not skip silently",
+            )
+            self.assertIn("missing from the worktree", bad.stderr)
+            self.assertIn("lib.txt", bad.stderr)
+
     def test_export_excludes_tool_state_trees(self):
         # The sanitized export = git-tracked files; the gitignored working trees must
         # never appear, so a release never ships .qb/ (which now holds the audit
