@@ -269,6 +269,10 @@ MAP=(
   "scripts/production_gate_signals.py|platforms/claude-code/scripts/production_gate_signals.py"
   "scripts/production_gate_signals.py|platforms/cursor/scripts/production_gate_signals.py"
   "scripts/production_gate_signals.py|platforms/codex/plugins/qb/skills/qb/scripts/production_gate_signals.py"
+  # shared/scripts/m7_readiness.py
+  "scripts/m7_readiness.py|platforms/claude-code/scripts/m7_readiness.py"
+  "scripts/m7_readiness.py|platforms/cursor/scripts/m7_readiness.py"
+  "scripts/m7_readiness.py|platforms/codex/plugins/qb/skills/qb/scripts/m7_readiness.py"
 )
 
 # Number of distinct shared source files (for the summary line).
