@@ -204,10 +204,20 @@ class RollbackDrillTests(unittest.TestCase):
             (out / self.rg.AUTHORIZATION_EVIDENCE_FILENAME).write_text(
                 "{not valid json", encoding="utf-8")
             self.assertEqual(self.rg.read_authorization(out), {})
-            # A valid record still round-trips through persist/read.
+            # A valid record still round-trips through persist/read, schema-versioned.
             record = self.rg.authorization_record(self._telemetry(9, 1))
             self.rg.persist_authorization(record, out)
-            self.assertEqual(self.rg.read_authorization(out)["permitted_autonomy"], "A2")
+            loaded = self.rg.read_authorization(out)
+            self.assertEqual(loaded["permitted_autonomy"], "A2")
+            self.assertEqual(loaded["schema_version"],
+                             self.rg.AUTHORIZATION_EVIDENCE_SCHEMA_VERSION)
+            # persist_authorization redacts: an injected secret-shaped value is never
+            # written to disk (defense in depth -- the record carries no raw values).
+            secret = "ghp_" + "B" * 30
+            persisted = self.rg.persist_authorization({**record, "note": secret}, out)
+            raw = persisted.read_text(encoding="utf-8")
+            self.assertNotIn(secret, raw)
+            self.assertIn("<redacted>", raw)
 
     def _telemetry(self, kept, reverted):
         return self.t.build_telemetry(run_id="r", autonomy_level="A2", findings=[],
