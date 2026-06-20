@@ -208,6 +208,13 @@ class DependencyAnalyzerTests(unittest.TestCase):
         for f in findings:
             self.assertEqual(self.validate(f), [])
 
+    def test_pyproject_non_table_project_or_tool_does_not_crash(self) -> None:
+        # A TOML-valid pyproject that declares `project` or `tool` as a scalar
+        # must fail closed to [] rather than raise AttributeError out of the
+        # offline tier. The whole repo body is untrusted input.
+        for body in ('project = "foo"\n', 'tool = "x"\n', 'project = 7\ntool = []\n'):
+            self.assertEqual(self.dep.parse_pyproject(body), [], msg=f"body={body!r}")
+
     def test_default_path_is_network_free(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             _fixture(Path(d))

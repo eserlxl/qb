@@ -131,7 +131,10 @@ def parse_pyproject(text: str) -> list:
 
     deps: list = []
     project = data.get("project", {}) if isinstance(data, dict) else {}
-    entries = list(project.get("dependencies", []) or [])
+    if not isinstance(project, dict):
+        project = {}  # a TOML-valid scalar `project = "x"` must not crash the audit
+    raw_entries = project.get("dependencies", []) or []
+    entries = list(raw_entries) if isinstance(raw_entries, list) else []
     optional = project.get("optional-dependencies", {}) or {}
     if isinstance(optional, dict):
         for group_entries in optional.values():
@@ -152,7 +155,11 @@ def parse_pyproject(text: str) -> list:
             "pinned": _is_exact_pin(spec),
         })
 
-    poetry = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
+    tool = data.get("tool", {})
+    tool = tool if isinstance(tool, dict) else {}  # `tool = "x"` scalar must not crash
+    poetry_tool = tool.get("poetry", {})
+    poetry_tool = poetry_tool if isinstance(poetry_tool, dict) else {}
+    poetry = poetry_tool.get("dependencies", {})
     if isinstance(poetry, dict):
         for name, raw_spec in sorted(poetry.items()):
             if str(name).lower() == "python":
