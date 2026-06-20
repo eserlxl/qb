@@ -248,6 +248,22 @@ class RollbackDrillTests(unittest.TestCase):
         self.assertEqual(self.rg.permitted_autonomy(self._telemetry(1, 9)), "A1")
         self.assertEqual(self.rg.permitted_autonomy(self._telemetry(0, 0)), "A1")  # fail-closed
 
+    def test_precision_floor_boundary_is_inclusive(self) -> None:
+        # Boundary: precision_gate denies on `precision < floor`, so precision
+        # EXACTLY at the floor earns A2 (inclusive) while just below denies to A1 --
+        # the >=-floor decision the 0.9/0.1 cases leave unpinned. The autonomy clamp
+        # is most_restrictive, so a fix-safety breach at the floor still denies.
+        floor = self.rg.PRECISION_FLOOR
+        at_floor = {"quality": {"precision_estimate": floor, "fix_safety_ok": True}}
+        below = {"quality": {"precision_estimate": floor - 0.01, "fix_safety_ok": True}}
+        breach_at_floor = {"quality": {"precision_estimate": floor, "fix_safety_ok": False}}
+        self.assertEqual(self.rg.permitted_autonomy(at_floor), "A2",
+                         "precision exactly at the floor must earn A2 (inclusive)")
+        self.assertEqual(self.rg.permitted_autonomy(below), "A1",
+                         "precision just below the floor must deny A2")
+        self.assertEqual(self.rg.permitted_autonomy(breach_at_floor), "A1",
+                         "a fix-safety breach denies even at the precision floor")
+
     def test_gates_fail_closed_on_malformed_telemetry(self) -> None:
         # Corrupt or hand-edited telemetry must deny (A1 max), never crash or pass open.
         for bad in ({"quality": None}, {"quality": "nope"},
