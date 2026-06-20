@@ -231,6 +231,38 @@ class DependencyAnalyzerTests(unittest.TestCase):
         for f in findings:
             self.assertEqual(self.validate(f), [])
 
+    def test_pyproject_with_deps_and_no_lockfile_is_flagged(self) -> None:
+        # Parity with the npm/cargo missing-lockfile checks: a pyproject.toml that
+        # declares dependencies but ships no Python lockfile is non-reproducible.
+        # A recognized lockfile suppresses it; a deps-free pyproject never fires.
+        def missing_lock(files: dict) -> list:
+            with tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                for name, content in files.items():
+                    root.joinpath(name).write_text(content, encoding="utf-8")
+                findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+            return [f for f in findings if "Python lockfile" in f.rationale]
+
+        deps_no_lock = missing_lock({"pyproject.toml": '[project]\ndependencies = ["requests==2.31.0"]\n'})
+        self.assertEqual(len(deps_no_lock), 1)
+        self.assertEqual(deps_no_lock[0].evidence, "pyproject.toml:1")
+        self.assertEqual(self.validate(deps_no_lock[0]), [])
+
+        with_lock = missing_lock({
+            "pyproject.toml": '[project]\ndependencies = ["requests==2.31.0"]\n',
+            "poetry.lock": "# locked\n",
+        })
+        self.assertEqual(with_lock, [])  # a recognized lockfile suppresses the finding
+
+        with_uv = missing_lock({
+            "pyproject.toml": '[project]\ndependencies = ["requests==2.31.0"]\n',
+            "uv.lock": "# locked\n",
+        })
+        self.assertEqual(with_uv, [])
+
+        no_deps = missing_lock({"pyproject.toml": '[project]\nname = "x"\n'})
+        self.assertEqual(no_deps, [])  # a deps-free pyproject is not flagged
+
     def test_pep735_dependency_groups_are_scanned(self) -> None:
         # PEP 735 [dependency-groups] is a standard manifest location for dev/test
         # deps; an unpinned entry there is a hygiene gap, a pinned one is clean,

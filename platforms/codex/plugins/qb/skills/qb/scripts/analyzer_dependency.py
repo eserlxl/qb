@@ -54,6 +54,9 @@ compute_finding_id = _ai.compute_finding_id
 confidence_for_rule = _core.confidence_for_rule
 
 _LOCKFILES = ("package-lock.json", "yarn.lock", "pnpm-lock.yaml")
+# Recognized Python lockfiles: a pyproject.toml that declares dependencies but
+# ships none of these has non-reproducible installs (mirrors the npm/cargo checks).
+_PY_LOCKFILES = ("poetry.lock", "pdm.lock", "uv.lock", "Pipfile.lock")
 _REQ_LINE = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*(.*)$")
 # pip VCS / direct-URL requirements (git+https://..., https://...#egg=name): the
 # `_REQ_LINE` name regex would split the scheme into a bogus "git" dependency, so
@@ -354,7 +357,8 @@ class DependencyAnalyzer:
                 text = pyproject_path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
                 text = ""
-            for dep in parse_pyproject(text):
+            pyproject_deps = parse_pyproject(text)
+            for dep in pyproject_deps:
                 dep["evidence"] = f"pyproject.toml:{dep['line']}"
                 inventory.append(dep)
                 if not dep["pinned"]:
@@ -366,6 +370,15 @@ class DependencyAnalyzer:
                         f"exact version ({dep['spec'] or 'no version specifier'}).",
                         "Pin the dependency to an exact version in pyproject.toml and regenerate the lockfile.",
                     ))
+            if pyproject_deps and not any((root / lock).is_file() for lock in _PY_LOCKFILES):
+                findings.append(self._finding(
+                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                    "pyproject.toml:1", "missing-python-lockfile",
+                    "Offline manifest audit: pyproject.toml declares dependencies but no Python "
+                    "lockfile (poetry.lock / pdm.lock / uv.lock / Pipfile.lock) was found, so the "
+                    "resolved dependency versions are not reproducible.",
+                    "Generate and commit a lockfile (e.g. `poetry lock`, `pdm lock`, or `uv lock`).",
+                ))
 
         pkg_path = root / "package.json"
         if pkg_path.is_file():
