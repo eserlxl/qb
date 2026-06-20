@@ -68,6 +68,34 @@ class BreadthAnalyzerTests(unittest.TestCase):
             self.assertEqual(finding.fix_strategy, "manual")
             self.assertEqual(self.ai.validate_finding(finding), [])
 
+    def test_named_step_and_reusable_workflow_uses_are_scanned(self) -> None:
+        # The GitHub-recommended named-step form puts `uses:` on its own indented
+        # line (no leading dash); reusable-workflow calls do the same at job level.
+        # Both must be scanned. A bare non-action `uses:` word (e.g. inside a
+        # script block) is not an action ref and must NOT be flagged.
+        findings = self._analyze({
+            ".github/workflows/ci.yml": (
+                "name: ci\n"
+                "jobs:\n"
+                "  call:\n"
+                "    uses: owner/repo/.github/workflows/reusable.yml@main\n"  # line 4
+                "  test:\n"
+                "    steps:\n"
+                "      - name: Checkout\n"
+                "        uses: actions/checkout@v4\n"                         # line 8
+                "      - name: Inline\n"
+                "        run: |\n"
+                "          uses: notanaction\n"                              # bare word: skip
+            )
+        })
+        evidences = [f.evidence for f in findings]
+        self.assertIn(".github/workflows/ci.yml:4", evidences)  # reusable workflow @main
+        self.assertIn(".github/workflows/ci.yml:8", evidences)  # named-step action @v4
+        self.assertEqual(len(findings), 2)  # the bare "notanaction" word is not flagged
+        for finding in findings:
+            self.assertEqual(finding.category, "dependency")
+            self.assertEqual(self.ai.validate_finding(finding), [])
+
     def test_write_all_permissions_is_flagged(self) -> None:
         findings = self._analyze({
             ".github/workflows/ci.yml": (

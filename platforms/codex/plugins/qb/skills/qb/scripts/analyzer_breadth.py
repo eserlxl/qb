@@ -35,7 +35,10 @@ validate_finding = _ai.validate_finding
 iter_repo_files = _core.iter_repo_files
 confidence_for_rule = _core.confidence_for_rule
 
-_USES_RE = re.compile(r"^\s*-\s*uses\s*:\s*['\"]?(?P<spec>[^'\"\s#]+)")
+# Match a `uses:` key whether it leads the step (`- uses:`) or is a later key of a
+# named step (`- name: ...` then an indented `uses:`), and reusable-workflow
+# `uses:` calls at job level. Requiring the dash missed every named step.
+_USES_RE = re.compile(r"^\s*(?:-\s*)?uses\s*:\s*['\"]?(?P<spec>[^'\"\s#]+)")
 _FULL_SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 _FULL_SEMVER_RE = re.compile(r"^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 # `permissions: write-all` grants the broadest possible GITHUB_TOKEN scope to a
@@ -63,7 +66,9 @@ def _split_action_ref(spec: str):
     if spec.startswith("./") or spec.startswith("docker://"):
         return None
     if "@" not in spec:
-        return (spec, "")
+        # A real action ref is always owner/repo[/path]; a bare word (e.g. a
+        # `uses:`-prefixed line inside a script: block) is not an action.
+        return (spec, "") if "/" in spec else None
     action, ref = spec.rsplit("@", 1)
     if not action or "/" not in action:
         return None
