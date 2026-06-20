@@ -49,6 +49,13 @@ re-derives the live counts and fails if they drift, so a test add/remove that sk
 the baseline update turns the next `make check` red; diagnose by the per-guard
 **Guard-to-test mapping** below.
 
+**Authoritative count source:** the test-function count is live
+`unittest` discovery (`unittest.TestLoader().discover('tests').countTestCases()`),
+the operator-visible number — never a `def test_` text grep, which miscounts
+(e.g. 572 vs the live 573, because fixture strings contain `def test_*`). Use
+`python3 -m unittest discover -s tests -v` (or `make baseline`) to read the
+count; do not "correct" the baseline from a source-text regex.
+
 ## Baseline preconditions
 
 The baseline reproduces on a stock toolchain so it stays machine-independent:
