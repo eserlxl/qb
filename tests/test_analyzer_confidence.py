@@ -124,6 +124,33 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
             "inline accepted fixture",
         )
 
+    def test_tool_and_heuristic_rules_are_never_high(self) -> None:
+        # Doctrine (docs/false-positive-controls.md "high / medium / low"): QB
+        # does not vouch for an external tool's diagnostic at the highest band
+        # (`tool-diagnostic` is fixed at `medium`), and the enumerated heuristic
+        # signals stay `medium`. This is a separate INVARIANT guard from the
+        # exact-band snapshot test: even if that snapshot were edited, a tool- or
+        # heuristic-derived kind re-banded `high` must still fail here.
+        self.assertEqual(
+            self.core.confidence_for_rule("quality-correctness", "tool-diagnostic"),
+            "medium",
+            "tool-diagnostic must stay medium: QB does not vouch for external tools at high",
+        )
+        # Heuristic kinds the doctrine names explicitly (false-positive-controls.md).
+        heuristic_kinds = {
+            ("dependency-audit", "manifest-hygiene"),
+            ("workflow-actions", "broad-action-ref"),
+            ("workflow-actions", "broad-permissions"),
+            ("command-injection", "dynamic-eval"),
+            ("command-injection", "path-traversal-sink"),
+        }
+        for analyzer_id, kind in sorted(heuristic_kinds):
+            with self.subTest(rule=(analyzer_id, kind)):
+                self.assertNotEqual(
+                    self.core.confidence_for_rule(analyzer_id, kind), "high",
+                    f"{analyzer_id}:{kind} is heuristic and must never be banded high",
+                )
+
     def test_secret_findings_use_high_confidence_policy(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
