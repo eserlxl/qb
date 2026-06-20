@@ -61,14 +61,18 @@ def evaluate(audit_dir, repo_root, scripts_dir=None) -> dict:
     earned ``permitted_autonomy`` ceiling is surfaced alongside. A crashed signal
     assembly is not readiness: it fails closed to ``passed == False``.
     """
+    errored = False
     try:
         decision = _signals.gate_decision(audit_dir, repo_root, scripts_dir)
+        checks = dict(decision.get("signals", {}))
+        permitted = decision.get("permitted_autonomy", "A0")
     except Exception:  # fail-closed: a crashed assembly is never readiness
-        decision = {"passed": False, "failures": ["production_gate_error"],
-                    "signals": {}, "permitted_autonomy": "A0"}
-    checks = dict(decision.get("signals", {}))
-    permitted = decision.get("permitted_autonomy", "A0")
+        checks, permitted, errored = {}, "A0", True
     checks[AUTONOMY_SIGNAL] = (permitted == A2_AUTONOMY)
+    if errored:
+        # Name the crash as its own failed signal so a fail-closed verdict is never
+        # silently attributed to an unrelated conjunct.
+        checks["production_gate_error"] = False
     failures = sorted(name for name, ok in checks.items() if not ok)
     return {
         "passed": not failures,
