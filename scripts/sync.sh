@@ -100,6 +100,11 @@ MAP=(
   "references/workflow-quality.md|platforms/cursor/references/workflow-quality.md"
   "references/workflow-quality.md|platforms/codex/plugins/qb/skills/qb/references/workflow-quality.md"
 
+  # shared/references/project-comprehension-methods.md
+  "references/project-comprehension-methods.md|platforms/claude-code/references/project-comprehension-methods.md"
+  "references/project-comprehension-methods.md|platforms/cursor/references/project-comprehension-methods.md"
+  "references/project-comprehension-methods.md|platforms/codex/plugins/qb/skills/qb/references/project-comprehension-methods.md"
+
   # shared/scripts/validate_planner_docs.py
   "scripts/validate_planner_docs.py|platforms/claude-code/scripts/validate_planner_docs.py"
   "scripts/validate_planner_docs.py|platforms/cursor/scripts/validate_planner_docs.py"

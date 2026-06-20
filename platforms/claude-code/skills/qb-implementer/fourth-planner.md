@@ -74,7 +74,7 @@ session, re-establish ground truth before editing anything:
 
 1. Re-read this contract and the selected sub-plan; do not trust a remembered plan.
 2. Re-check `git status` and the current branch; stop on an unrelated dirty worktree.
-3. Re-read `.qb/sub-planning-audit.md` and `.qb/sub-planning-index.md` (and, if present, `.qb/planning-ledger.md`), and reconcile any recorded slice status against real repo evidence.
+3. Re-read `.qb/sub-planning-audit.md` and `.qb/sub-planning-index.md` (and, if present, `.qb/planning-ledger.md` and `.qb/project-comprehension.md` — the optional evidence-backed comprehension artifact described in `project-comprehension-methods.md`), and reconcile any recorded slice status against real repo evidence. Verify any `tentative`/`probable` hypothesis the slice depends on before changing code.
 4. Do not repeat a slice that the evidence already shows implemented and verified.
 5. If the plan or audit no longer matches repo reality (plan-snapshot drift), stop and recommend a re-plan/re-audit instead of forcing the stale slice.
 

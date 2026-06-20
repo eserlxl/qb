@@ -50,9 +50,10 @@ absent from the sync map) are enumerated below and enforced separately.
 ## Decision: Antigravity reference-doc ownership
 
 `platforms/antigravity/skills/qb/references/` carries a richer planning-reference
-set than the engine hosts. Two refs — `repo-aware-intake.md` and
-`workflow-quality.md` — are **shared** (they live in `shared/references/` and fan
-out to all engine hosts). The host-specific planner-step prompts
+set than the engine hosts. Three refs — `repo-aware-intake.md`,
+`workflow-quality.md`, and `project-comprehension-methods.md` — are **shared**
+(they live in `shared/references/` and fan out to all engine hosts). The
+host-specific planner-step prompts
 (`first-planner.md`, `second-planner.md`, `third-planner.md`, `fourth-planner.md`,
 `assessment-planner.md`) are inherently Antigravity-only (they open with "You are
 Antigravity, running as…"). The remaining concept docs are classified below so the

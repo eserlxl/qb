@@ -26,6 +26,7 @@ ANTIGRAVITY_PLANNING_FILES = {
     "skills/qb/references/fourth-planner.md",
     "skills/qb/references/repo-aware-intake.md",
     "skills/qb/references/workflow-quality.md",
+    "skills/qb/references/project-comprehension-methods.md",
     "skills/qb/references/vibecoding-principles.md",
     "skills/qb/references/task-delegation-playbook.md",
     "skills/qb/references/planning-ledger.md",

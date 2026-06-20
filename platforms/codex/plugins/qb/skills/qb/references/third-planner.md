@@ -38,6 +38,8 @@ Primary sources of truth:
 main-planning.md is the master plan.
 sub-planning-index.md and all sub-plan files must be checked against it.
 
+When `.qb/project-comprehension.md` exists (the optional evidence-backed comprehension artifact described in `project-comprehension-methods.md`), audit the sub-plans against it: flag any sub-plan that rests on a `tentative`/`probable`/`contradicted` hypothesis or an `absent`/`divergent` architecture relation without a validation step. Treat it as supporting evidence; do not block Step 3 when it is absent.
+
 Language:
 Write .qb/sub-planning-audit.md in English.
 

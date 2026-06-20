@@ -64,6 +64,7 @@ Evidence and confidence discipline:
 - Tag each material claim with a confidence level: `confirmed`, `probable`, `tentative`, or `contradicted`. A `tentative` or `probable` claim is NOT an implementation fact; record it as work Step 2 must turn into validation.
 - A behavioral claim (what the code does at runtime) needs `test` or `runtime` evidence, or at least two independent evidence types with different locators. Independent means different evidence types AND different locators — two documentation references alone are not independent proof.
 - For an open why/how/what question, record a short hypothesis (e.g. `HYP-01: <claim>` with supporting and contradicting evidence and a next probe) instead of asserting a conclusion. Step 2 converts unresolved hypotheses into validation work; Step 4 verifies them before code changes.
+- For a non-trivial existing project that needs a durable evidence-backed mental model (distributed domain behavior, unclear architecture boundaries, repeated replanning), optionally apply the `project-comprehension-methods.md` reference — its Evidence Register, Domain-to-Code Trace Map, and Architecture Reflexion structures — and record the result in `.qb/project-comprehension.md`. This artifact is optional and never blocks the assessment.
 
 Focus on:
 - project modules and responsibility boundaries;

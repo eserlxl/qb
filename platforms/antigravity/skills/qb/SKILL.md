@@ -25,6 +25,7 @@ Planning behavior references:
 - `references/task-delegation-playbook.md` for safe helper-agent/task delegation and role boundaries.
 - `references/planning-ledger.md` for durable plan/implementation history via `.qb/planning-ledger.md`.
 - `references/project-ontology.md` for durable project vocabulary, entities, workflows, boundaries, and invariants.
+- `references/project-comprehension-methods.md` for the optional evidence-backed comprehension model (CQ questions, hypothesis confidence, Evidence Register, Domain-to-Code Trace Map, Architecture Reflexion) recorded in `.qb/project-comprehension.md` for non-trivial existing projects.
 - `references/assessment-and-budget.md` for autonomy, Antigravity task, token/context, and budget assessment.
 - `references/engineering-principles.md` for domain-appropriate CS, architecture, validation, and secure engineering methods.
 

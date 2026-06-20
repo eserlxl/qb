@@ -29,6 +29,8 @@ If it exists, read this file fully before generating sub-plans:
 
 assessment.md is not a replacement for main-planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when assessment.md is absent.
 
+When `.qb/project-comprehension.md` exists (the optional evidence-backed comprehension artifact described in `project-comprehension-methods.md`), read it too: convert each unresolved or `tentative`/`probable` hypothesis into explicit validation work in the sub-plans rather than treating it as an implementation fact. Do not block Step 2 when it is absent.
+
 Do not invent or replace the master plan, and do not change the phase order unless the
 main plan is internally inconsistent — even then, preserve the original order and
 document the inconsistency in the generated index. Step 2 decomposes the Step 1 master
