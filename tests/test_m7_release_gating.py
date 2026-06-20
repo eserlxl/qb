@@ -21,12 +21,15 @@ RELEASING = REPO_ROOT / "RELEASING.md"
 SECTION_HEADING = "### M7-eligible release"
 
 
-def _load_production_gate():
+def _engine(module_name: str):
     scripts_dir = str(SHARED_DIR / "scripts")
     if scripts_dir not in sys.path:
         sys.path.insert(0, scripts_dir)
-    import production_gate  # noqa: E402  (path set above)
-    return production_gate
+    return __import__(module_name)
+
+
+def _load_production_gate():
+    return _engine("production_gate")
 
 
 def _m7_section() -> str:
@@ -63,6 +66,18 @@ class M7ReleaseGatingProcedureTests(unittest.TestCase):
             "M7-eligible release", releasing,
             "RELEASING.md must cross-reference the M7-eligible release procedure",
         )
+
+    def test_documented_evidence_filename_matches_engine(self) -> None:
+        # The persisted, redacted release-gating decision filename in the procedure
+        # must match the engine constant that writes it, so the runbook evidence path
+        # cannot drift from release_gate.persist_authorization.
+        rg = _engine("release_gate")
+        self.assertIn(
+            rg.AUTHORIZATION_EVIDENCE_FILENAME, self.section,
+            "M7 procedure must document the persisted release-authorization filename "
+            "matching release_gate.AUTHORIZATION_EVIDENCE_FILENAME",
+        )
+        self.assertIn("persist_authorization", self.section)
 
 
 if __name__ == "__main__":
