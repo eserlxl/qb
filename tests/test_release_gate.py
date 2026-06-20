@@ -219,6 +219,22 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertNotIn(secret, raw)
             self.assertIn("<redacted>", raw)
 
+    def test_authorization_record_carries_no_delivery_flag(self) -> None:
+        # Release authorizes OPERATION, never DELIVERY: the authorization record
+        # carries the earned-autonomy decision but no a3-enable / commit / push / pr
+        # flag, so passing the release gate can never auto-enable A3 delivery
+        # (complements the production-gate operation-vs-delivery pin).
+        record = self.rg.authorization_record(self._telemetry(9, 1))
+        self.assertEqual(record["permitted_autonomy"], "A2")
+        self.assertEqual(set(record), {
+            "schema_version", "permitted_autonomy",
+            "precision_ok", "precision_reason",
+            "fix_safety_ok", "fix_safety_reason",
+        })
+        for delivery_key in ("a3_enabled_by_default", "allow_commit",
+                             "allow_push", "allow_pr"):
+            self.assertNotIn(delivery_key, record)
+
     def _telemetry(self, kept, reverted):
         return self.t.build_telemetry(run_id="r", autonomy_level="A2", findings=[],
                                       evidence=[{"outcome": "kept", "after_exit": 0}] * kept
