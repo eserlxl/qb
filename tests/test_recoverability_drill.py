@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from tests.qb_monorepo import SHARED_DIR
@@ -142,6 +143,26 @@ class RecoverabilityDrillTest(unittest.TestCase):
             self.assertFalse((repo / "new.txt").exists())
             self.assertEqual((repo / "a.txt").read_text(encoding="utf-8"), "baseline\n")
             self.assertEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")
+
+    def test_incomplete_restore_fails_closed(self):
+        # If the whole-run rollback does NOT fully restore the tree (the drill's
+        # own clean-at-baseline check reports the tree is still dirty), the drill
+        # must report passed=False -- it can never silently pass on an incomplete
+        # restore -- and the persisted evidence must record the failure. The
+        # exception path (test_mutation_exception_is_failed_but_rolled_back) is a
+        # different failure mode where the tree IS cleanly restored; this pins the
+        # passed = (clean and no error) fail-closed branch for clean=False.
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d) / "repo"
+            repo.mkdir()
+            _init_repo(repo)
+            output_dir = Path(d) / ".qb/audit"
+            with mock.patch.object(drill._rg, "baseline_clean", return_value=False):
+                record = drill.run_and_persist(str(repo), "drill-incomplete", output_dir)
+            self.assertFalse(record["baseline_clean"])
+            self.assertIsNone(record["mutation_error"])
+            self.assertFalse(record["passed"], "an incomplete restore must fail the drill")
+            self.assertEqual(drill.read_evidence(output_dir)["passed"], False)
 
 
 if __name__ == "__main__":
