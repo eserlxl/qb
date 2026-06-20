@@ -24,13 +24,19 @@ test:
 
 # coverage -- line-coverage of the QB engine source (shared/scripts) over the test
 # suite. coverage.py is an optional dev tool (like the quality analyzer's
-# ruff/pyflakes): when installed this emits a real line-coverage report; when
-# absent the target stays dormant, prints how to install it, and exits 0 so it
-# never breaks a clean tree. Not part of `make check` -- a measurement, not a gate.
+# ruff/pyflakes): when installed this emits a real line-coverage report AND enforces a
+# minimum floor (COVERAGE_FLOOR, default 80%) via `coverage report --fail-under`, so a
+# measured line-coverage regression fails the target instead of passing silently; when
+# absent the target stays dormant, prints how to install it, and exits 0 so it never
+# breaks a clean tree (the optional-dev-tool contract). The floor is a deliberately
+# conservative gate below the current measured coverage (~85% over shared/scripts);
+# raise COVERAGE_FLOOR as coverage improves to ratchet it. Not part of `make check` --
+# a measurement + regression floor, not the gate of record.
+COVERAGE_FLOOR ?= 80
 coverage:
 	@if python3 -c "import coverage" 2>/dev/null; then \
 		python3 -m coverage run --source=shared/scripts -m unittest discover -s tests -p 'test_*.py'; \
-		python3 -m coverage report; \
+		python3 -m coverage report --fail-under=$(COVERAGE_FLOOR); \
 	else \
 		echo "coverage: coverage.py not installed (optional dev tool); skipping measurement."; \
 		echo "coverage: install it for a line-coverage report -> pip install coverage"; \
