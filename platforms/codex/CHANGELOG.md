@@ -5,6 +5,18 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-06-20
+
+### Added
+- Planner enhancements: a v2 planning ledger, a project ontology, a probe-policy, and a task-delegation playbook, plus a confidence + evidence taxonomy and a seven-scenario planning corpus.
+- Tracked-file secret-hygiene scan in all four platform validators — each `validate.sh` scans its package for committed credentials and fails with a uniform `tracked_secret_hygiene_failed` token, covered by per-host tests.
+
+### Fixed
+- The planner-doc validator now masks only balanced code fences, so a dangling fence can no longer hide fix-list findings; the Step 4 readiness gate no longer silently bypasses on legacy three-field audit rows, and accepted findings still gate Step 4.
+
+### Changed
+- Attribution now credits Alican Kiraz's ClaudeQB alongside CursorQB, CodexQB, and AntigravityQB.
+
 ## [0.17.0] - 2026-06-19
 
 ### Changed
