@@ -28,6 +28,8 @@ Ledger v2 is the default structure for new files:
 ```markdown
 # Planning Ledger
 
+qb_schema_version: 2
+
 ## 1. Purpose
 ## 2. Planning Runs
 ## 3. Plan Snapshot Registry
@@ -37,6 +39,13 @@ Ledger v2 is the default structure for new files:
 ## 7. Replanning Inputs
 ## 8. Open Decisions and Follow-Ups
 ```
+
+New Ledger v2 files should carry the `qb_schema_version: 2` frontmatter marker on the
+line directly under the `# Planning Ledger` title. The marker is what lets future
+tooling tell a v2 ledger apart from a legacy one without inferring it from the section
+shape. Backward compatible: an unmarked ledger is still accepted in non-strict mode and
+treated as a deprecation warning — migrate it by adding the marker line. Strict mode may
+require the marker once tooling enforces it.
 
 Legacy v1 ledgers (the older six-section structure) remain valid for compatibility;
 treat one as a deprecation warning and migrate it to Ledger v2 before Step 4
@@ -93,6 +102,31 @@ contain `..`. Use the shape:
 ```
 
 Do not keep two active rows for the same sub-plan with conflicting statuses.
+
+## Hypothesis Linkage
+
+When the project carries the optional evidence-backed comprehension artifact
+(`.qb/project-comprehension.md`, see `references/project-comprehension-methods.md`),
+tie ledger rows back to the hypotheses and evidence they act on so a row's confidence is
+traceable, not asserted. Add an optional `Hypothesis Links` column to the Sub-Plan Status
+Matrix (kept separate from the core v2 columns so the existing table is not regressed):
+
+```markdown
+| Sub-plan Path | ... | Hypothesis Links |
+|---|---|---|
+| .qb/phase-1-plans/phase-1.1-x.md | ... | HYP-02 (confirmed), EV-04 |
+```
+
+Linkage rules:
+
+- Reference comprehension `HYP-xx` hypotheses or `EV-xx` Evidence Register IDs, with the
+  confirm/contradict outcome in parentheses, e.g. `HYP-02 (confirmed)`.
+- A row that relied on a `tentative`/`probable` hypothesis must not move to `verified`
+  until that hypothesis is `confirmed` (or its claim is otherwise validated) — record the
+  confirming Run ID / Validation Evidence in the same row.
+- A `contradicted` hypothesis that a row depended on is a blocker: set the row `blocked`
+  with a Next Action to re-plan around the contradiction.
+- The column is optional; omit it entirely when no comprehension artifact exists.
 
 ## Step 4 Implementation Run Summary
 
