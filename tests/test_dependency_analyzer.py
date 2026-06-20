@@ -129,6 +129,36 @@ class DependencyAnalyzerTests(unittest.TestCase):
                 self.assertEqual(finding.category, "dependency")
                 self.assertEqual(self.validate(finding), [])
 
+    def test_cargo_toml_without_lockfile_is_flagged(self) -> None:
+        # Cargo.toml present but no Cargo.lock -> reproducibility hygiene finding,
+        # mirroring the existing package.json missing-lockfile rule.
+        expected_id = self.dep.compute_finding_id(
+            "dependency", "Cargo.toml:1", "missing-cargo-lockfile")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            root.joinpath("Cargo.toml").write_text(
+                '[package]\nname = "x"\nversion = "0.1.0"\n', encoding="utf-8")
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+        match = [f for f in findings if f.id == expected_id]
+        self.assertEqual(len(match), 1, "expected exactly one missing-cargo-lockfile finding")
+        self.assertEqual(match[0].category, "dependency")
+        self.assertEqual(match[0].evidence, "Cargo.toml:1")
+        self.assertEqual(self.validate(match[0]), [])
+
+    def test_cargo_lock_present_suppresses_missing_lockfile(self) -> None:
+        expected_id = self.dep.compute_finding_id(
+            "dependency", "Cargo.toml:1", "missing-cargo-lockfile")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            root.joinpath("Cargo.toml").write_text(
+                '[package]\nname = "x"\nversion = "0.1.0"\n', encoding="utf-8")
+            root.joinpath("Cargo.lock").write_text("# lockfile\n", encoding="utf-8")
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+        self.assertFalse(
+            any(f.id == expected_id for f in findings),
+            "Cargo.lock present must suppress the missing-cargo-lockfile finding",
+        )
+
     def test_pyproject_dependencies_are_parsed_offline(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
