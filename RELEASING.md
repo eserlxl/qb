@@ -21,9 +21,12 @@ See also the [RUNBOOK](RUNBOOK.md) gate-of-record and release-integrity sections
    not sufficient: confirm the consolidated M7 release-gating conjunction — the six
    `production_gate.PRODUCTION_GATE_CHECKS` conjuncts **and** every Phase 0–5 row of the
    M7 readiness checklist (`BASELINE.md`) — holds fail-closed, per
-   [RUNBOOK.md](RUNBOOK.md) ("M7-eligible release"). Any single false conjunct denies M7
-   eligibility and is named; passing authorizes operation only, so the tagging and
-   publishing steps below stay manual, operator-only actions.
+   [RUNBOOK.md](RUNBOOK.md) ("M7-eligible release"). The joint operational + autonomy
+   verdict is computed programmatically by the M7 readiness aggregator
+   (`shared/scripts/m7_readiness.py`): run `python3 shared/scripts/m7_readiness.py
+   --root .` (exit 0 = ready) to resolve the joint-signal conjunct. Any single false
+   conjunct denies M7 eligibility and is named; passing authorizes operation only, so
+   the tagging and publishing steps below stay manual, operator-only actions.
 
 3. **Bump the version and write the changelog entry** through the sanctioned bump
    path (never hand-edit version fields):

@@ -345,6 +345,22 @@ fail-closed conjunction of two parts:
 
 Neither part alone is sufficient. **Any single false conjunct** — a production-gate
 conjunct **or** an un-green readiness row — denies M7-eligible release and is named.
+
+The joint operational + autonomy verdict (the evidence-backed core of part 2) is
+computed **programmatically** by the M7 readiness aggregator
+(`shared/scripts/m7_readiness.py`), so the joint-signal conjunct resolves to one verdict
+rather than a manual checklist cross-read: `m7_readiness.evaluate` returns a single
+fail-closed `{passed, failures, checks}` over the captured `.qb/audit/` evidence (the six
+production-gate conjuncts plus `autonomy_earned`), and
+
+```bash
+python3 shared/scripts/m7_readiness.py --root .
+```
+
+persists a redacted, schema-versioned sign-off record to `.qb/audit/m7-readiness.json`
+(exit 0 only when every signal holds). The test-suite-pinned floor (Phase 0 baseline,
+Phase 1 isolation, Phase 5 byte-equal parity) stays the gate of record (`make check`).
+
 The release-gating decision is persisted redacted via `release_gate.persist_authorization`
 to `.qb/audit/release-authorization.json` (alongside `.qb/audit/production-gate.json`).
 Release eligibility **fails closed**, and passing it authorizes **operation only**: it
