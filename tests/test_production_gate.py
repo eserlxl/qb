@@ -61,6 +61,10 @@ class ProductionGateTests(unittest.TestCase):
             result = self.pg.production_gate(**args)
             self.assertFalse(result["passed"], f"gate should fail when {check} is false")
             self.assertIn(check, result["failures"])
+            # Operation never implies delivery: A3 stays opt-in on a FAILING gate
+            # too (complements the passing-gate assertion above).
+            self.assertFalse(result["a3_enabled_by_default"],
+                             f"A3 must never be default, even when {check} fails")
 
     def test_self_audit_clean_with_accepted_register(self) -> None:
         findings = [{"id": "QBF-1"}, {"id": "QBF-2"}]
