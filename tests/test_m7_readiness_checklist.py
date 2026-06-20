@@ -15,9 +15,10 @@ instead of leaving a green-but-wrong checklist.
 from __future__ import annotations
 
 import re
+import sys
 import unittest
 
-from tests.qb_monorepo import REPO_ROOT
+from tests.qb_monorepo import REPO_ROOT, SHARED_DIR
 
 BASELINE = REPO_ROOT / "BASELINE.md"
 SECTION_HEADING = "## M7 readiness checklist"
@@ -69,6 +70,23 @@ class M7ReadinessChecklistTests(unittest.TestCase):
                     existing,
                     f"checklist row names no existing committed evidence file: {row[:80]}",
                 )
+
+
+    def test_release_gating_row_references_production_gate_conjuncts(self) -> None:
+        # Pin the release-gating (operations) signal to the REAL conjunct set,
+        # imported by name: a renamed or dropped production-gate conjunct fails here
+        # instead of leaving a green-but-wrong checklist.
+        scripts_dir = str(SHARED_DIR / "scripts")
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        import production_gate  # noqa: E402  (path set above)
+
+        self.assertTrue(production_gate.PRODUCTION_GATE_CHECKS)
+        for conjunct in production_gate.PRODUCTION_GATE_CHECKS:
+            self.assertIn(
+                conjunct, self.section,
+                f"the M7 readiness checklist omits production-gate conjunct {conjunct!r}",
+            )
 
 
 if __name__ == "__main__":
