@@ -167,6 +167,11 @@ def parse_pyproject(text: str) -> list:
             if isinstance(raw_spec, str):
                 spec = raw_spec
             elif isinstance(raw_spec, dict):
+                # A poetry git/path dependency (inline table without a version)
+                # carries no registry version to pin; skip it rather than emit a
+                # bogus unpinned finding (mirrors parse_cargo's git/path skip).
+                if "version" not in raw_spec:
+                    continue
                 spec = str(raw_spec.get("version", ""))
             else:
                 spec = str(raw_spec)

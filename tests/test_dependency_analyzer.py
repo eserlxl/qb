@@ -208,6 +208,27 @@ class DependencyAnalyzerTests(unittest.TestCase):
         for f in findings:
             self.assertEqual(self.validate(f), [])
 
+    def test_poetry_git_path_dependencies_are_skipped(self) -> None:
+        # A poetry git/path dep (inline table without a version) carries no
+        # registry version to pin and must not be flagged "unpinned"; a poetry
+        # dep that DOES carry a version is still parsed (and pin-checked).
+        body = (
+            '[tool.poetry.dependencies]\n'
+            'python = "^3.11"\n'
+            'mylib = {git = "https://github.com/u/r.git"}\n'
+            'localdep = {path = "../localdep"}\n'
+            'requests = {version = "^2.31"}\n'
+            'pinned = {version = "2.2.1"}\n'
+        )
+        names = [d["name"] for d in self.dep.parse_pyproject(body)]
+        self.assertNotIn("mylib", names)     # git dep skipped
+        self.assertNotIn("localdep", names)  # path dep skipped
+        self.assertIn("requests", names)     # versioned dict dep kept
+        self.assertIn("pinned", names)
+        by_name = {d["name"]: d for d in self.dep.parse_pyproject(body)}
+        self.assertFalse(by_name["requests"]["pinned"])  # ^2.31 is a range
+        self.assertTrue(by_name["pinned"]["pinned"])     # 2.2.1 is exact
+
     def test_pyproject_non_table_project_or_tool_does_not_crash(self) -> None:
         # A TOML-valid pyproject that declares `project` or `tool` as a scalar
         # must fail closed to [] rather than raise AttributeError out of the
