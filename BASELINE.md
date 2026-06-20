@@ -35,12 +35,12 @@ python3 -m unittest discover -s tests -v
 | Metric | Baseline value |
 |---|---|
 | Test modules (`tests/test_*.py`) | 76 |
-| Test functions | 573 |
+| Test functions | 574 |
 | Failures | 0 |
 | Errors | 0 |
 | Exit status | 0 |
 
-A run reporting anything other than 76 modules or 573 passing test cases, or any
+A run reporting anything other than 76 modules or 574 passing test cases, or any
 failure or error, is a regression against this reference.
 
 **Same-change update rule:** adding or removing a test module or test case must
@@ -52,7 +52,8 @@ the baseline update turns the next `make check` red; diagnose by the per-guard
 **Authoritative count source:** the test-function count is live
 `unittest` discovery (`unittest.TestLoader().discover('tests').countTestCases()`),
 the operator-visible number — never a `def test_` text grep, which miscounts
-(e.g. 572 vs the live 573, because fixture strings contain `def test_*`). Use
+(a text grep counts `def test_*` strings inside fixtures that are not real
+tests, so it undercounts the live total). Use
 `python3 -m unittest discover -s tests -v` (or `make baseline`) to read the
 count; do not "correct" the baseline from a source-text regex.
 
@@ -86,7 +87,7 @@ localized to one guard.
 | `bash platforms/cursor/scripts/validate.sh` | The Cursor package validates the same per-host contract. |
 | `bash platforms/antigravity/scripts/validate.sh` | The Antigravity (planning-only) package validates its own contract. |
 | `cd platforms/codex && bash scripts/validate.sh` | The Codex package validates the same per-host contract. |
-| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (76 modules / 573 functions) passes. |
+| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (76 modules / 574 functions) passes. |
 
 A red `make check` is diagnosed by re-running the failing sub-step in isolation;
 each command above is self-contained.
@@ -207,7 +208,7 @@ discovery).
 | Version (`VERSION`) | `0.18.0` |
 | Expected `make check` exit status | `0` |
 | Expected test modules | 76 |
-| Expected test functions | 573 |
+| Expected test functions | 574 |
 | Expected failures / errors | 0 / 0 |
 
 Baseline guard set (each individually runnable — see **Guard-to-test mapping**):

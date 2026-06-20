@@ -199,6 +199,51 @@ class CommandSafetyTests(unittest.TestCase):
         for control in available:
             self.assertIn(control, completed.qb_confinement["controls"])
 
+    def test_timeout_reaps_whole_process_group(self) -> None:
+        # A timed-out command must SIGKILL its whole session/group so a grandchild
+        # it spawned is reaped, not orphaned (an orphaned untrusted process could
+        # keep running after QB returns). The grandchild records its PID and then
+        # blocks; after the timeout we assert that PID is no longer alive.
+        import subprocess
+        import time
+        if "process_group" not in self.cs.available_confinement_controls():
+            self.skipTest("process confinement unavailable on this host")
+        with tempfile.TemporaryDirectory() as d:
+            pid_file = Path(d) / "grandchild.pid"
+            grandchild = (
+                "import os, time, pathlib;"
+                f"pathlib.Path({str(pid_file)!r}).write_text(str(os.getpid()));"
+                "time.sleep(60)"
+            )
+            # The parent leads its own session/group (run_command sets
+            # start_new_session); the grandchild it spawns inherits that group, so
+            # the timeout group-kill must reach it.
+            parent = (
+                "import subprocess, sys, time;"
+                f"subprocess.Popen([sys.executable, '-c', {grandchild!r}]);"
+                "time.sleep(60)"
+            )
+            with self.assertRaises(subprocess.TimeoutExpired):
+                self.cs.run_command([sys.executable, "-c", parent], timeout=1.0)
+            deadline = time.monotonic() + 10.0
+            while not pid_file.exists() and time.monotonic() < deadline:
+                time.sleep(0.02)
+            self.assertTrue(pid_file.exists(), "grandchild never started")
+            gpid = int(pid_file.read_text())
+            reaped = False
+            while time.monotonic() < deadline:
+                try:
+                    os.kill(gpid, 0)
+                except ProcessLookupError:
+                    reaped = True
+                    break
+                time.sleep(0.02)
+            self.assertTrue(
+                reaped,
+                f"grandchild {gpid} survived the timeout group-kill (orphaned); "
+                "_kill_process_group must SIGKILL the whole process group",
+            )
+
     # --- path containment -------------------------------------------------
     def test_path_containment_accepts_within_and_rejects_escape(self) -> None:
         with tempfile.TemporaryDirectory() as d:
