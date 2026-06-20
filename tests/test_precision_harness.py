@@ -70,6 +70,82 @@ class PrecisionHarnessTests(unittest.TestCase):
         self.assertEqual(first["per_analyzer"]["secret-hygiene"]["recall"], 1.0)
         self.assertEqual(first["per_analyzer"]["workflow-actions"]["recall"], 1.0)
 
+    def test_full_baseline_is_pinned(self) -> None:
+        # Pin the COMPLETE deterministic per-analyzer / per-category / totals
+        # baseline over the committed corpus, so a silent metric drift in any
+        # field of any deterministic analyzer fails the test (the spot-checks in
+        # test_baseline_metrics_are_deterministic only pin a few fields).
+        report = self._build_report(CORPUS)
+
+        self.assertEqual(
+            report["totals"],
+            {
+                "true_positive": 5,
+                "false_positive": 0,
+                "false_negative": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+            },
+        )
+        self.assertEqual(
+            report["per_analyzer"],
+            {
+                "command-injection": {
+                    "true_positive": 1, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+                "dependency-audit": {
+                    "true_positive": 1, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+                "secret-hygiene": {
+                    "true_positive": 1, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+                "workflow-actions": {
+                    "true_positive": 2, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+            },
+        )
+        self.assertEqual(
+            report["per_category"],
+            {
+                "config": {
+                    "true_positive": 0, "false_positive": 0, "false_negative": 0,
+                    "precision": None, "recall": None,
+                },
+                "correctness": {
+                    "true_positive": 0, "false_positive": 0, "false_negative": 0,
+                    "precision": None, "recall": None,
+                },
+                "dependency": {
+                    "true_positive": 3, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+                "injection": {
+                    "true_positive": 1, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+                "license": {
+                    "true_positive": 0, "false_positive": 0, "false_negative": 0,
+                    "precision": None, "recall": None,
+                },
+                "path-traversal": {
+                    "true_positive": 0, "false_positive": 0, "false_negative": 0,
+                    "precision": None, "recall": None,
+                },
+                "quality": {
+                    "true_positive": 0, "false_positive": 0, "false_negative": 0,
+                    "precision": None, "recall": None,
+                },
+                "secret": {
+                    "true_positive": 1, "false_positive": 0, "false_negative": 0,
+                    "precision": 1.0, "recall": 1.0,
+                },
+            },
+        )
+
     def test_unlabelled_positive_changes_precision(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             corpus = Path(d) / "corpus"
