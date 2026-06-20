@@ -231,6 +231,24 @@ class DependencyAnalyzerTests(unittest.TestCase):
         for f in findings:
             self.assertEqual(self.validate(f), [])
 
+    def test_pep735_dependency_groups_are_scanned(self) -> None:
+        # PEP 735 [dependency-groups] is a standard manifest location for dev/test
+        # deps; an unpinned entry there is a hygiene gap, a pinned one is clean,
+        # and an {include-group = ...} table reference carries no version (skipped).
+        body = (
+            '[dependency-groups]\n'
+            'test = ["pytest>=8", "ruff==0.1.0"]\n'
+            'dev = [{include-group = "test"}, "mypy>=1.8"]\n'
+        )
+        deps = {d["name"]: d for d in self.dep.parse_pyproject(body)}
+        self.assertIn("pytest", deps)
+        self.assertFalse(deps["pytest"]["pinned"])  # >=8 is a range
+        self.assertIn("ruff", deps)
+        self.assertTrue(deps["ruff"]["pinned"])      # ==0.1.0 is exact
+        self.assertIn("mypy", deps)
+        self.assertFalse(deps["mypy"]["pinned"])
+        self.assertNotIn("include-group", deps)      # table reference skipped
+
     def test_poetry_git_path_dependencies_are_skipped(self) -> None:
         # A poetry git/path dep (inline table without a version) carries no
         # registry version to pin and must not be flagged "unpinned"; a poetry

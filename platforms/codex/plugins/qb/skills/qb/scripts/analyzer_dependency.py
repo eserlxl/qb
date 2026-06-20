@@ -181,6 +181,29 @@ def parse_pyproject(text: str) -> list:
                 "line": _line_for_token(text, str(name)),
                 "pinned": _is_exact_pin(spec),
             })
+
+    # PEP 735 dependency groups ([dependency-groups]). Each group is a list of
+    # PEP 508 requirement strings (or {"include-group": ...} table references,
+    # which carry no version and are skipped).
+    groups = data.get("dependency-groups", {})
+    if isinstance(groups, dict):
+        for group_entries in groups.values():
+            if not isinstance(group_entries, list):
+                continue
+            for entry in group_entries:
+                if not isinstance(entry, str):
+                    continue
+                parsed = _REQ_LINE.match(entry)
+                if not parsed:
+                    continue
+                name = parsed.group(1)
+                spec = parsed.group(2).strip()
+                deps.append({
+                    "name": name,
+                    "spec": spec,
+                    "line": _line_for_token(text, entry),
+                    "pinned": _is_exact_pin(spec),
+                })
     return deps
 
 
