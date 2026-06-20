@@ -75,7 +75,7 @@ localized to one guard.
 | Sub-step (command) | Invariant enforced |
 |---|---|
 | `bash scripts/sync.sh --check` | Every platform copy is byte-equal to its `shared/` source, and every shared file is wired into the fan-out MAP. |
-| `bash platforms/claude-code/scripts/validate.sh` | The Claude Code package validates: manifest identity, frontmatter, and no cross-host launch-syntax residue. |
+| `bash platforms/claude-code/scripts/validate.sh` | The Claude Code package validates: manifest identity, frontmatter, no cross-host launch-syntax residue, and tracked-file secret hygiene. |
 | `bash platforms/cursor/scripts/validate.sh` | The Cursor package validates the same per-host contract. |
 | `bash platforms/antigravity/scripts/validate.sh` | The Antigravity (planning-only) package validates its own contract. |
 | `cd platforms/codex && bash scripts/validate.sh` | The Codex package validates the same per-host contract. |
