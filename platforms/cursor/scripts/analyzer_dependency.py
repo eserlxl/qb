@@ -28,6 +28,12 @@ import json
 import re
 import sys
 from pathlib import Path
+# Minimum-supported-Python contract: QB targets Python 3.11+, where ``tomllib`` is in
+# the standard library. On 3.10 (or any interpreter lacking ``tomllib``) the analyzer
+# still loads and runs: the TOML-based manifests (pyproject.toml, Cargo.toml) degrade to
+# NO findings -- a documented, fail-open-to-empty fallback, pinned by
+# test_pyproject_without_tomllib_degrades_to_empty / test_cargo_without_tomllib_degrades_to_empty
+# -- while the non-TOML manifests (requirements.txt, package.json, go.mod) are unaffected.
 try:
     import tomllib
 except ImportError:  # pragma: no cover - Python <3.11 fallback

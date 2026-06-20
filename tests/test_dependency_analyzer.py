@@ -416,6 +416,43 @@ class DependencyAnalyzerTests(unittest.TestCase):
             after = {p.name: p.stat().st_mtime_ns for p in Path(d).iterdir()}
             self.assertEqual(before, after)
 
+    def test_pyproject_without_tomllib_degrades_to_empty(self) -> None:
+        # Minimum-supported-Python contract: on an interpreter lacking tomllib (Python
+        # <3.11) the TOML manifest parsers degrade to NO findings rather than crashing.
+        # Pin that documented fallback by simulating the absent module global.
+        pyproject = '[project]\ndependencies = ["flask>=3.0"]\n'
+        self.assertTrue(
+            self.dep.parse_pyproject(pyproject),
+            "with tomllib present the dep is parsed (guards against a vacuous test)",
+        )
+        original = self.dep.tomllib
+        self.dep.tomllib = None
+        try:
+            self.assertEqual(
+                self.dep.parse_pyproject(pyproject), [],
+                "without tomllib, pyproject.toml parsing must degrade to no findings",
+            )
+        finally:
+            self.dep.tomllib = original
+
+    def test_cargo_without_tomllib_degrades_to_empty(self) -> None:
+        # Companion to the pyproject case: Cargo.toml parsing shares the tomllib guard,
+        # so it degrades to no findings the same way on a pre-3.11 interpreter.
+        cargo = '[dependencies]\nserde = "1.0"\n'
+        self.assertTrue(
+            self.dep.parse_cargo(cargo),
+            "with tomllib present the dep is parsed (guards against a vacuous test)",
+        )
+        original = self.dep.tomllib
+        self.dep.tomllib = None
+        try:
+            self.assertEqual(
+                self.dep.parse_cargo(cargo), [],
+                "without tomllib, Cargo.toml parsing must degrade to no findings",
+            )
+        finally:
+            self.dep.tomllib = original
+
     def test_nested_manifests_are_analyzed_with_relative_path_evidence(self) -> None:
         # A monorepo's nested package manifests must be audited too -- not only the root
         # -- and each finding must carry that nested manifest's true relative-path evidence
