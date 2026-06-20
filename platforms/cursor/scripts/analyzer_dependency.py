@@ -357,6 +357,14 @@ class DependencyAnalyzer:
                         f"caret, or wildcard spec can resolve to a different version over time.",
                         "Pin the dependency to an exact version (=X.Y.Z) and commit Cargo.lock.",
                     ))
+        if cargo_path.is_file() and not (root / "Cargo.lock").is_file():
+            findings.append(self._finding(
+                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                "Cargo.toml:1", "missing-cargo-lockfile",
+                "Offline manifest audit: Cargo.toml is present but no Cargo.lock was found, "
+                "so the resolved dependency versions are not reproducible.",
+                "Run `cargo generate-lockfile` (or `cargo build`) and commit Cargo.lock.",
+            ))
 
         # --- Networked tier (opt-in, fail-closed) ----------------------------
         allow_networked = bool(getattr(config, "allow_networked", False))
