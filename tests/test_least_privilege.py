@@ -221,6 +221,39 @@ class LeastPrivilegeTests(unittest.TestCase):
                 "process-confinement availability must not certify a full execution sandbox",
             )
 
+    def test_autonomy_ceiling_splits_trusted_and_untrusted_paths(self) -> None:
+        # Phase 1.3 ceiling precision: process-confinement availability alone must not
+        # authorise A2/A3 for UNTRUSTED code -- that requires a certified full execution
+        # sandbox. The trusted-code path retains the process-confinement clamp.
+        policy = _load("qb_policy_ceiling_under_test", SHARED_SCRIPTS / "policy.py")
+        # Untrusted code, no certification: capped at A1 even when process confinement is up.
+        self.assertEqual(
+            policy.execution_autonomy_ceiling(
+                sandbox_available=True, sandbox_certified=False, code_trusted=False),
+            policy.A1,
+            "untrusted code without a certified sandbox must cap at A1",
+        )
+        # Untrusted code, certified sandbox: reaches A3.
+        self.assertEqual(
+            policy.execution_autonomy_ceiling(
+                sandbox_available=True, sandbox_certified=True, code_trusted=False),
+            policy.A3,
+            "untrusted code with a certified sandbox reaches A3",
+        )
+        # Trusted-code path retains the process-confinement clamp (current behaviour).
+        self.assertEqual(
+            policy.execution_autonomy_ceiling(
+                sandbox_available=True, sandbox_certified=False, code_trusted=True),
+            policy.A3,
+            "trusted code with process confinement available keeps A3",
+        )
+        self.assertEqual(
+            policy.execution_autonomy_ceiling(
+                sandbox_available=False, sandbox_certified=False, code_trusted=True),
+            policy.A1,
+            "trusted code without process confinement clamps to A1",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

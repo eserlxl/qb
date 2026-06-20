@@ -56,6 +56,29 @@ def full_execution_sandbox_certified() -> bool:
     return False
 
 
+def execution_autonomy_ceiling(
+    *, sandbox_available: bool, sandbox_certified: bool, code_trusted: bool = True
+) -> str:
+    """Effective autonomy ceiling under the governed trust boundary (Phase 1.3).
+
+    This makes the trust premise explicit, closing the conflation where mere
+    process-confinement availability was treated as the "sandbox" signal for A2/A3:
+
+    * Trusted-code path (``code_trusted`` True -- the governed direction-B default,
+      QB run under the SECURITY.md trusted-code precondition): the ceiling rests on
+      that precondition, clamped to the shipped *process confinement* -- A3 when
+      process confinement is available, A1 otherwise. This is the current shipped
+      behaviour, unchanged.
+    * Untrusted-code path (``code_trusted`` False): A2/A3 require a CERTIFIED full
+      execution sandbox (filesystem/network/syscall isolation), NOT merely process
+      confinement. Without certification the ceiling caps at A1 -- so process-group
+      availability alone can never authorise A2/A3 over untrusted code.
+    """
+    if code_trusted:
+        return sandbox_autonomy_ceiling(sandbox_available=sandbox_available)
+    return A3 if sandbox_certified else A1
+
+
 SCHEMA_VERSION = 2
 
 # The CLOSED set of permitted top-level policy keys. Unknown key => parse error.

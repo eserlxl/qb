@@ -145,7 +145,16 @@ def run_finding(policy, repo_root, fix_plan, apply_fn, *, run_id="run", enable_a
     # host; if not, clamp effective autonomy below apply-verified so no A2/A3 apply
     # is attempted (a deterministic safe degradation, not attempt-and-revert).
     sandbox_available = "process_group" in _cs.available_confinement_controls()
-    sandbox_ceiling = _policy.sandbox_autonomy_ceiling(sandbox_available=sandbox_available)
+    # Governed direction-B trust premise: QB runs under the SECURITY.md trusted-code
+    # precondition, so the ceiling rests on process-confinement availability. Untrusted
+    # code would require a CERTIFIED full execution sandbox (not shipped, fail-closed),
+    # threaded here so process-confinement availability alone can never imply A2/A3 for it.
+    sandbox_certified = _policy.full_execution_sandbox_certified()
+    sandbox_ceiling = _policy.execution_autonomy_ceiling(
+        sandbox_available=sandbox_available,
+        sandbox_certified=sandbox_certified,
+        code_trusted=True,
+    )
     # Effective level = the most restrictive of declared, earned ceiling, and the
     # sandbox-availability clamp (the lowest always wins).
     level = _release.most_restrictive(declared, earned, sandbox_ceiling)
