@@ -219,6 +219,27 @@ class ProductionGateSignalsTests(unittest.TestCase):
                 "an unparseable engine module must fail the supply-chain check closed",
             )
 
+    def test_supply_chain_is_manifest_anchored_and_fails_closed(self) -> None:
+        # Phase 6.1: supply_chain_ok is no longer the dependency-free check alone -- it is
+        # AND-ed with the release-manifest invariant (well-formed semver VERSION over a
+        # non-empty tree). A clean engine core under a malformed manifest fails closed; a
+        # well-formed semver manifest passes.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            scripts = root / "scripts"
+            scripts.mkdir()
+            (scripts / "ok.py").write_text("import os\n", encoding="utf-8")  # stdlib-only, clean
+            (root / "VERSION").write_text("not-a-semver\n", encoding="utf-8")
+            self.assertFalse(
+                self.sig.supply_chain_ok(scripts),
+                "a malformed (non-semver) manifest VERSION must fail supply_chain_ok closed",
+            )
+            (root / "VERSION").write_text("1.2.3\n", encoding="utf-8")
+            self.assertTrue(
+                self.sig.supply_chain_ok(scripts),
+                "a clean engine core under a well-formed semver manifest passes",
+            )
+
     def test_each_missing_signal_fails_the_gate(self) -> None:
         # Fail-closed: an absent telemetry record / recoverability record / findings
         # inventory each deny their conjunct (so the composite gate cannot pass).

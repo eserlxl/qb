@@ -10,11 +10,11 @@ the single authorization decision the finale is named for:
   * killswitch_proven     -- the budget engine's kill-switch halts at a safe
                              checkpoint with the documented exit code, proven live (7.1).
   * least_privilege_ok    -- the write/network/script least-privilege invariants hold (7.3).
-  * supply_chain_ok       -- INTERIM: derived only from the `make check` posture (the
-                             engine's dependency-free core). The AUTHORITATIVE
-                             published-integrity source is Phase 8 (deterministic
-                             release manifest + SHA-256); this never returns True on a
-                             placeholder, only on the real dependency-free check.
+  * supply_chain_ok       -- manifest-anchored (Phase 6.1): the engine's dependency-free
+                             core AND the QB release manifest verifying clean (a
+                             well-formed semver VERSION over a non-empty tree -- the
+                             same invariant scripts/release-manifest.py --check pins).
+                             Fail-closed: any verification error denies the conjunct.
   * self_audit_clean      -- the QB-audits-QB reconciliation is clean (7.3).
 
 Every derivation is fail-closed: a missing record, an unreadable signal, or any
@@ -27,9 +27,13 @@ autonomy; it does not gate operation).
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from importlib import util as _import_util
 from pathlib import Path
+
+# A well-formed manifest pins a semver VERSION (mirrors release-manifest.py --check).
+_SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 
 # Entrypoint exit-code contract (fail-closed: a crash never reports passed):
 #   0 GATE_PASSED  -- every conjunct holds; autonomous operation authorized.
@@ -105,14 +109,44 @@ def least_privilege_ok(repo_root) -> bool:
                 and offline_runs and no_implicit_egress)
 
 
+def _qb_root(scripts_dir: Path):
+    """The QB package root anchoring the release manifest: the nearest ancestor of the
+    engine scripts dir that holds a VERSION file. None if none is found (fail-closed)."""
+    for parent in (scripts_dir, *scripts_dir.parents):
+        if (parent / "VERSION").is_file():
+            return parent
+    return None
+
+
+def _manifest_verifies(scripts_dir: Path) -> bool:
+    """The release-manifest integrity invariant, reimplemented stdlib-only so the shared
+    engine never imports the repo-root scripts/release-manifest.py: the QB package root
+    pins a well-formed semver VERSION over a non-empty tree -- the same well-formed-manifest
+    property scripts/release-manifest.py --check enforces (which remains the authoritative
+    on-disk SHA-256 inventory). Fail-closed: returns False if the root or VERSION is
+    missing/malformed."""
+    root = _qb_root(scripts_dir)
+    if root is None:
+        return False
+    version = (root / "VERSION").read_text(encoding="utf-8").strip()
+    if not _SEMVER_RE.match(version):
+        return False
+    return any(p.is_file() for p in root.iterdir())
+
+
 def supply_chain_ok(scripts_dir=None) -> bool:
-    """INTERIM supply-chain signal derived from the `make check` posture: the engine's
-    dependency-free core (no non-stdlib import in any shared module). This is NOT the
-    authoritative published-integrity check -- Phase 8's deterministic release manifest
-    + SHA-256 is. It never returns True on a placeholder, only when the real
-    dependency-free check is clean."""
+    """Manifest-anchored supply-chain signal (Phase 6.1): the engine's dependency-free
+    core (no non-stdlib import in any shared module) AND the QB release manifest verifying
+    clean (a well-formed semver VERSION over a non-empty tree -- the invariant
+    scripts/release-manifest.py --check pins). Fail-closed: any verification error returns
+    False (never raises), and it never returns True on a placeholder."""
     scripts_dir = Path(scripts_dir) if scripts_dir is not None else Path(__file__).resolve().parent
-    return _lp.assert_dependency_free_core(scripts_dir) == []
+    try:
+        if _lp.assert_dependency_free_core(scripts_dir) != []:
+            return False
+        return _manifest_verifies(scripts_dir)
+    except Exception:
+        return False
 
 
 def self_audit_clean(audit_dir, repo_root) -> bool:
