@@ -12,8 +12,9 @@ the single authorization decision the finale is named for:
   * least_privilege_ok    -- the write/network/script least-privilege invariants hold (7.3).
   * supply_chain_ok       -- manifest-anchored (Phase 6.1): the engine's dependency-free
                              core AND the QB release manifest verifying clean (a
-                             well-formed semver VERSION over a non-empty tree -- the
-                             same invariant scripts/release-manifest.py --check pins).
+                             well-formed semver VERSION over a complete, fully-hashable
+                             engine inventory -- the same self-verify invariant
+                             scripts/release-manifest.py --check pins).
                              Fail-closed: any verification error denies the conjunct.
   * self_audit_clean      -- the QB-audits-QB reconciliation is clean (7.3).
 
@@ -27,6 +28,7 @@ autonomy; it does not gate operation).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from importlib import util as _import_util
@@ -118,28 +120,54 @@ def _qb_root(scripts_dir: Path):
     return None
 
 
+def _engine_inventory(scripts_dir: Path) -> "list[str]":
+    """Deterministic SHA-256 inventory of the engine module tree under scripts_dir
+    (every source file, recursively; sorted; __pycache__ skipped). This is the
+    bounded, git-free analogue of the on-disk inventory scripts/release-manifest.py
+    builds -- it actually hashes each engine file rather than checking only that the
+    package directory is non-empty. Raises OSError on an unreadable file so the
+    caller can fail closed: an engine tree that cannot be fully inventoried is not
+    proven intact."""
+    entries: list[str] = []
+    for path in sorted(scripts_dir.rglob("*")):
+        if "__pycache__" in path.parts or not path.is_file():
+            continue
+        h = hashlib.sha256()
+        with path.open("rb") as fh:  # OSError on an unreadable file -> fail closed
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        rel = path.relative_to(scripts_dir).as_posix()
+        entries.append(f"{h.hexdigest()}  {rel}")
+    return entries
+
+
 def _manifest_verifies(scripts_dir: Path) -> bool:
     """The release-manifest integrity invariant, reimplemented stdlib-only so the shared
     engine never imports the repo-root scripts/release-manifest.py: the QB package root
-    pins a well-formed semver VERSION over a non-empty tree -- the same well-formed-manifest
-    property scripts/release-manifest.py --check enforces (which remains the authoritative
-    on-disk SHA-256 inventory). Fail-closed: returns False if the root or VERSION is
-    missing/malformed."""
+    pins a well-formed semver VERSION AND the engine tree is a complete, fully-hashable
+    SHA-256 inventory -- the same well-formed + fully-hashable property
+    scripts/release-manifest.py --check self-verifies (a non-empty file set every entry
+    of which is present and readable). This anchors the positive path to the actual
+    inventory rather than asserting only that the package directory holds some file.
+    Fail-closed: returns False if the root or VERSION is missing/malformed, or the engine
+    inventory is empty or cannot be fully computed (an unreadable file raises OSError,
+    which supply_chain_ok turns into a denial)."""
     root = _qb_root(scripts_dir)
     if root is None:
         return False
     version = (root / "VERSION").read_text(encoding="utf-8").strip()
     if not _SEMVER_RE.match(version):
         return False
-    return any(p.is_file() for p in root.iterdir())
+    return len(_engine_inventory(Path(scripts_dir))) > 0
 
 
 def supply_chain_ok(scripts_dir=None) -> bool:
     """Manifest-anchored supply-chain signal (Phase 6.1): the engine's dependency-free
     core (no non-stdlib import in any shared module) AND the QB release manifest verifying
-    clean (a well-formed semver VERSION over a non-empty tree -- the invariant
-    scripts/release-manifest.py --check pins). Fail-closed: any verification error returns
-    False (never raises), and it never returns True on a placeholder."""
+    clean (a well-formed semver VERSION over a complete, fully-hashable engine inventory --
+    the self-verify invariant scripts/release-manifest.py --check pins). Fail-closed: any
+    verification error returns False (never raises), and it never returns True on a
+    placeholder."""
     scripts_dir = Path(scripts_dir) if scripts_dir is not None else Path(__file__).resolve().parent
     try:
         if _lp.assert_dependency_free_core(scripts_dir) != []:

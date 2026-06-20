@@ -240,6 +240,36 @@ class ProductionGateSignalsTests(unittest.TestCase):
                 "a clean engine core under a well-formed semver manifest passes",
             )
 
+    def test_supply_chain_requires_complete_engine_inventory(self) -> None:
+        # The positive path now anchors to the actual inventory: it hashes every engine
+        # module (the self-verify invariant release-manifest.py --check pins) rather than
+        # asserting only that the package directory holds *some* file. A package root that
+        # carries a well-formed VERSION and other top-level files but whose engine tree is
+        # not inventoriable fails supply_chain_ok closed -- which the old non-empty-directory
+        # check would have passed.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            scripts = root / "scripts"
+            scripts.mkdir()
+            (root / "VERSION").write_text("1.2.3\n", encoding="utf-8")
+            (root / "README.txt").write_text("a non-empty package directory\n", encoding="utf-8")
+
+            # Engine tree present and fully hashable -> passes.
+            (scripts / "ok.py").write_text("import os\n", encoding="utf-8")
+            self.assertTrue(
+                self.sig.supply_chain_ok(scripts),
+                "a complete, hashable engine inventory under a semver VERSION passes",
+            )
+
+            # Remove the engine module: the package root is still non-empty (VERSION +
+            # README), so the old any(p.is_file() for p in root.iterdir()) check passed --
+            # but there is now no engine inventory to anchor to, so it fails closed.
+            (scripts / "ok.py").unlink()
+            self.assertFalse(
+                self.sig.supply_chain_ok(scripts),
+                "a non-empty package directory with no inventoriable engine tree must fail closed",
+            )
+
     def test_each_missing_signal_fails_the_gate(self) -> None:
         # Fail-closed: an absent telemetry record / recoverability record / findings
         # inventory each deny their conjunct (so the composite gate cannot pass).
