@@ -100,6 +100,20 @@ class M7ReadinessAggregatorTests(unittest.TestCase):
                 self.assertIn(conjunct, baseline)
                 self.assertIn(conjunct, runbook)
 
+    def test_baseline_consolidation_statement_pins_aggregator(self) -> None:
+        # The single committed M7 consolidation statement must define M7 as satisfied
+        # only by the aggregator's passed verdict, pinned to the aggregator module name
+        # so the definition cannot drift from the engine that decides it.
+        baseline = (REPO_ROOT / "BASELINE.md").read_text(encoding="utf-8")
+        self.assertIn("M7 consolidation statement", baseline,
+                      "BASELINE.md must carry the single M7 consolidation statement")
+        marker = baseline.index("M7 consolidation statement")
+        statement = baseline[marker:marker + 800]
+        self.assertIn("m7_readiness", statement,
+                      "the consolidation statement must pin M7 to the aggregator module")
+        self.assertIn("passed", statement,
+                      "the statement must define M7 as satisfied only by a passed verdict")
+
 
 if __name__ == "__main__":
     unittest.main()

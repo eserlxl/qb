@@ -189,6 +189,16 @@ When the Phase 0 floor and every Phase 1–5 row are jointly green, the consolid
 readiness signal holds. This checklist makes "are we at M7?" a reproducible gate rather
 than a judgment call; it never rests on a `.qb/` planning note.
 
+**M7 consolidation statement.** For QB, *M7* is the production-gated, observable,
+recoverable system — with proven trusted-code autonomy and host parity — that the
+roadmap's consolidation phase defines. It is **satisfied only when the cross-phase M7
+readiness aggregator (`shared/scripts/m7_readiness.py`) returns a `passed` verdict** —
+every prior-phase operational + autonomy signal jointly green over captured `.qb/audit/`
+evidence (the six production-gate conjuncts plus `autonomy_earned`) — **alongside** the
+test-suite gate of record (`make check`, which pins the Phase 0/1/5 floor). M7 is thus a
+script-checkable assertion (`python3 shared/scripts/m7_readiness.py --root .`, exit 0),
+never a narrative claim.
+
 ## A2/A3 trusted-code precondition and gate of record
 
 Two operator-facing preconditions are part of the baseline so safety is not
