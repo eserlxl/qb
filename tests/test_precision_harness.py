@@ -185,6 +185,32 @@ class PrecisionHarnessTests(unittest.TestCase):
             skipped, per_analyzer={"quality-correctness": {"min_precision": 1.0, "min_recall": 1.0}})
         self.assertTrue(cap["passed"], "an absent-tool analyzer must not fail the gate")
 
+    def test_capability_exemption_is_not_a_loophole(self) -> None:
+        # The capability_skipped exemption must apply ONLY to a genuinely-absent
+        # optional tool, never as a blanket loophole that hides a real regression.
+        # Same below-bar deterministic analyzer: it is exempt ONLY when it is
+        # actually listed in capability_skipped, and otherwise still fails.
+        below_bar = {
+            "totals": {"precision": 1.0, "recall": 1.0},
+            "per_analyzer": {"dependency-audit": {"precision": 0.5, "recall": 0.5}},
+            "per_category": {},
+            "capability_skipped": [],
+        }
+        bars = {"dependency-audit": {"min_precision": 1.0, "min_recall": 1.0}}
+        # (b) A deterministic (not-skipped) analyzer below its bar STILL fails.
+        res = self.harness.evaluate_thresholds(below_bar, per_analyzer=bars)
+        self.assertFalse(res["passed"], "a below-bar deterministic analyzer must fail the gate")
+        self.assertEqual(
+            [(f["scope"], f["metric"]) for f in res["failures"]],
+            [("per_analyzer:dependency-audit", "precision"),
+             ("per_analyzer:dependency-audit", "recall")],
+        )
+        # (a) The SAME below-bar analyzer is exempt only when genuinely not-run.
+        skipped = dict(below_bar, capability_skipped=["dependency-audit"])
+        cap = self.harness.evaluate_thresholds(skipped, per_analyzer=bars)
+        self.assertTrue(cap["passed"], "an absent-tool analyzer must not fail the gate")
+        self.assertEqual(cap["failures"], [])
+
     def test_main_gate_exit_codes(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             out = str(Path(d) / "report.json")
