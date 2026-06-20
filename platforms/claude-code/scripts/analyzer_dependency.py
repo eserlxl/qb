@@ -214,6 +214,36 @@ def parse_package_json(text: str) -> list:
     return deps
 
 
+_CARGO_DEP_KINDS = ("dependencies", "dev-dependencies", "build-dependencies")
+
+
+def _cargo_table_deps(text: str, entries, section: str) -> list:
+    """Extract dependency records from one Cargo dependency table (offline)."""
+    deps: list = []
+    if not isinstance(entries, dict):
+        return deps
+    for name, raw_spec in sorted(entries.items()):
+        if not isinstance(name, str):
+            continue
+        if isinstance(raw_spec, str):
+            spec = raw_spec
+        elif isinstance(raw_spec, dict):
+            # A path/git dependency carries no registry version to pin; skip.
+            if "version" not in raw_spec:
+                continue
+            spec = str(raw_spec.get("version", ""))
+        else:
+            continue
+        deps.append({
+            "name": name,
+            "spec": spec,
+            "section": section,
+            "line": _line_for_token(text, name),
+            "pinned": _is_cargo_exact_pin(spec),
+        })
+    return deps
+
+
 def parse_cargo(text: str) -> list:
     """Parse Cargo.toml dependency tables into dependency records (offline)."""
     if tomllib is None:
@@ -226,29 +256,22 @@ def parse_cargo(text: str) -> list:
         return []
 
     deps: list = []
-    for section in ("dependencies", "dev-dependencies", "build-dependencies"):
-        entries = data.get(section, {})
-        if not isinstance(entries, dict):
-            continue
-        for name, raw_spec in sorted(entries.items()):
-            if not isinstance(name, str):
+    for section in _CARGO_DEP_KINDS:
+        deps.extend(_cargo_table_deps(text, data.get(section, {}), section))
+
+    # Workspace-level declarations ([workspace.dependencies]) — inherited by members.
+    workspace = data.get("workspace", {})
+    if isinstance(workspace, dict):
+        deps.extend(_cargo_table_deps(text, workspace.get("dependencies", {}), "workspace.dependencies"))
+
+    # Platform/target-specific tables ([target.<cfg>.<kind>]).
+    target = data.get("target", {})
+    if isinstance(target, dict):
+        for cfg, cfg_table in sorted(target.items()):
+            if not isinstance(cfg, str) or not isinstance(cfg_table, dict):
                 continue
-            if isinstance(raw_spec, str):
-                spec = raw_spec
-            elif isinstance(raw_spec, dict):
-                # A path/git dependency carries no registry version to pin; skip.
-                if "version" not in raw_spec:
-                    continue
-                spec = str(raw_spec.get("version", ""))
-            else:
-                continue
-            deps.append({
-                "name": name,
-                "spec": spec,
-                "section": section,
-                "line": _line_for_token(text, name),
-                "pinned": _is_cargo_exact_pin(spec),
-            })
+            for kind in _CARGO_DEP_KINDS:
+                deps.extend(_cargo_table_deps(text, cfg_table.get(kind, {}), f"target({cfg}).{kind}"))
     return deps
 
 

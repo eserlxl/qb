@@ -129,6 +129,29 @@ class DependencyAnalyzerTests(unittest.TestCase):
                 self.assertEqual(finding.category, "dependency")
                 self.assertEqual(self.validate(finding), [])
 
+    def test_cargo_workspace_and_target_tables_are_scanned(self) -> None:
+        # A supply-chain audit must not stop at top-level [dependencies]: unpinned
+        # deps under [workspace.dependencies] and [target.<cfg>.dependencies] are
+        # equally a hygiene gap. Pinned (=X.Y.Z) and git/path entries stay clean.
+        body = (
+            '[workspace.dependencies]\n'
+            'serde = "1.0"\n'                       # caret -> unpinned
+            'tokio = "=1.35.0"\n'                   # exact -> clean
+            'localdep = {path = "../localdep"}\n'   # path -> no version, skipped
+            "[target.'cfg(unix)'.dependencies]\n"
+            'libc = "0.2"\n'                        # caret -> unpinned
+        )
+        deps = {d["name"]: d for d in self.dep.parse_cargo(body)}
+        self.assertIn("serde", deps)
+        self.assertFalse(deps["serde"]["pinned"])
+        self.assertEqual(deps["serde"]["section"], "workspace.dependencies")
+        self.assertIn("tokio", deps)
+        self.assertTrue(deps["tokio"]["pinned"])      # exact pin is clean
+        self.assertNotIn("localdep", deps)            # path dep skipped
+        self.assertIn("libc", deps)
+        self.assertFalse(deps["libc"]["pinned"])
+        self.assertEqual(deps["libc"]["section"], "target(cfg(unix)).dependencies")
+
     def test_cargo_toml_without_lockfile_is_flagged(self) -> None:
         # Cargo.toml present but no Cargo.lock -> reproducibility hygiene finding,
         # mirroring the existing package.json missing-lockfile rule.
