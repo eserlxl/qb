@@ -120,6 +120,11 @@ class RollbackDrillTests(unittest.TestCase):
             # the drill did not silently pass: residue is still present after rollback
             self.assertTrue((repo / "nested").exists())
             self.assertNotEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")
+            # even a FAILED drill releases its reversal ref (run_rollback_drill's
+            # finally): no refs/qb-baseline/* leaks after the failure.
+            self.assertEqual(
+                _git(repo, "for-each-ref", "refs/qb-baseline/").stdout.strip(), "",
+                "a failed (residue) drill must not leak a refs/qb-baseline/* ref")
 
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d)
@@ -149,6 +154,10 @@ class RollbackDrillTests(unittest.TestCase):
             self.assertEqual((repo / "a.txt").read_text(), "original\n")
             self.assertFalse((repo / "b.txt").exists())
             self.assertEqual(_git(repo, "status", "--porcelain").stdout.strip(), "")
+            # the reversal ref is released even when the drill fails on an exception
+            self.assertEqual(
+                _git(repo, "for-each-ref", "refs/qb-baseline/").stdout.strip(), "",
+                "an exception-failed drill must not leak a refs/qb-baseline/* ref")
 
     def test_authorize_release_gate_on_recorded_telemetry(self) -> None:
         # Phase 7.2: authorize the earned-autonomy ceiling against a RECORDED
