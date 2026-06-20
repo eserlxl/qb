@@ -54,6 +54,36 @@ def _load(name: str, path: Path):
     return module
 
 
+def _grandchild_reaped(pid: int) -> bool:
+    """True when a SIGKILLed grandchild is dead -- fully reaped OR a lingering zombie.
+
+    os.kill(pid, 0) only tests existence, and a process whose parent (or PID 1) has
+    not wait()ed it lingers as a ZOMBIE that still answers signal 0 even though it is
+    dead and confined. In a containerized sandbox where PID 1 does not reap, polling
+    os.kill alone reports a false "survived". So: ProcessLookupError (fully gone) is
+    reaped; otherwise consult /proc to distinguish a zombie/dead state (Z/X -> reaped,
+    the kill landed) from a live, schedulable process (R/S/D -> genuinely survived).
+    When /proc is unavailable we cannot prove the zombie case, so we keep the strict
+    live reading (still present == not reaped) rather than mask a real escape.
+    """
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True  # fully reaped
+    except PermissionError:
+        return True  # not ours to signal -> our grandchild is gone (pid reused)
+    try:
+        with open(f"/proc/{pid}/stat", "rb") as fh:
+            stat = fh.read().decode("latin-1")
+        # comm (field 2) may contain spaces/parens; the state char follows the last ')'.
+        state = stat.rpartition(")")[2].split()[0]
+        return state in ("Z", "X", "x")  # zombie / dead -> killed, awaiting reap
+    except FileNotFoundError:
+        return True  # vanished between the kill check and the stat read
+    except OSError:
+        return False  # /proc unavailable: keep the strict live reading
+
+
 class CommandSafetyTests(unittest.TestCase):
     def setUp(self) -> None:
         if not MODULE_PATH.exists():
@@ -232,16 +262,14 @@ class CommandSafetyTests(unittest.TestCase):
             gpid = int(pid_file.read_text())
             reaped = False
             while time.monotonic() < deadline:
-                try:
-                    os.kill(gpid, 0)
-                except ProcessLookupError:
+                if _grandchild_reaped(gpid):
                     reaped = True
                     break
                 time.sleep(0.02)
             self.assertTrue(
                 reaped,
-                f"grandchild {gpid} survived the timeout group-kill (orphaned); "
-                "_kill_process_group must SIGKILL the whole process group",
+                f"grandchild {gpid} survived the timeout group-kill (orphaned and still "
+                "live); _kill_process_group must SIGKILL the whole process group",
             )
 
     def test_group_kill_failure_is_surfaced_not_swallowed(self) -> None:
