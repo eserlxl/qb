@@ -32,6 +32,10 @@ from pathlib import Path
 A2_AUTONOMY = "A2"
 # The aggregator's distinct signal beyond the six production-gate conjuncts.
 AUTONOMY_SIGNAL = "autonomy_earned"
+# Redacted, schema-versioned sign-off record conventions (mirroring the release-gate
+# authorization record): a captured M7 verdict artifact, never a secret value.
+M7_READINESS_SCHEMA_VERSION = 1
+M7_READINESS_FILENAME = "m7-readiness.json"
 
 
 def _load_sibling(module_name, filename):
@@ -74,6 +78,48 @@ def evaluate(audit_dir, repo_root, scripts_dir=None) -> dict:
     }
 
 
+def signoff_record(audit_dir, repo_root, scripts_dir=None) -> dict:
+    """A redaction-safe M7 sign-off record: the schema version plus the verdict.
+
+    Carries only booleans, the autonomy level, and signal names -- no raw value -- so
+    it is safe to persist as durable evidence of the joint verdict.
+    """
+    verdict = evaluate(audit_dir, repo_root, scripts_dir)
+    return {
+        "schema_version": M7_READINESS_SCHEMA_VERSION,
+        "passed": verdict["passed"],
+        "failures": verdict["failures"],
+        "checks": verdict["checks"],
+        "permitted_autonomy": verdict["permitted_autonomy"],
+    }
+
+
+def persist_signoff(record, output_dir) -> Path:
+    """Write the sign-off record into the .qb/audit store deterministically (sorted
+    keys) and redacted via ``run_store.redact``, so no secret value is ever emitted.
+    Returns the written path."""
+    import json
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    redacted = _store.redact(record)
+    path = out / M7_READINESS_FILENAME
+    path.write_text(json.dumps(redacted, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def read_signoff(output_dir) -> dict:
+    """Read back the M7 sign-off record, or ``{}`` when absent or malformed (never
+    raising to the caller, like the other hardened run-store readers)."""
+    import json
+
+    path = Path(output_dir) / M7_READINESS_FILENAME
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
 def main(argv=None) -> int:
     """CLI entrypoint: print the fail-closed M7 readiness verdict over the run store.
     Exit 0 when M7-ready, 1 when any signal is false. Fail-closed on any error."""
@@ -89,14 +135,15 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     audit_dir = args.out if args.out is not None else str(Path(args.root) / _store.OUTPUT_DIR_NAME)
     try:
-        verdict = evaluate(audit_dir, args.root, scripts_dir=args.scripts_dir)
+        record = signoff_record(audit_dir, args.root, scripts_dir=args.scripts_dir)
+        persist_signoff(record, audit_dir)
     except Exception as exc:  # fail-closed: never report ready on a crash
         sys.stderr.write(f"m7-readiness ERROR: {type(exc).__name__}: {exc}\n")
         return 1
     sys.stdout.write(json.dumps(
-        {"m7_ready": verdict["passed"], "failures": verdict["failures"]},
+        {"m7_ready": record["passed"], "failures": record["failures"]},
         sort_keys=True) + "\n")
-    return 0 if verdict["passed"] else 1
+    return 0 if record["passed"] else 1
 
 
 if __name__ == "__main__":
