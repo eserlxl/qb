@@ -73,6 +73,16 @@ class PolicyEngineTests(unittest.TestCase):
             unknown = Path(d) / "unknown.json"
             unknown.write_text('{"surprise": true}', encoding="utf-8")
             self.assertEqual(self.p.load_policy(unknown).autonomy_level, "A0")  # fail-closed
+            # A malformed-but-valid-JSON field whose coercion raises must also fail
+            # closed (the "any problem" contract), not crash the loader.
+            for body in ('{"schema_version": "abc"}', '{"schema_version": null}',
+                         '{"write_allowlist": 5}'):
+                coerce_bad = Path(d) / "coerce.json"
+                coerce_bad.write_text(body, encoding="utf-8")
+                self.assertEqual(
+                    self.p.load_policy(coerce_bad).autonomy_level, "A0",
+                    msg=f"load_policy must fail closed on {body}",
+                )
 
     # --- evaluation ------------------------------------------------------
     def test_default_blocks_every_fix(self) -> None:

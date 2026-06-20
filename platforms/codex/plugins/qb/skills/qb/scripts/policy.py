@@ -180,7 +180,11 @@ def load_policy(path) -> Policy:
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
         return parse_policy(data)
-    except (json.JSONDecodeError, PolicyError, OSError, UnicodeDecodeError):
+    except (json.JSONDecodeError, PolicyError, OSError, UnicodeDecodeError,
+            ValueError, TypeError):
+        # ValueError/TypeError cover a malformed field whose coercion raises
+        # (e.g. a non-numeric schema_version int(), or a non-iterable list field),
+        # so "fail CLOSED on any problem" holds uniformly, not just for JSON/OS errors.
         return default_policy()
 
 
