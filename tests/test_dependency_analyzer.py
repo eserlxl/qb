@@ -416,6 +416,49 @@ class DependencyAnalyzerTests(unittest.TestCase):
             after = {p.name: p.stat().st_mtime_ns for p in Path(d).iterdir()}
             self.assertEqual(before, after)
 
+    def test_nested_manifests_are_analyzed_with_relative_path_evidence(self) -> None:
+        # A monorepo's nested package manifests must be audited too -- not only the root
+        # -- and each finding must carry that nested manifest's true relative-path evidence
+        # so the locator points at the real file (e.g. packages/app/package.json:N).
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            nested = root / "packages" / "app"
+            nested.mkdir(parents=True)
+            nested.joinpath("package.json").write_text(
+                '{\n'
+                '  "dependencies": {\n'
+                '    "express": "^4.18.0"\n'
+                '  }\n'
+                '}\n',
+                encoding="utf-8",
+            )
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+
+        evidences = [f.evidence for f in findings]
+        self.assertIn("packages/app/package.json:3", evidences,
+                      "the nested unpinned dependency must be flagged with its nested-path evidence")
+        self.assertIn("packages/app/package.json:1", evidences,
+                      "the nested package.json with no sibling lockfile must be flagged")
+        for f in findings:
+            self.assertEqual(self.validate(f), [], f"non-conformant finding: {f.evidence}")
+
+    def test_vendored_nested_manifests_are_skipped(self) -> None:
+        # The discovery walk is bounded: a manifest under a vendored/tool-owned tree
+        # (node_modules/) is never inspected, so QB does not flag a third party's own deps.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            vendored = root / "node_modules" / "leftpad"
+            vendored.mkdir(parents=True)
+            vendored.joinpath("package.json").write_text(
+                '{"dependencies": {"sneaky": "^1.0.0"}}\n', encoding="utf-8",
+            )
+            findings = self.dep.DependencyAnalyzer().analyze(d, _cfg(False))
+
+        self.assertEqual(
+            [f.evidence for f in findings if "node_modules" in f.evidence], [],
+            "manifests under node_modules/ must be skipped, not audited",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

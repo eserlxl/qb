@@ -78,6 +78,13 @@ _ADVISORY_SEVERITY = {
     "low": "P3",
 }
 
+# The dependency manifests the offline tier audits. Discovered repo-wide (not only at
+# the root) so a monorepo's nested packages are not silent dependency false-negatives;
+# the walk is bounded by iter_repo_files (git-aware, skip-pruned, scope-respecting).
+_MANIFEST_NAMES = frozenset({
+    "requirements.txt", "pyproject.toml", "package.json", "Cargo.toml", "go.mod",
+})
+
 
 def _is_exact_pin(spec: str) -> bool:
     spec = (spec or "").strip()
@@ -333,130 +340,173 @@ class DependencyAnalyzer:
             fix_strategy="manual",
         )
 
+    def _discover_manifests(self, root: Path, config) -> dict:
+        """Map each manifest name -> sorted list of (directory, repo-relative posix path)
+        across the whole repo, not only the root. The root manifests are always included
+        directly (backward compatible, independent of gitignore); nested manifests are
+        discovered via iter_repo_files, whose git-aware, skip-pruned, scope-respecting walk
+        keeps vendored/tool-owned trees (node_modules/, .git/, .qb/ ...) out of the audit."""
+        found: dict = {name: [] for name in _MANIFEST_NAMES}
+        seen: set = set()
+
+        def _add(path: Path) -> None:
+            if path.name not in _MANIFEST_NAMES or not path.is_file():
+                return
+            try:
+                rel = path.relative_to(root).as_posix()
+            except ValueError:
+                return
+            if rel in seen:
+                return
+            seen.add(rel)
+            found[path.name].append((path.parent, rel))
+
+        for name in _MANIFEST_NAMES:
+            _add(root / name)
+        try:
+            for path in _core.iter_repo_files(root, config):
+                _add(path)
+        except Exception:
+            pass  # the root manifests are already covered; never abort the audit
+        for name in found:
+            found[name].sort(key=lambda pr: pr[1])
+        return found
+
+    def _audit_requirements(self, mdir, rel, findings, inventory) -> None:
+        try:
+            text = (mdir / "requirements.txt").read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = ""
+        for dep in parse_requirements(text):
+            dep["evidence"] = f"{rel}:{dep['line']}"
+            inventory.append(dep)
+            if not dep["pinned"]:
+                findings.append(self._finding(
+                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                    dep["evidence"], f"unpinned:{dep['name']}",
+                    f"Offline manifest audit: dependency '{dep['name']}' is not pinned to an exact "
+                    f"version ({dep['spec'] or 'no version specifier'}).",
+                    "Pin the dependency to an exact version (name==X.Y.Z) and commit a lockfile.",
+                ))
+
+    def _audit_pyproject(self, mdir, rel, findings, inventory) -> None:
+        try:
+            text = (mdir / "pyproject.toml").read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = ""
+        pyproject_deps = parse_pyproject(text)
+        for dep in pyproject_deps:
+            dep["evidence"] = f"{rel}:{dep['line']}"
+            inventory.append(dep)
+            if not dep["pinned"]:
+                findings.append(self._finding(
+                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                    dep["evidence"],
+                    f"unpinned-pyproject:{dep['name']}",
+                    f"Offline pyproject audit: dependency '{dep['name']}' is not pinned to an "
+                    f"exact version ({dep['spec'] or 'no version specifier'}).",
+                    "Pin the dependency to an exact version in pyproject.toml and regenerate the lockfile.",
+                ))
+        if pyproject_deps and not any((mdir / lock).is_file() for lock in _PY_LOCKFILES):
+            findings.append(self._finding(
+                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                f"{rel}:1", "missing-python-lockfile",
+                "Offline manifest audit: pyproject.toml declares dependencies but no Python "
+                "lockfile (poetry.lock / pdm.lock / uv.lock / Pipfile.lock) was found, so the "
+                "resolved dependency versions are not reproducible.",
+                "Generate and commit a lockfile (e.g. `poetry lock`, `pdm lock`, or `uv lock`).",
+            ))
+
+    def _audit_package_json(self, mdir, rel, findings, inventory) -> None:
+        try:
+            text = (mdir / "package.json").read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = ""
+        for dep in parse_package_json(text):
+            dep["evidence"] = f"{rel}:{dep['line']}"
+            inventory.append(dep)
+            if not dep["pinned"]:
+                findings.append(self._finding(
+                    "dependency",
+                    "P2",
+                    confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                    dep["evidence"],
+                    f"unpinned-package-json:{dep['section']}:{dep['name']}",
+                    f"Offline package.json audit: {dep['section']} dependency '{dep['name']}' "
+                    f"is not pinned to an exact version ({dep['spec'] or 'no version specifier'}).",
+                    "Pin the package dependency to an exact version and regenerate the lockfile.",
+                ))
+        if not any((mdir / lock).is_file() for lock in _LOCKFILES):
+            findings.append(self._finding(
+                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                f"{rel}:1", "missing-lockfile",
+                "Offline manifest audit: package.json is present but no lockfile "
+                "(package-lock.json / yarn.lock / pnpm-lock.yaml) was found.",
+                "Generate and commit a lockfile so dependency versions are reproducible.",
+            ))
+
+    def _audit_cargo(self, mdir, rel, findings, inventory) -> None:
+        try:
+            text = (mdir / "Cargo.toml").read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            text = ""
+        for dep in parse_cargo(text):
+            dep["evidence"] = f"{rel}:{dep['line']}"
+            inventory.append(dep)
+            if not dep["pinned"]:
+                findings.append(self._finding(
+                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                    dep["evidence"],
+                    f"unpinned-cargo:{dep['section']}:{dep['name']}",
+                    f"Offline Cargo.toml audit: {dep['section']} dependency '{dep['name']}' is not "
+                    f"pinned to an exact version ({dep['spec'] or 'no version specifier'}); a bare, "
+                    f"caret, or wildcard spec can resolve to a different version over time.",
+                    "Pin the dependency to an exact version (=X.Y.Z) and commit Cargo.lock.",
+                ))
+        if not (mdir / "Cargo.lock").is_file():
+            findings.append(self._finding(
+                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                f"{rel}:1", "missing-cargo-lockfile",
+                "Offline manifest audit: Cargo.toml is present but no Cargo.lock was found, "
+                "so the resolved dependency versions are not reproducible.",
+                "Run `cargo generate-lockfile` (or `cargo build`) and commit Cargo.lock.",
+            ))
+
+    def _audit_go_mod(self, mdir, rel, findings, inventory) -> None:
+        try:
+            gomod_text = (mdir / "go.mod").read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            gomod_text = ""
+        if _GO_REQUIRE.search(gomod_text) and not (mdir / "go.sum").is_file():
+            findings.append(self._finding(
+                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
+                f"{rel}:1", "missing-go-lockfile",
+                "Offline manifest audit: go.mod declares module requirements but no go.sum "
+                "was found, so the resolved module versions and their checksums are not pinned.",
+                "Run `go mod download` (or `go mod tidy`) and commit go.sum.",
+            ))
+
     def analyze(self, repo_root: str, config) -> list:
         root = Path(repo_root)
         findings: list = []
         inventory: list = []
 
         # --- Offline tier ----------------------------------------------------
-        req_path = root / "requirements.txt"
-        if req_path.is_file():
-            try:
-                text = req_path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                text = ""
-            for dep in parse_requirements(text):
-                dep["evidence"] = f"requirements.txt:{dep['line']}"
-                inventory.append(dep)
-                if not dep["pinned"]:
-                    findings.append(self._finding(
-                        "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                        dep["evidence"], f"unpinned:{dep['name']}",
-                        f"Offline manifest audit: dependency '{dep['name']}' is not pinned to an exact "
-                        f"version ({dep['spec'] or 'no version specifier'}).",
-                        "Pin the dependency to an exact version (name==X.Y.Z) and commit a lockfile.",
-                    ))
-
-        pyproject_path = root / "pyproject.toml"
-        if pyproject_path.is_file():
-            try:
-                text = pyproject_path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                text = ""
-            pyproject_deps = parse_pyproject(text)
-            for dep in pyproject_deps:
-                dep["evidence"] = f"pyproject.toml:{dep['line']}"
-                inventory.append(dep)
-                if not dep["pinned"]:
-                    findings.append(self._finding(
-                        "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                        dep["evidence"],
-                        f"unpinned-pyproject:{dep['name']}",
-                        f"Offline pyproject audit: dependency '{dep['name']}' is not pinned to an "
-                        f"exact version ({dep['spec'] or 'no version specifier'}).",
-                        "Pin the dependency to an exact version in pyproject.toml and regenerate the lockfile.",
-                    ))
-            if pyproject_deps and not any((root / lock).is_file() for lock in _PY_LOCKFILES):
-                findings.append(self._finding(
-                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                    "pyproject.toml:1", "missing-python-lockfile",
-                    "Offline manifest audit: pyproject.toml declares dependencies but no Python "
-                    "lockfile (poetry.lock / pdm.lock / uv.lock / Pipfile.lock) was found, so the "
-                    "resolved dependency versions are not reproducible.",
-                    "Generate and commit a lockfile (e.g. `poetry lock`, `pdm lock`, or `uv lock`).",
-                ))
-
-        pkg_path = root / "package.json"
-        if pkg_path.is_file():
-            try:
-                text = pkg_path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                text = ""
-            for dep in parse_package_json(text):
-                dep["evidence"] = f"package.json:{dep['line']}"
-                inventory.append(dep)
-                if not dep["pinned"]:
-                    findings.append(self._finding(
-                        "dependency",
-                        "P2",
-                        confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                        dep["evidence"],
-                        f"unpinned-package-json:{dep['section']}:{dep['name']}",
-                        f"Offline package.json audit: {dep['section']} dependency '{dep['name']}' "
-                        f"is not pinned to an exact version ({dep['spec'] or 'no version specifier'}).",
-                        "Pin the package dependency to an exact version and regenerate the lockfile.",
-                    ))
-        if pkg_path.is_file() and not any((root / lock).is_file() for lock in _LOCKFILES):
-            findings.append(self._finding(
-                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                "package.json:1", "missing-lockfile",
-                "Offline manifest audit: package.json is present but no lockfile "
-                "(package-lock.json / yarn.lock / pnpm-lock.yaml) was found.",
-                "Generate and commit a lockfile so dependency versions are reproducible.",
-            ))
-
-        cargo_path = root / "Cargo.toml"
-        if cargo_path.is_file():
-            try:
-                text = cargo_path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                text = ""
-            for dep in parse_cargo(text):
-                dep["evidence"] = f"Cargo.toml:{dep['line']}"
-                inventory.append(dep)
-                if not dep["pinned"]:
-                    findings.append(self._finding(
-                        "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                        dep["evidence"],
-                        f"unpinned-cargo:{dep['section']}:{dep['name']}",
-                        f"Offline Cargo.toml audit: {dep['section']} dependency '{dep['name']}' is not "
-                        f"pinned to an exact version ({dep['spec'] or 'no version specifier'}); a bare, "
-                        f"caret, or wildcard spec can resolve to a different version over time.",
-                        "Pin the dependency to an exact version (=X.Y.Z) and commit Cargo.lock.",
-                    ))
-        if cargo_path.is_file() and not (root / "Cargo.lock").is_file():
-            findings.append(self._finding(
-                "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                "Cargo.toml:1", "missing-cargo-lockfile",
-                "Offline manifest audit: Cargo.toml is present but no Cargo.lock was found, "
-                "so the resolved dependency versions are not reproducible.",
-                "Run `cargo generate-lockfile` (or `cargo build`) and commit Cargo.lock.",
-            ))
-
-        gomod_path = root / "go.mod"
-        if gomod_path.is_file():
-            try:
-                gomod_text = gomod_path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                gomod_text = ""
-            if _GO_REQUIRE.search(gomod_text) and not (root / "go.sum").is_file():
-                findings.append(self._finding(
-                    "dependency", "P2", confidence_for_rule(self.descriptor.id, "manifest-hygiene"),
-                    "go.mod:1", "missing-go-lockfile",
-                    "Offline manifest audit: go.mod declares module requirements but no go.sum "
-                    "was found, so the resolved module versions and their checksums are not pinned.",
-                    "Run `go mod download` (or `go mod tidy`) and commit go.sum.",
-                ))
+        # Discover every dependency manifest in the repo (not only the root) so a
+        # monorepo's nested packages are audited, each finding carrying its true
+        # relative-path evidence. The walk is bounded (skip-pruned, scope-respecting).
+        manifests = self._discover_manifests(root, config)
+        _AUDITORS = {
+            "requirements.txt": self._audit_requirements,
+            "pyproject.toml": self._audit_pyproject,
+            "package.json": self._audit_package_json,
+            "Cargo.toml": self._audit_cargo,
+            "go.mod": self._audit_go_mod,
+        }
+        for name in ("requirements.txt", "pyproject.toml", "package.json", "Cargo.toml", "go.mod"):
+            audit = _AUDITORS[name]
+            for mdir, rel in manifests[name]:
+                audit(mdir, rel, findings, inventory)
 
         # --- Networked tier (opt-in, fail-closed) ----------------------------
         allow_networked = bool(getattr(config, "allow_networked", False))
