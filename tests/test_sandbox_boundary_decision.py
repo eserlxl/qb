@@ -62,8 +62,16 @@ class SandboxBoundaryDirectionBTests(unittest.TestCase):
         p = self.policy
         ceiling = p.sandbox_autonomy_ceiling(sandbox_available=False)
         self.assertEqual(ceiling, p.A1, "ceiling must be A1 when the sandbox is unavailable")
-        self.assertLess(
-            p._LEVELS.index(ceiling), p._LEVELS.index(p.A2),
+        # Pin "below apply-verified" against the PUBLIC autonomy constants rather than the
+        # module-private _LEVELS ordering tuple: the fail-closed ceiling must be one of the
+        # sub-apply levels (A0/A1) and never apply-verified-or-above (A2/A3). This pins the
+        # behavioral contract, so a refactor of the internal _LEVELS tuple cannot break it.
+        self.assertIn(
+            ceiling, (p.A0, p.A1),
+            "fail-closed ceiling must be a sub-apply-verified autonomy level (A0/A1)",
+        )
+        self.assertNotIn(
+            ceiling, (p.A2, p.A3),
             "fail-closed ceiling must rank below apply-verified (A2)",
         )
 
