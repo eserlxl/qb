@@ -35,6 +35,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 import audit_runner  # noqa: E402  (path set above)
+import analyzer_quality  # noqa: E402
 import accepted_findings  # noqa: E402
 import budget  # noqa: E402
 import finding_schema  # noqa: E402
@@ -215,6 +216,39 @@ class DocConsistencyTest(unittest.TestCase):
                 for f in findings),
             "DependencyAnalyzer must emit the Cargo.lock-missing finding the doc documents",
         )
+
+    def test_coverage_doc_capability_report_contract_matches_engine(self):
+        # Pin the doc's capability-report contract to the engine: the field name,
+        # the ran/skipped shape, and the `tool-unavailable` caveat reason are real
+        # engine outputs, so renaming the field/reason in the engine or
+        # misdescribing it in the doc fails make check. (Registered analyzer ids
+        # are already pinned by test_analyzer_coverage_doc_registry_matches_engine;
+        # the gated precision bar VALUES are pinned by test_precision_harness.)
+        import tempfile
+        from pathlib import Path
+
+        doc = self._read(ANALYZER_COVERAGE_DOC)
+        with tempfile.TemporaryDirectory() as d:
+            summary = audit_runner.run_audit(d, output_dir=str(Path(d) / "_out"))["summary"]
+        self.assertIn("capability_report", summary)
+        self.assertIsInstance(summary["capability_report"], dict)
+
+        # `tool-unavailable` is the engine's real absent-tool skip reason (the
+        # quality analyzer's capability report), not just doc prose.
+        adapter = analyzer_quality.ToolAdapter(
+            name="qb-absent-linter", executable="qb-nonexistent-tool-xyz",
+            category="quality", build_argv=lambda root: ["qb-nonexistent-tool-xyz"],
+            parse=lambda out, err: [], severity_map={}, default_severity="P3",
+        )
+        analyzer = analyzer_quality.QualityAnalyzer([adapter])
+        with tempfile.TemporaryDirectory() as d:
+            analyzer.analyze(d, audit_runner.AnalyzerConfig())
+        skipped = analyzer.last_capability_report["skipped"]
+        self.assertEqual([e["reason"] for e in skipped], ["tool-unavailable"])
+
+        # The doc documents the field name, its sub-keys, and the caveat verbatim.
+        for token in ("capability_report", "ran", "skipped", "tool-unavailable"):
+            self.assertIn(token, doc, f"coverage doc must document {token!r}")
 
     def test_prose_producer_count_word_matches_registry(self):
         # The spelled-out "<N> producer analyzers" count in narrative contract
