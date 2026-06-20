@@ -197,6 +197,34 @@ def run_audit(repo_root, config=None, registry=None, output_dir=None) -> dict:
     return {"output_dir": str(output_dir), "findings": findings, "summary": summary}
 
 
+def format_coverage_line(summary) -> str:
+    """Human-readable analyzer-coverage line for the text run report.
+
+    Lists how many analyzers ran, which were skipped (with reason), and any
+    adapter skipped because its optional tool was unavailable -- the shape
+    documented in docs/analyzer-coverage.md. Inputs are already sorted, so two
+    runs over an unchanged repo render this line byte-identically.
+    """
+    run = summary["analyzers_run"]
+    skipped = summary["analyzers_skipped"]
+    parts = [f"coverage: {len(run)}/{len(run) + len(skipped)} analyzers ran"]
+    if skipped:
+        parts.append(
+            "skipped " + ", ".join(
+                f"{item['id']} ({item.get('reason', 'skipped')})" for item in skipped
+            )
+        )
+    tool_unavailable = [
+        f"{analyzer_id}/{entry['adapter']}"
+        for analyzer_id in sorted(summary.get("capability_report", {}))
+        for entry in summary["capability_report"][analyzer_id].get("skipped", [])
+        if entry.get("reason") == "tool-unavailable"
+    ]
+    if tool_unavailable:
+        parts.append("tool-unavailable " + ", ".join(tool_unavailable))
+    return "; ".join(parts)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Run the QB read-only audit engine over a repository.")
     parser.add_argument("--root", default=".", help="Repository root to audit; default: current directory.")
@@ -220,6 +248,7 @@ def main(argv=None) -> int:
         f" analyzers_run={len(summary['analyzers_run'])}"
         f" analyzers_skipped={len(summary['analyzers_skipped'])}"
     )
+    print(format_coverage_line(summary))
     return 0
 
 

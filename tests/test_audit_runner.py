@@ -168,6 +168,30 @@ class AuditRunnerTests(unittest.TestCase):
         self.assertEqual(summary["total_findings"], 0)
         self.assertNotIn("cap-stub", [s["id"] for s in summary["analyzers_skipped"]])
 
+    def test_coverage_line_lists_ran_skipped_and_tool_unavailable(self) -> None:
+        # docs/analyzer-coverage.md promises a human-readable `coverage:` line in
+        # the text run report: how many analyzers ran, which were skipped (with
+        # reason), and any adapter skipped because its optional tool was absent.
+        summary = {
+            "analyzers_run": ["alpha", "beta"],
+            "analyzers_skipped": [{"id": "net", "reason": "networked-disabled"}],
+            "capability_report": {
+                "alpha": {
+                    "ran": [],
+                    "skipped": [{"adapter": "ruff", "reason": "tool-unavailable"}],
+                },
+            },
+        }
+        line = self.runner.format_coverage_line(summary)
+        self.assertTrue(
+            line.startswith("coverage: 2/3 analyzers ran"),
+            f"coverage line must lead with the ran/total count: {line!r}",
+        )
+        self.assertIn("skipped net (networked-disabled)", line)
+        self.assertIn("tool-unavailable alpha/ruff", line)
+        # Deterministic: identical summary renders byte-identically.
+        self.assertEqual(line, self.runner.format_coverage_line(summary))
+
     def test_run_is_deterministic_across_two_runs(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             repo = Path(d) / "repo"
