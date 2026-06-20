@@ -165,6 +165,30 @@ These statements mirror the existing README and RUNBOOK claims (notably the full
 execution sandboxing "not yet shipped" caveat and the planning-only Antigravity
 model) and do not supersede them.
 
+## M7 readiness checklist
+
+M7 (the roadmap's Production-Gated M7 Consolidation phase) is reached when **every**
+prior-phase acceptance signal jointly holds, each re-derivable from a committed gate
+rather than a narrative claim. Each row below names its joint acceptance signal
+(meaning-equivalent to the roadmap's Key Acceptance Signals), a committed evidence
+source (a tracked file or engine module — **never** a `.qb/` planning note), and the
+command that re-derives it. A row is **green** iff its re-deriving command exits 0; M7
+holds only when the Phase 0 floor and every Phase 1–5 row are jointly green. Each row
+cross-references its closing-phase row in **Known gaps** above.
+
+| Phase | Joint acceptance signal | Evidence source (committed) | Re-derives via | Known-gaps row |
+|---|---|---|---|---|
+| 0 — Baseline & Regression Net (floor) | `make check` exits 0 on a clean tree; baseline module/case counts unchanged; gate-of-record caveats documented | `BASELINE.md`, `.github/workflows/validate.yml`, `tests/test_baseline_consistency.py` | `make check` | Disabled cloud CI |
+| 1 — Execution-Isolation Hardening | Confine-by-default / sandboxed-authorization gate enforced and tested; SECURITY/README posture pinned; isolation regressions green | `shared/scripts/isolation.py`, `shared/scripts/command_safety.py`, `tests/test_isolation_runtime.py` | `make check` | Full execution sandboxing of analyzed code |
+| 2 — Analyzer Coverage & Determinism | Precision/recall bars met; analyzer-coverage doc and engine in sync; no silent dormant-analyzer gap | `tests/fixtures/precision-thresholds.json`, `shared/scripts/precision_harness.py`, `docs/analyzer-coverage.md` | `make precision` | Analyzer breadth / environment-dependence |
+| 3 — Live A2/A3 Autonomy Proofs | A2/A3 campaign tests pass over the trusted corpus; verification evidence persisted; no isolation/gate escape | `tests/test_a1_campaign.py`, `tests/test_a2_campaign.py`, `tests/test_a3_campaign.py` | `make check` | Live A2/A3 autonomy proofs |
+| 4 — Operations, Telemetry & Recoverability | Recoverability drill passes; the production gate's six fail-closed conjuncts hold (`telemetry_emitted`, `rollback_drill_passed`, `least_privilege_ok`, `supply_chain_ok`, `killswitch_proven`, `self_audit_clean`); telemetry trends render from a real series | `shared/scripts/recoverability_drill.py`, `shared/scripts/production_gate.py`, `tests/test_telemetry_trends.py` | `make check` | (operations maturity — no open gap row) |
+| 5 — Multi-Host Parity | `scripts/sync.sh --check` byte-equal across engine hosts; Antigravity planning-only contract pinned; host-parity tests green | `scripts/sync.sh`, `platforms/PARITY.md`, `tests/test_host_parity_contract.py` | `bash scripts/sync.sh --check` | Antigravity parity |
+
+When the Phase 0 floor and every Phase 1–5 row are jointly green, the consolidated M7
+readiness signal holds. This checklist makes "are we at M7?" a reproducible gate rather
+than a judgment call; it never rests on a `.qb/` planning note.
+
 ## A2/A3 trusted-code precondition and gate of record
 
 Two operator-facing preconditions are part of the baseline so safety is not
