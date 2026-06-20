@@ -79,6 +79,19 @@ class M7ReleaseGatingProcedureTests(unittest.TestCase):
         )
         self.assertIn("persist_authorization", self.section)
 
+    def test_procedure_states_fail_closed_and_no_a3_default(self) -> None:
+        # Operators must not read a passing gate as authorizing auto-delivery: the
+        # procedure states release eligibility fails closed and that passing the gate
+        # authorizes operation only -- never A3 auto-delivery -- pinned to the engine
+        # constant A3_DEFAULT_ENABLED == False.
+        lowered = self.section.lower()
+        self.assertIn("fails closed", lowered)
+        self.assertIn("operation only", lowered)
+        self.assertIn("A3_DEFAULT_ENABLED", self.section)
+        pg = _load_production_gate()
+        self.assertFalse(pg.A3_DEFAULT_ENABLED,
+                         "A3_DEFAULT_ENABLED must be False so a passing gate never auto-delivers")
+
 
 if __name__ == "__main__":
     unittest.main()
