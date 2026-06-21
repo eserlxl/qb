@@ -16,6 +16,7 @@ closed if either invariant is violated.
 from __future__ import annotations
 
 import importlib.util
+import re
 import subprocess
 import sys
 import tempfile
@@ -135,6 +136,33 @@ class FixSafetyTests(unittest.TestCase):
             # after teardown the operator tree is untouched and no qb-fix branch remains
             self.assertEqual((repo / "style.txt").read_text(), "messy\n")
             self.assertEqual(_git(repo, "branch", "--list", "qb-fix/*").stdout.strip(), "")
+
+
+@unittest.skipIf(not (SHARED_DIR / "scripts").is_dir(), "shared/scripts missing")
+class EngineShellFreeGuard(unittest.TestCase):
+    """The shared engine must never spawn a child through a system shell.
+
+    Every external command goes through ``command_safety.run_command``'s argv
+    form (``shell=False``). The command-injection analyzer's rule only matches a
+    single-line ``subprocess.(...)(...shell=True`` form, so a *multi-line* call
+    could slip a ``shell=True`` past it (``run_command``'s own ``Popen`` spans
+    several lines). This line-level scan is multi-line-proof and pins the whole
+    shared command-execution surface, including ``run_command`` itself.
+    """
+
+    def test_no_shell_string_execution_path_in_engine(self) -> None:
+        offenders = []
+        for path in sorted((SHARED_DIR / "scripts").glob("*.py")):
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                code = line.split("#", 1)[0]
+                if re.search(r"shell\s*=\s*True", code) or re.search(r"\bos\.system\s*\(", code):
+                    offenders.append(f"{path.name}:{lineno}: {line.strip()}")
+        self.assertEqual(
+            offenders,
+            [],
+            "shared engine code must dispatch shell-free (run_command argv form); "
+            f"shell-string execution sink(s) found: {offenders}",
+        )
 
 
 if __name__ == "__main__":

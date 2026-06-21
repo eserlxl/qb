@@ -129,7 +129,7 @@ class BaselineConsistencyTests(unittest.TestCase):
                 count,
                 f"BASELINE module count {count} != live test modules {live} — "
                 "adding or removing a test module requires updating the "
-                "BASELINE.md 82/676 counts in the SAME change "
+                "BASELINE.md 82/677 counts in the SAME change "
                 "(see BASELINE.md 'Same-change update rule')",
             )
 
@@ -143,7 +143,7 @@ class BaselineConsistencyTests(unittest.TestCase):
                 count,
                 f"BASELINE test count {count} != live unittest count {live} — "
                 "adding or removing a test requires updating the "
-                "BASELINE.md 82/676 counts in the SAME change "
+                "BASELINE.md 82/677 counts in the SAME change "
                 "(see BASELINE.md 'Same-change update rule')",
             )
 
