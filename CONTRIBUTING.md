@@ -58,8 +58,8 @@ platform changelogs share the same latest version header
 
 ## Test-suite count baseline
 
-`BASELINE.md` freezes the gate-of-record test inventory (**76 modules / 573 test
-cases**). **Adding or removing a test module or test case must update the
+`BASELINE.md` freezes the gate-of-record test inventory; its recorded module and
+test-case counts are the single source of truth. **Adding or removing a test module or test case must update the
 `BASELINE.md` recorded counts in the same change.** `make check` runs
 `tests/test_baseline_consistency.py`, which re-derives the live module and case
 counts from the tree and fails if they drift from the recorded reference, so a
