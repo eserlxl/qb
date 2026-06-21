@@ -329,6 +329,17 @@ Each item should include:
 - description
 - expected output
 
+Coverage-awareness gate (do not re-prove what a passing test already proves):
+before emitting a "harden/verify/pin/prove X" item, find a candidate test in the
+suite, read its source to confirm it contains a specific assertion validating that
+exact invariant (not a name-match, and not a test that runs the code without
+asserting the outcome), and run its validation command to confirm it passes. If a
+passing test asserts it, the invariant is already shipped — do NOT emit the item;
+record it as evidence and cite the covering test and assertion instead. Emit an
+item only when its validation does not yet pass, it covers genuinely new behavior,
+or it repairs a concrete defect. A skipped, failing, or non-asserting test is NOT
+coverage.
+
 Example:
 - F2.3-01 — Clarify the task state schema
   - Description: Defines ASF task lifecycle states as queued/running/review/completed/failed/cancelled.

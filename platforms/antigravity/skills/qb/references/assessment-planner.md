@@ -193,6 +193,16 @@ Include:
 - local vs live validation gaps;
 - suggested validation gates for Step 2 sub-plans.
 
+Classify each material behavior/invariant into exactly one bucket so Step 2 only
+gets genuine work:
+- **uncovered** — no test asserts it: a real gap; forward as validation work.
+- **covered (passing)** — a currently passing test already proves it: cite the
+  test by name and do NOT forward it to Step 2 (it is already shipped, not work).
+- **broken / skipped / stale** — a test names it but fails, is skipped, or no
+  longer asserts it: forward as a repair/coverage gap, naming what is broken.
+Only the uncovered and broken/stale buckets are real gaps. Do not list a
+covered-and-passing invariant as a "gap"; doing so seeds already-shipped items.
+
 ## 9. Security, Secret, and Governance Findings
 
 Analyze security and governance.

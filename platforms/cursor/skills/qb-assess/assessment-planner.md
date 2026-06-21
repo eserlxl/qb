@@ -61,7 +61,7 @@ Create a practical, ordered technical feedback report. Be specific and grounded 
 
 Evidence and confidence discipline:
 
-- Tag each material claim with a confidence level: `confirmed`, `probable`, `tentative`, or `contradicted`. A `tentative` or `probable` claim is NOT an implementation fact; record it as work Step 2 must turn into validation.
+- Tag each material claim with a confidence level: `confirmed`, `probable`, `tentative`, or `contradicted`. A `tentative` or `probable` claim is NOT an implementation fact; record it as work Step 2 must turn into validation — **unless a currently passing test already proves it**, in which case it is already shipped (confirmed evidence, not work to forward to Step 2). To call it covered you must (a) **read the test source** and confirm it contains a specific assertion validating your exact claim — a test that only names or executes the invariant without asserting it is NOT coverage — and (b) **confirm the test passes**; then cite the test and the specific assertion. Re-validating an invariant a passing test already asserts only creates work a downstream executor will reject as already-covered. A skipped, failing, or non-asserting test is NOT coverage.
 - A behavioral claim (what the code does at runtime) needs `test` or `runtime` evidence, or at least two independent evidence types with different locators. Independent means different evidence types AND different locators — two documentation references alone are not independent proof.
 - For an open why/how/what question, record a short hypothesis (e.g. `HYP-01: <claim>` with supporting and contradicting evidence and a next probe) instead of asserting a conclusion. Step 2 converts unresolved hypotheses into validation work; Step 4 verifies them before code changes.
 - For a non-trivial existing project that needs a durable evidence-backed mental model (distributed domain behavior, unclear architecture boundaries, repeated replanning), optionally apply the `project-comprehension-methods.md` reference — its Evidence Register, Domain-to-Code Trace Map, and Architecture Reflexion structures — and record the result in `.qb/project-comprehension.md`. This artifact is optional and never blocks the assessment.
@@ -178,6 +178,17 @@ Include:
 - CI status or absence;
 - local vs live validation gaps;
 - suggested validation gates for Step 2 sub-plans.
+
+Classify each material behavior/invariant into exactly one bucket so Step 2 only
+gets genuine work:
+- **uncovered** — no test asserts it: a real gap; forward as validation work.
+- **covered (passing)** — a currently passing test already proves it: cite the
+  test by name and do NOT forward it to Step 2 (it is already shipped, not work).
+- **broken / skipped / stale** — a test names it but fails, is skipped, or no
+  longer asserts it: forward as a repair/coverage gap, naming what is broken.
+Only the uncovered and broken/stale buckets are real gaps. Do not list a
+covered-and-passing invariant as a "gap"; doing so seeds already-shipped items
+that a downstream executor will reject as already-covered.
 
 ## 9. Security, Secret, and Governance Findings
 

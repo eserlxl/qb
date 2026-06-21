@@ -29,7 +29,16 @@ If it exists, read this file fully before generating sub-plans:
 
 assessment.md is not a replacement for main-planning.md. It is a supporting feedback source from Step 1.5. Use it to enrich sub-plans with concrete repo feedback, technical debt, placeholder/stub findings, broken integration risks, test gaps, security/governance gaps, and readiness blockers. Do not block Step 2 when assessment.md is absent.
 
-When `.qb/project-comprehension.md` exists (the optional evidence-backed comprehension artifact described in `project-comprehension-methods.md`), read it too: convert each unresolved or `tentative`/`probable` hypothesis into explicit validation work in the sub-plans rather than treating it as an implementation fact. Do not block Step 2 when it is absent.
+When `.qb/project-comprehension.md` exists (the optional evidence-backed comprehension artifact described in `project-comprehension-methods.md`), read it too: convert each unresolved or `tentative`/`probable` hypothesis into explicit validation work in the sub-plans — **but only after the coverage-awareness gate below clears it** — rather than treating it as an implementation fact. Do not block Step 2 when it is absent.
+
+Coverage-awareness gate (do not re-prove what a passing test already proves):
+An invariant that a **currently passing test already proves is already shipped** — it is repository evidence, not work. Before turning any `tentative`/`probable` claim, hypothesis, risk, or "harden/verify/pin/prove X" idea into a work-breakdown item, first look for an existing test that already **asserts** that exact invariant: search the test suite (`tests/`, `test_*.py`, `*_test.py`, `spec/`, `*.spec.js`, `__tests__/`, `*.test.ts`, plus the project's own test directories — adjust for the project's actual layout per its Makefile/pytest.ini/package.json). When you find a candidate you MUST do both: (a) **read its source** and confirm it contains a specific assertion (assert/expect/should) validating your exact claim — not a test whose name merely resembles the invariant, and not one that exercises the code path without asserting the outcome; and (b) **run the candidate validation command** and confirm it currently passes (running a non-mutating test is read-only and allowed in Step 2). Reading the test or an Evidence note alone, without running it, is NOT sufficient to call an invariant covered. If the command cannot be run cheaply and non-mutatingly, treat the invariant as **uncovered** (genuine work) rather than assuming coverage. Then classify the invariant as one of:
+
+- **covered (a passing test asserts it)** — do NOT emit a work item. Record it in section 6 (Current Repository Evidence) as "already covered by passing test: `<test name / command>` — `<the specific assertion that proves it>`" and, if a later sub-phase depends on it, cite it in section 10 (Dependencies). A sub-plan that suppresses an item this way MUST record it in section 6; an uncited drop is invalid. Re-proving it only produces an item a downstream executor will reject as already-shipped.
+- **uncovered (no test asserts it)** — this is genuine work; emit the item normally.
+- **broken / skipped / stale (a test names it but fails, is skipped, or no longer asserts it)** — this is genuine work too; emit a repair/coverage item and say what is broken. A non-asserting, skipped, or failing test is NOT coverage.
+
+Emit a work item only when at least one is true: its validation command does not yet pass, it covers genuinely new behavior, or it repairs a concrete defect. The whole point of this step is to drive real delivery, so a sub-plan that surveys a phase and finds every invariant already covered should say so (in section 6 and the index Coverage Check) and emit few or no items — never pad with already-shipped re-proofs.
 
 Do not invent or replace the master plan, and do not change the phase order unless the
 main plan is internally inconsistent — even then, preserve the original order and
@@ -279,6 +288,14 @@ Each item should include:
 - likely implementation surfaces outside `.qb/`
 - a real validation command or existing gate that would prove the item after
   implementation
+
+Treat that validation command as a pass/fail probe, not just a label: if it
+**already passes against the current repo**, the item is already shipped — drop
+it and cite the covering test/gate in section 6 instead of emitting the item.
+Keep an item only when its validation command currently fails, it covers
+genuinely new behavior, or it repairs a concrete defect (the coverage-awareness
+gate above). This is a per-item backstop for anything the gate above missed
+(for example an item seeded by the master plan rather than a hypothesis).
 
 Example:
 - F2.3-01 — Task state schema clarification

@@ -276,6 +276,19 @@ Step 4 will likely create detailed implementation task files with:
 
 Your audit must say which phases/sub-plans are ready for Step 4 and which need repair first.
 
+Already-shipped / redundant-coverage check (read-only): for each work-breakdown
+item whose mitigation is "verify/prove/pin/harden X", check whether a currently
+passing test already asserts that invariant. Read the cited or likely test source
+to confirm it actually asserts the claim (not a name-match), and confirm its pass
+status from the test/CI — do NOT mutate or run mutating commands. If a passing
+test already asserts it, the item is already shipped: flag it
+`value-gate: redundant-test-coverage`, cite the covering test and assertion, and
+record it COMPLETE (already implemented and verified) rather than forwarding it to
+Step 4. A skipped, failing, or non-asserting test is NOT coverage — such items stay
+genuine work. This matters most here because the Antigravity package is
+planning-only with no separate planwright-export gate, so this audit is the last
+line of defense against already-shipped items.
+
 Audit output file:
 
 Create or update:

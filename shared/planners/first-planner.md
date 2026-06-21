@@ -241,7 +241,11 @@ The phases should be realistic and sequential.
 For an existing partially built project:
 - start from the current observed state;
 - do not restart from scratch unless the repo is essentially empty;
-- include a stabilization/hardening phase before live/production activation if needed.
+- include a stabilization/hardening phase before live/production activation if needed;
+- treat capability the test suite already proves (a currently passing test) as
+  **already shipped** — do not propose a phase to re-verify/re-harden/re-prove
+  it. Scope hardening/stabilization phases to genuinely uncovered or broken
+  behavior, so downstream steps do not mint items a passing test already covers.
 
 For a new project:
 - start with Phase 0: foundation, scope, architecture, repo, contracts, and baseline quality gates.
@@ -260,6 +264,8 @@ For each risk include:
 - mitigation direction.
 
 Include security, architecture, delivery, operational, dependency, testing, and maintainability risks where applicable.
+
+Before listing a gap or a risk whose mitigation is "verify/prove/test X", find the likely test, read its source to confirm it asserts that exact property, and confirm it passes; if so, it is already shipped — note it as covered (cite the test and the specific assertion) or omit it. If no test asserts the property, it is a genuine gap. List only genuinely uncovered or broken gaps, so the roadmap does not seed already-shipped verification work.
 
 Be direct. Do not soften serious issues.
 

@@ -38,7 +38,7 @@ execute against it end to end.
 ## Slice procedure
 
 1. Read `git status`, `README.md`, `AGENTS.md`, `Makefile`, the audit, and the selected sub-plan.
-2. Determine the validation/test command FIRST. Prefer existing repo commands (e.g. `make test`, `make smoke`, `make check`, a focused unit test) over invented ones. Write a failing test first when feasible (test-driven).
+2. Determine the validation/test command FIRST. Prefer existing repo commands (e.g. `make test`, `make smoke`, `make check`, a focused unit test) over invented ones. Write a failing test first when feasible (test-driven). If that command **already passes before any change** — a currently passing test already covers this item's invariant — the slice is already shipped: do not produce an empty/no-op change; skip it and cite the covering test in the result summary.
 3. Make the minimal, reversible change required by the slice.
 4. Run the focused tests plus the relevant `make` smoke/check target.
 5. Before claiming done, verify with fresh evidence (run the command and confirm output).

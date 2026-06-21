@@ -228,10 +228,20 @@ normal executor item after this audit:
   surfaces outside `.qb/`;
 - it has or can cite a real runnable verification command;
 - its expected output is not another `.qb/` planning note, decision record,
-  ledger row, audit finding, or spec-only artifact.
+  ledger row, audit finding, or spec-only artifact;
+- it is not already shipped — i.e. its invariant is NOT already proven by a
+  currently passing test. Confirm by reading the cited/likely test and checking
+  its pass status (read-only: inspect the test source and its known/CI status,
+  do not mutate). An item that only re-proves what a passing test already
+  asserts is redundant; flag it `value-gate: redundant-test-coverage`, cite the
+  existing covering test, and record it as COMPLETE (already implemented and
+  verified) in section 12 rather than passing it to Step 4. A skipped, failing,
+  or non-asserting test is NOT coverage — such items stay genuine work.
 
 Flag sub-plans whose work breakdown mostly describes planning-file edits rather
-than implementation work. These are not ready for planwright export even if their
+than implementation work, or whose items mostly re-prove already-covered
+invariants (both are reasons an item is not export-ready even when its section
+structure is valid). These are not ready for planwright export even if their
 section structure is valid. A documentation item is acceptable only when it edits
 committed project documentation such as `README.md`, `RUNBOOK.md`, package docs,
 or another tracked documentation surface outside `.qb/`.

@@ -133,6 +133,16 @@ Grounding discipline:
 - If a work-breakdown entry can only be satisfied by editing `.qb/`, skip it and list it
   as "planning-state only". Do not force-add ignored planning artifacts or emit an item
   that would require an empty/no-op commit.
+- Already-shipped gate: inspect each entry's Verification command (from the sub-plan's
+  section 9 / the item's Verification). Confirm it actually asserts the entry's invariant
+  (read the cited test), then check whether it already passes — run it when it is a cheap
+  non-mutating command, otherwise rely on its known/CI status. If the invariant is
+  already proven by a passing test, the entry is already shipped: skip it and list it in
+  the closing summary under "Already-shipped (covered by passing test): `<command>`". Only
+  export entries whose Verification does not yet pass, or that add genuinely new behavior
+  or repair a concrete defect — never an item a downstream executor would immediately
+  reject as already-covered. A skipped, failing, or non-asserting test is NOT coverage;
+  keep those entries.
 
 Output file requirements:
 
