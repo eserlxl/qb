@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-06-21
+
+### Changed
+- Add a planner coverage-awareness gate so QB stops minting work items that a passing test already covers: threaded through every planner stage (assessment, first, second, export, third, fourth) across all four platforms, it keys on a read-confirmed assertion plus the verification command's pass/fail rather than a name match, cites the covering test on every drop, and treats skipped/failing/non-asserting tests as not coverage. Persist a per-run telemetry trend artifact (telemetry-trends.json report + telemetry-trends.txt summary) in the headless run finale via RunStore.emit_trend_artifacts(), rendered fail-soft on a thin series and fanned byte-equal to the three engine hosts. Ratchet the optional make coverage line-coverage floor 80 -> 84 with a recorded margin-below-measured policy. Harden the suite: guard the whole shared command-execution surface against multi-line shell-string spawns, pin the sync MAP remediation guidance, and self-document the BASELINE same-change count rule.
+
 ## [0.20.0] - 2026-06-21
 
 ### Changed

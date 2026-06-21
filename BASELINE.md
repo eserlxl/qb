@@ -14,7 +14,7 @@ The gate of record is `make check`, run on a clean working tree.
 |---|---|
 | Command | `make check` |
 | Observed exit status | `0` |
-| Version (`VERSION`) | `0.20.0` |
+| Version (`VERSION`) | `0.21.0` |
 | Commit | `d5e2884` |
 | Date | 2026-06-21 |
 
@@ -251,7 +251,7 @@ an install hint and exits 0 (a no-op), so this figure reproduces only where
 `coverage.py` is installed — consistent with the optional-tool dormancy
 caveat above.
 
-## Regression reference (v0.20.0)
+## Regression reference (v0.21.0)
 
 The frozen reference any future run is compared against. A single `make baseline`
 re-runs the whole net (fan-out + byte-equality + per-host validation + full test
@@ -259,7 +259,7 @@ discovery).
 
 | Field | Reference value |
 |---|---|
-| Version (`VERSION`) | `0.20.0` |
+| Version (`VERSION`) | `0.21.0` |
 | Expected `make check` exit status | `0` |
 | Expected test modules | 82 |
 | Expected test functions | 677 |
