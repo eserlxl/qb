@@ -48,7 +48,9 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   confidence, offline) in the `dependency` category; a narrow per-scope grant
   such as `contents: read` is treated as clean.
 - `LicenseAnalyzer` covers missing or placeholder repository-root license files
-  in the `license` category.
+  in the `license` category, and -- when the root is licensed -- a package
+  manifest (`package.json` / `pyproject.toml` / `Cargo.toml`) that declares a
+  package but omits its own license declaration.
 - `ConfigHygieneAnalyzer` covers committed dotenv files and credential-bearing
   `.npmrc` keys in the `config` category.
 - `ContainerConfigAnalyzer` covers high-risk defaults in Docker Compose and
@@ -126,12 +128,18 @@ run only when their tool is installed), each audit run records a deterministic
      narrow stdlib checks only where false-positive risk stays low.
 
 4. **License metadata inside package manifests (`license`)**
-   - Current coverage: `LicenseAnalyzer` checks repository-root license files.
-   - Gap: package-level license declarations in `package.json`, `pyproject.toml`,
-     Cargo manifests, and generated distributions are not compared to the root
-     license state.
-   - Candidate follow-up: manifest-level license consistency after the broader
-     dependency inventory exists.
+   - Current coverage: `LicenseAnalyzer` checks repository-root license files and,
+     when the root is licensed, flags a `package.json` / `pyproject.toml` /
+     `Cargo.toml` that declares a package but omits its own license declaration
+     (deterministic, offline; private/unpublished/sample manifests and every
+     declared license form -- SPDX string, table, classifier, file reference,
+     workspace inheritance -- are suppressed).
+   - Remaining gap: a manifest declaring an SPDX license that *contradicts* a
+     sibling manifest's is not yet flagged -- a cross-manifest SPDX-expression
+     comparison whose false-positive epicenter is SPDX normalization, so it is
+     deferred until normalization can be done without eroding precision.
+   - Candidate follow-up: same-directory SPDX-contradiction detection with a
+     reviewed deprecated-id/alias table and operand-set parsing.
 
 5. **Config templates and generated examples (`config`, `secret`)**
    - Current coverage: committed real `.env` files are flagged and secret-shaped

@@ -78,6 +78,7 @@ CONFIDENCE_POLICY: dict[str, dict[str, str]] = {
     "license-hygiene": {
         "missing-license": "high",
         "empty-license": "medium",
+        "manifest-undeclared-license": "medium",
     },
     "config-hygiene": {
         "committed-config": "medium",

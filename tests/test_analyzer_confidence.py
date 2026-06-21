@@ -93,6 +93,7 @@ class AnalyzerConfidencePolicyTests(unittest.TestCase):
             ("dependency-audit", "network-advisory"): "high",
             ("license-hygiene", "missing-license"): "high",
             ("license-hygiene", "empty-license"): "medium",
+            ("license-hygiene", "manifest-undeclared-license"): "medium",
             ("config-hygiene", "committed-config"): "medium",
             ("workflow-actions", "broad-action-ref"): "medium",
             ("workflow-actions", "broad-permissions"): "medium",

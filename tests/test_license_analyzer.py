@@ -51,8 +51,15 @@ class LicenseAnalyzerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             for name, content in files.items():
-                (root / name).write_text(content, encoding="utf-8")
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(content, encoding="utf-8")
             return self.mod.LicenseAnalyzer().analyze(str(root), self.cfg)
+
+    def _manifest(self, files: dict) -> list:
+        # Every manifest case here ships a real root LICENSE, so the root is
+        # licensed and the only possible findings are manifest-undeclared ones.
+        return self._analyze({"LICENSE": _MIT, **files})
 
     def test_missing_license_is_flagged(self) -> None:
         findings = self._analyze({"README.md": "# project\n"})
@@ -101,6 +108,90 @@ class LicenseAnalyzerTests(unittest.TestCase):
             before = sorted(p.name for p in root.iterdir())
             self.mod.LicenseAnalyzer().analyze(str(root), self.cfg)
             self.assertEqual(before, sorted(p.name for p in root.iterdir()))
+
+    # --- manifest-undeclared-license (root is licensed) -----------------------
+
+    def test_manifest_without_license_is_flagged_when_root_licensed(self) -> None:
+        findings = self._manifest({"pkg/package.json": '{"name": "x", "version": "1.0.0"}'})
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].category, "license")
+        self.assertEqual(findings[0].severity, "P3")
+        self.assertEqual(findings[0].confidence, "medium")
+        self.assertEqual(findings[0].fix_strategy, "manual")
+        self.assertEqual(findings[0].evidence, "pkg/package.json:1")
+        self.assertEqual(self.ai.validate_finding(findings[0]), [])
+
+    def test_pyproject_and_cargo_without_license_are_flagged(self) -> None:
+        findings = self._manifest({
+            "py/pyproject.toml": '[project]\nname = "x"\nversion = "0.1"\n',
+            "cr/Cargo.toml": '[package]\nname = "x"\nversion = "0.1.0"\n',
+            "po/pyproject.toml": '[tool.poetry]\nname = "x"\nversion = "0.1"\n',
+        })
+        self.assertEqual(
+            {f.evidence for f in findings},
+            {"py/pyproject.toml:1", "cr/Cargo.toml:1", "po/pyproject.toml:1"},
+        )
+
+    def test_manifest_with_declared_license_is_clean(self) -> None:
+        for files in (
+            {"pkg/package.json": '{"name": "x", "license": "MIT"}'},
+            {"pkg/package.json": '{"name": "x", "license": {"type": "MIT", "url": "u"}}'},
+            {"pkg/package.json": '{"name": "x", "licenses": [{"type": "MIT"}]}'},
+            {"py/pyproject.toml": '[project]\nname = "x"\nlicense = "MIT"\n'},
+            {"py/pyproject.toml": '[project]\nname = "x"\nlicense = {file = "LICENSE"}\n'},
+            {"py/pyproject.toml": '[project]\nname = "x"\nlicense-files = ["LICENSE"]\n'},
+            {"py/pyproject.toml": '[project]\nname = "x"\ndynamic = ["license"]\n'},
+            {"py/pyproject.toml": '[project]\nname = "x"\nclassifiers = ["License :: OSI Approved :: MIT License"]\n'},
+            {"cr/Cargo.toml": '[package]\nname = "x"\nlicense = "MIT OR Apache-2.0"\n'},
+            {"cr/Cargo.toml": '[package]\nname = "x"\nlicense.workspace = true\n'},
+            {"cr/Cargo.toml": '[package]\nname = "x"\nlicense-file = "LICENSE"\n'},
+        ):
+            self.assertEqual(self._manifest(files), [], files)
+
+    def test_non_package_manifests_are_not_flagged(self) -> None:
+        # private / unpublished / identity-less / tool-only manifests declare no
+        # distributable package, so an absent license must not fire.
+        for files in (
+            {"pkg/package.json": '{"name": "x", "private": true}'},
+            {"pkg/package.json": '{"name": "my-monorepo", "version": "0.0.0", "workspaces": ["packages/*"]}'},
+            {"pkg/package.json": '{"version": "1.0.0"}'},
+            {"py/pyproject.toml": '[build-system]\nrequires = ["setuptools"]\n'},
+            {"cr/Cargo.toml": '[package]\nname = "x"\npublish = false\n'},
+            {"cr/Cargo.toml": '[package]\nname = "x"\npublish = []\n'},
+            {"cr/Cargo.toml": '[workspace]\nmembers = ["a"]\n'},
+        ):
+            self.assertEqual(self._manifest(files), [], files)
+
+    def test_bom_prefixed_manifest_is_still_flagged(self) -> None:
+        # A UTF-8 BOM (common in Windows-emitted manifests, accepted by npm) must
+        # not silently hide a license-omitting package: the BOM is stripped before
+        # parsing so the omission is still detected.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "LICENSE").write_text(_MIT, encoding="utf-8")
+            pkg = root / "pkg"
+            pkg.mkdir()
+            (pkg / "package.json").write_bytes(
+                b'\xef\xbb\xbf{"name": "x", "version": "1.0.0"}')
+            findings = self.mod.LicenseAnalyzer().analyze(str(root), self.cfg)
+            self.assertEqual([f.evidence for f in findings], ["pkg/package.json:1"])
+
+    def test_sample_path_manifests_are_excluded(self) -> None:
+        for prefix in ("examples", "fixtures", "testdata", "demo"):
+            self.assertEqual(
+                self._manifest({f"{prefix}/pkg/package.json": '{"name": "x"}'}), [],
+                f"{prefix}/ manifest should be excluded")
+
+    def test_malformed_manifest_degrades_to_no_finding(self) -> None:
+        self.assertEqual(self._manifest({"pkg/package.json": '{"name": broken'}), [])
+        self.assertEqual(self._manifest({"py/pyproject.toml": 'name = "x" [oops\n'}), [])
+
+    def test_manifest_scan_skipped_when_root_unlicensed(self) -> None:
+        # No root license: only the root missing-license finding fires; package
+        # manifests are NOT additionally flagged (the root rule already states it).
+        findings = self._analyze({"pkg/package.json": '{"name": "x"}'})
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].evidence, "LICENSE:1")
 
 
 if __name__ == "__main__":
