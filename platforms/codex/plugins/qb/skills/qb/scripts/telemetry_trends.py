@@ -160,6 +160,14 @@ def emit_trend_artifacts(source, json_path, summary_path, window: int = 3) -> di
 _DEFAULT_AGGREGATE_SUBPATH = Path(".qb") / "audit" / _aggregate.AGGREGATE_TELEMETRY_FILENAME
 NO_SERIES_MESSAGE = "no telemetry series yet"
 
+# Fixed run-store artifact filenames for the persisted per-run trend report,
+# mirroring telemetry.TELEMETRY_FILENAME / telemetry_aggregate.AGGREGATE_TELEMETRY_FILENAME.
+# The run path emits these once per run (run_store.emit_trend_artifacts) so the
+# improving/regressing/stable read-out is a durable, diffable artifact rather than
+# reachable only by re-running `make trends`.
+TREND_REPORT_FILENAME = "telemetry-trends.json"
+TREND_SUMMARY_FILENAME = "telemetry-trends.txt"
+
 
 def main(argv=None) -> int:
     """CLI: render the multi-run telemetry trend report from an aggregate series.

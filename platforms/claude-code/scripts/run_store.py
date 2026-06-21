@@ -57,9 +57,14 @@ _fs = _load_sibling("qb_finding_schema", "finding_schema.py")
 _core = _load_sibling("qb_analyzer_core", "analyzer_core.py")
 _telemetry = _load_sibling("qb_telemetry", "telemetry.py")
 _telemetry_aggregate = _load_sibling("qb_telemetry_aggregate", "telemetry_aggregate.py")
+_telemetry_trends = _load_sibling("qb_telemetry_trends", "telemetry_trends.py")
 serialize_finding = _fs.serialize_finding
 TELEMETRY_FILENAME = _telemetry.TELEMETRY_FILENAME
 AGGREGATE_TELEMETRY_FILENAME = _telemetry_aggregate.AGGREGATE_TELEMETRY_FILENAME
+# Persisted per-run trend artifacts (optional outputs, NOT in REQUIRED_SUBPATHS): a
+# JSON trend report and a text summary, emitted once per run by emit_trend_artifacts.
+TREND_REPORT_FILENAME = _telemetry_trends.TREND_REPORT_FILENAME
+TREND_SUMMARY_FILENAME = _telemetry_trends.TREND_SUMMARY_FILENAME
 # telemetry.json is required for a completed run: even report-only A0 emits
 # quality/autonomy telemetry, and a missing file should be visible to layout
 # validation instead of silently pinning later runs to cold-start behavior.
@@ -191,6 +196,25 @@ class RunStore:
             raise RunStoreError("telemetry record requires schema_version")
         return _telemetry_aggregate.append_or_update(
             self.root / AGGREGATE_TELEMETRY_FILENAME, record)
+
+    def emit_trend_artifacts(self, window: int = 3) -> dict:
+        """Persist the multi-run trend artifacts (a JSON report + a text summary)
+        derived from the store-local ``telemetry-aggregate.json`` series, mirroring
+        what ``make trends`` renders on demand. Returns the rendered bytes.
+
+        Safe on a cold/insufficient series: the trend report still renders (with
+        ``insufficient-data`` verdicts) rather than raising, so a fresh run never
+        fails here. These are optional outputs (not in REQUIRED_SUBPATHS); assert
+        their presence, not their bytes, in layout checks.
+        """
+        aggregate = _telemetry_aggregate.read_aggregate(
+            self.root / AGGREGATE_TELEMETRY_FILENAME)
+        return _telemetry_trends.emit_trend_artifacts(
+            aggregate,
+            self.root / TREND_REPORT_FILENAME,
+            self.root / TREND_SUMMARY_FILENAME,
+            window,
+        )
 
     def write_self_audit(self, record: dict):
         """Persist a redacted self-audit evidence record (the QB-audits-QB
