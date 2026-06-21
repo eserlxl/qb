@@ -72,12 +72,29 @@ class ObservabilityPipelineTest(unittest.TestCase):
             self.assertIn("precision_estimate", record["quality"])
             self.assertIn("fix_safety_ok", record["quality"])
             # A re-run overwrites the single fixed-path per-run record (no duplicate),
-            # and maintains exactly one multi-run aggregate series alongside it.
+            # and maintains exactly one multi-run aggregate series alongside it -- plus
+            # the persisted trend report (telemetry-trends.json), all at fixed paths.
             headless.run_headless(repo, output_dir=out)
             telem_files = sorted(p.name for p in out.glob("telemetry*.json"))
             self.assertEqual(
                 telem_files,
-                [store_mod.AGGREGATE_TELEMETRY_FILENAME, store_mod.TELEMETRY_FILENAME],
+                [
+                    store_mod.AGGREGATE_TELEMETRY_FILENAME,
+                    store_mod.TREND_REPORT_FILENAME,
+                    store_mod.TELEMETRY_FILENAME,
+                ],
+            )
+            # The run finale persists the trend artifacts (JSON report + text
+            # summary) at their fixed store paths, and re-rendering the stored
+            # series is byte-identical (deterministic, diffable artifact).
+            trend_json = out / store_mod.TREND_REPORT_FILENAME
+            trend_txt = out / store_mod.TREND_SUMMARY_FILENAME
+            self.assertTrue(trend_json.is_file(), "run must persist the trend report")
+            self.assertTrue(trend_txt.is_file(), "run must persist the trend summary")
+            agg = self.agg.read_aggregate(out / store_mod.AGGREGATE_TELEMETRY_FILENAME)
+            self.assertEqual(
+                trend_json.read_text(encoding="utf-8"),
+                self.trends.render_trend_json(agg),
             )
 
     def test_per_run_telemetry_to_aggregate_to_trends_to_recommendation(self):

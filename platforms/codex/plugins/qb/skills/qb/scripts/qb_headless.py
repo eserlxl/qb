@@ -147,6 +147,11 @@ def run_headless(repo_root, *, policy=None, output_dir=None, allow_networked=Fal
         # satisfies its own REQUIRED_SUBPATHS layout and the report emitted just
         # below sees a non-empty aggregate to derive trend_direction from.
         store.append_telemetry_aggregate(telemetry_record)
+        # Persist the multi-run trend read-out (improving/regressing/stable) as a
+        # durable, diffable per-run artifact rather than something only `make trends`
+        # recomputes on demand. Safe right after the append: the series holds this
+        # run's record, so a thin series renders insufficient-data verdicts, not an error.
+        store.emit_trend_artifacts()
         _report.emit(store, provenance=_report.build_provenance(policy))
         return EXIT_FINDINGS if findings else EXIT_CLEAN
     except Exception as exc:  # fail-closed: never report a crashed run as clean
