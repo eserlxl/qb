@@ -217,6 +217,49 @@ class DocConsistencyTest(unittest.TestCase):
             "DependencyAnalyzer must emit the Cargo.lock-missing finding the doc documents",
         )
 
+    def test_coverage_doc_lockfile_presence_claims_match_engine(self):
+        # Pin the doc's npm/Python/go lockfile-presence claims to the engine,
+        # mirroring the Cargo.lock guard above so EVERY documented lockfile check
+        # is pinned, not just Cargo: the Current coverage statement names each
+        # lockfile, and DependencyAnalyzer emits the matching missing-lockfile
+        # finding for a dependency-declaring manifest that ships no lockfile. This
+        # closes the asymmetry that let the Python-lockfile claim go stale.
+        import tempfile
+        from pathlib import Path
+
+        statement, _, _ = self._read(ANALYZER_COVERAGE_DOC).partition(
+            "## Impact-ranked coverage gaps")
+        for token in ("poetry.lock", "pdm.lock", "uv.lock", "Pipfile.lock",
+                      "npm lockfile", "go.sum"):
+            self.assertIn(
+                token, statement,
+                f"the Current coverage statement must document the {token} check",
+            )
+
+        dep = next(a for a in audit_runner.build_default_registry().analyzers()
+                   if type(a).__name__ == "DependencyAnalyzer")
+        cfg = audit_runner.AnalyzerConfig(allow_networked=False)
+        # Each manifest declares a pinned dependency but ships NO lockfile, so the
+        # only finding is the missing-lockfile one at "<manifest>:1".
+        cases = {
+            "pyproject.toml": '[project]\nname = "x"\nversion = "0.1.0"\n'
+                              'dependencies = ["requests==2.31.0"]\n',
+            "package.json": '{"name": "x", "version": "1.0.0",'
+                            ' "dependencies": {"left-pad": "1.3.0"}}\n',
+            "go.mod": "module example.com/x\n\ngo 1.21\n\n"
+                      "require github.com/pkg/errors v0.9.1\n",
+        }
+        for manifest, contents in cases.items():
+            with tempfile.TemporaryDirectory() as d:
+                Path(d, manifest).write_text(contents, encoding="utf-8")
+                findings = dep.analyze(d, cfg)
+            self.assertTrue(
+                any(f.evidence == f"{manifest}:1" and f.category == "dependency"
+                    for f in findings),
+                "DependencyAnalyzer must emit the missing-lockfile finding the doc "
+                f"documents for {manifest}",
+            )
+
     def test_coverage_doc_capability_report_contract_matches_engine(self):
         # Pin the doc's capability-report contract to the engine: the field name,
         # the ran/skipped shape, and the `tool-unavailable` caveat reason are real
