@@ -231,6 +231,26 @@ Two intentional baseline states are recorded as known caveats, not silent gaps:
   hosts do. This is an intended asymmetry, not a defect.
   *Addressed in Phase 5 (multi-host parity).*
 
+## Measured line-coverage reference (Phase 0)
+
+`make coverage` measures statement coverage of `shared/scripts` via
+`coverage.py` and enforces `COVERAGE_FLOOR` (80) with
+`coverage report --fail-under=$(COVERAGE_FLOOR)`. Re-derived on a clean tree
+at v0.20.0:
+
+| Field | Reference value |
+|---|---|
+| Measured total line-coverage (`shared/scripts`) | 86% |
+| `COVERAGE_FLOOR` enforced | 80 (unchanged) |
+| Clears the floor | yes (86% ≥ 80) |
+
+The margin between the measured 86% and the 80 floor is the Phase 0 coverage
+reference Phase 1's ratchet moves against; the floor is intentionally left at
+80 here and not ratcheted. When `coverage.py` is absent `make coverage` prints
+an install hint and exits 0 (a no-op), so this figure reproduces only where
+`coverage.py` is installed — consistent with the optional-tool dormancy
+caveat above.
+
 ## Regression reference (v0.20.0)
 
 The frozen reference any future run is compared against. A single `make baseline`
