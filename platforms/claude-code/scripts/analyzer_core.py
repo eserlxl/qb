@@ -82,6 +82,13 @@ CONFIDENCE_POLICY: dict[str, dict[str, str]] = {
     "config-hygiene": {
         "committed-config": "medium",
     },
+    "container-config": {
+        "privileged-container": "medium",
+        "host-network": "medium",
+        "host-namespace": "medium",
+        "allow-privilege-escalation": "medium",
+        "docker-socket-mount": "medium",
+    },
     "workflow-actions": {
         "broad-action-ref": "medium",
         "broad-permissions": "medium",

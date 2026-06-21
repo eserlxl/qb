@@ -9,6 +9,7 @@ QB's default offline registry is built in `shared/scripts/audit_runner.py` by
 - `DependencyAnalyzer`
 - `LicenseAnalyzer`
 - `ConfigHygieneAnalyzer`
+- `ContainerConfigAnalyzer`
 - `WorkflowActionAnalyzer`
 
 Those producers emit findings in the frozen categories from
@@ -50,6 +51,11 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   in the `license` category.
 - `ConfigHygieneAnalyzer` covers committed dotenv files and credential-bearing
   `.npmrc` keys in the `config` category.
+- `ContainerConfigAnalyzer` covers high-risk defaults in Docker Compose and
+  Kubernetes manifests — privileged containers, host network/PID/IPC namespaces,
+  `allowPrivilegeEscalation: true`, and host Docker-socket mounts — in the
+  `config` category. It is deterministic and offline, and scans only files it
+  positively identifies as container manifests, so unrelated YAML is never read.
 - `QualityAnalyzer` is environment-conditional: the `ruff` adapter can emit
   `quality` findings only when `ruff` is already installed, and the `pyflakes`
   adapter can emit `correctness` findings only when `pyflakes` is already
@@ -99,12 +105,16 @@ run only when their tool is installed), each audit run records a deterministic
 
 2. **Runtime/container configuration (`config`, `security-adjacent`)**
    - Current coverage: `ConfigHygieneAnalyzer` flags committed dotenv files and
-     credential-bearing `.npmrc` files.
-   - Gap: Dockerfiles, compose files, and Kubernetes manifests are not checked
-     for high-risk defaults such as privileged containers, broad host mounts,
-     or missing non-root execution.
-   - Candidate follow-up: a bounded config analyzer for deterministic text
-     patterns in container manifests.
+     credential-bearing `.npmrc` files; `ContainerConfigAnalyzer` flags
+     deterministic high-risk defaults in Docker Compose and Kubernetes
+     manifests — privileged containers, host network/PID/IPC namespaces,
+     `allowPrivilegeEscalation: true`, and a mounted host Docker socket.
+   - Remaining gap: Dockerfile-level hardening (e.g. missing non-root `USER`)
+     is intentionally deferred — that signal is high false-positive without
+     build-stage analysis, and the analyzer's bounded-precision contract scopes
+     it to unambiguous manifest tokens for now.
+   - Candidate follow-up: a low-false-positive Dockerfile pass that distinguishes
+     final-stage from build-stage images before flagging a missing `USER`.
 
 3. **Language-specific correctness without optional tools (`correctness`,
    `quality`)**

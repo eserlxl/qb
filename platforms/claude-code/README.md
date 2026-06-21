@@ -194,9 +194,9 @@ Beyond planning, the package ships the QB audit → harden engine (`/qb-harden`,
 Proposed fixes are tried in disposable git **write isolation** (the working tree
 is untouched until a fix verifies); execution sandboxing of analyzed code is a
 **Phase 3** item and is not yet shipped. Its
-seven producer analyzers — `SecretHygieneAnalyzer`, `CommandInjectionAnalyzer`,
+eight producer analyzers — `SecretHygieneAnalyzer`, `CommandInjectionAnalyzer`,
 `QualityAnalyzer`, `DependencyAnalyzer`, `LicenseAnalyzer`,
-`ConfigHygieneAnalyzer`, and `WorkflowActionAnalyzer` — cover the eight finding categories `secret`,
+`ConfigHygieneAnalyzer`, `ContainerConfigAnalyzer`, and `WorkflowActionAnalyzer` — cover the eight finding categories `secret`,
 `injection`, `path-traversal`, `dependency`, `quality`, `correctness`,
 `license`, and `config`. The `correctness` category is produced conditionally by
 the `pyflakes` adapter when `pyflakes` is already installed. See the root

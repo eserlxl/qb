@@ -34,13 +34,13 @@ python3 -m unittest discover -s tests -v
 
 | Metric | Baseline value |
 |---|---|
-| Test modules (`tests/test_*.py`) | 81 |
-| Test functions | 654 |
+| Test modules (`tests/test_*.py`) | 82 |
+| Test functions | 666 |
 | Failures | 0 |
 | Errors | 0 |
 | Exit status | 0 |
 
-A run reporting anything other than 81 modules or 654 passing test cases, or any
+A run reporting anything other than 82 modules or 666 passing test cases, or any
 failure or error, is a regression against this reference.
 
 **Same-change update rule:** adding or removing a test module or test case must
@@ -87,7 +87,7 @@ localized to one guard.
 | `bash platforms/cursor/scripts/validate.sh` | The Cursor package validates the same per-host contract. |
 | `bash platforms/antigravity/scripts/validate.sh` | The Antigravity (planning-only) package validates its own contract. |
 | `cd platforms/codex && bash scripts/validate.sh` | The Codex package validates the same per-host contract. |
-| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (81 modules / 654 functions) passes. |
+| `python3 -m unittest discover -s tests` | The full cross-platform invariant suite (82 modules / 666 functions) passes. |
 
 A red `make check` is diagnosed by re-running the failing sub-step in isolation;
 each command above is self-contained.
@@ -143,7 +143,7 @@ This is the authoritative "before" state every forward phase closes against.
 
 - Repo-aware staged planning (`.qb/` artifacts) with read-only, dependency-free
   validators at every step and a planwright export path.
-- A dependency-free audit engine, A0 report-only by default, with the seven producer
+- A dependency-free audit engine, A0 report-only by default, with the eight producer
   analyzers and frozen finding categories named in the README.
 - Disposable git **write isolation** for proposed fixes — a throwaway worktree; the
   target working tree is untouched until a fix verifies and is promoted.
@@ -241,8 +241,8 @@ discovery).
 |---|---|
 | Version (`VERSION`) | `0.19.0` |
 | Expected `make check` exit status | `0` |
-| Expected test modules | 81 |
-| Expected test functions | 654 |
+| Expected test modules | 82 |
+| Expected test functions | 666 |
 | Expected failures / errors | 0 / 0 |
 
 Baseline guard set (each individually runnable — see **Guard-to-test mapping**):

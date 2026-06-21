@@ -175,6 +175,11 @@ MAP=(
   "scripts/analyzer_config.py|platforms/cursor/scripts/analyzer_config.py"
   "scripts/analyzer_config.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_config.py"
 
+  # shared/scripts/analyzer_container.py
+  "scripts/analyzer_container.py|platforms/claude-code/scripts/analyzer_container.py"
+  "scripts/analyzer_container.py|platforms/cursor/scripts/analyzer_container.py"
+  "scripts/analyzer_container.py|platforms/codex/plugins/qb/skills/qb/scripts/analyzer_container.py"
+
   # shared/scripts/analyzer_breadth.py
   "scripts/analyzer_breadth.py|platforms/claude-code/scripts/analyzer_breadth.py"
   "scripts/analyzer_breadth.py|platforms/cursor/scripts/analyzer_breadth.py"

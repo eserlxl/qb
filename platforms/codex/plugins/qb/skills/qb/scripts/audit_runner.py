@@ -51,6 +51,7 @@ _quality = _load_sibling("qb_analyzer_quality", "analyzer_quality.py")
 _dependency = _load_sibling("qb_analyzer_dependency", "analyzer_dependency.py")
 _license = _load_sibling("qb_analyzer_license", "analyzer_license.py")
 _config = _load_sibling("qb_analyzer_config", "analyzer_config.py")
+_container = _load_sibling("qb_analyzer_container", "analyzer_container.py")
 _breadth = _load_sibling("qb_analyzer_breadth", "analyzer_breadth.py")
 _store = _load_sibling("qb_run_store", "run_store.py")
 
@@ -72,6 +73,7 @@ QualityAnalyzer = _quality.QualityAnalyzer
 DependencyAnalyzer = _dependency.DependencyAnalyzer
 LicenseAnalyzer = _license.LicenseAnalyzer
 ConfigHygieneAnalyzer = _config.ConfigHygieneAnalyzer
+ContainerConfigAnalyzer = _container.ContainerConfigAnalyzer
 WorkflowActionAnalyzer = _breadth.WorkflowActionAnalyzer
 
 # --- Fixed output-directory convention (validator-checked identifiers) ---------
@@ -97,6 +99,7 @@ def build_default_registry():
     registry.register(DependencyAnalyzer())
     registry.register(LicenseAnalyzer())
     registry.register(ConfigHygieneAnalyzer())
+    registry.register(ContainerConfigAnalyzer())
     registry.register(WorkflowActionAnalyzer())
     return registry
 

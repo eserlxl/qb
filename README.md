@@ -139,12 +139,15 @@ full-containment claim.
 
 The built-in producer analyzers are `SecretHygieneAnalyzer`,
 `CommandInjectionAnalyzer`, `QualityAnalyzer`, `DependencyAnalyzer`,
-`LicenseAnalyzer`, `ConfigHygieneAnalyzer`, and `WorkflowActionAnalyzer`.
+`LicenseAnalyzer`, `ConfigHygieneAnalyzer`, `ContainerConfigAnalyzer`, and
+`WorkflowActionAnalyzer`.
 Together they cover the frozen finding categories `secret`, `injection`,
 `path-traversal`, `dependency`, `quality`, `correctness`, `license`, and
 `config`: secret-shaped values, command injection, dynamic eval, path traversal,
 dependency manifests, lockfiles, CI workflow action pinning, repository license
-state, committed dotenv/config hygiene, and local quality/correctness tools.
+state, committed dotenv/config hygiene, container-manifest high-risk defaults
+(privileged containers, host namespaces, Docker-socket mounts), and local
+quality/correctness tools.
 `QualityAnalyzer` findings from `ruff` and `pyflakes` are
 environment-conditional: those adapters run only when the tools already exist.
 Advisory enrichment is enabled only via the opt-in allow_networked/register_optional contract.
