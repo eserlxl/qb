@@ -86,6 +86,26 @@ class ReportTests(unittest.TestCase):
             self.assertEqual(loc["artifactLocation"]["uri"], "src/a.py")
             self.assertEqual(loc["region"]["startLine"], 7)
 
+    def test_sarif_locator_with_colon_in_path(self) -> None:
+        # The locator is "path:line" split on the LAST colon, and the schema
+        # permits a path that itself contains a colon (finding_schema rsplit
+        # contract). The SARIF location must carry the full path and the real
+        # line, not split on the first colon (which would point at a wrong file
+        # at line 1). Regression guard for the partition-vs-rsplit divergence.
+        with tempfile.TemporaryDirectory() as d:
+            store = self.rs.RunStore(Path(d) / self.rs.OUTPUT_DIR_NAME).open()
+            ev = "weird:dir/file.py:42"
+            f = self.schema.Finding(
+                id=self.schema.compute_finding_id("secret", ev, "k"),
+                category="secret", severity="P1", confidence="high",
+                evidence=ev, rationale="r", suggested_fix="s", fix_strategy="manual")
+            self.assertEqual(self.schema.validate_finding(f), [])
+            store.write_findings([f])
+            sarif = self.report.render_sarif(store)
+            loc = sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
+            self.assertEqual(loc["artifactLocation"]["uri"], "weird:dir/file.py")
+            self.assertEqual(loc["region"]["startLine"], 42)
+
     def test_severity_to_sarif_level_table(self) -> None:
         self.assertEqual(self.report.SEVERITY_TO_SARIF,
                          {"P0": "error", "P1": "error", "P2": "warning", "P3": "note"})

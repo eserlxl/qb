@@ -15,6 +15,11 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# Coverage.py artifacts (the optional `make coverage` dev tool)
+.coverage
+.coverage.*
+htmlcov/
+
 # Virtual environments / env & secrets
 .venv/
 venv/

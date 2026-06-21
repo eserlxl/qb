@@ -65,7 +65,16 @@ def _category_rule(category: str) -> str:
 
 
 def _evidence_location(evidence: str):
-    path, _, line = (evidence or "").partition(":")
+    # Split on the LAST colon: the locator is "path:line" / "path:start-end" and
+    # the path segment may itself contain a colon, so this must match the canonical
+    # rsplit(":", 1) contract in finding_schema/validate_finding (and
+    # findings_to_plan.evidence_path). Splitting on the first colon mislocates any
+    # finding whose path contains a colon to a wrong file and line 1.
+    text = evidence or ""
+    path, sep, line = text.rpartition(":")
+    if not sep:
+        # No "path:line" separator: treat the whole token as a path at line 1.
+        path, line = text, ""
     try:
         start = int(line.split("-", 1)[0]) if line else 1
     except ValueError:
