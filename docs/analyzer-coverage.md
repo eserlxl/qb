@@ -28,13 +28,16 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
 - `CommandInjectionAnalyzer` covers shell-string execution, dynamic eval, and
   traversal sinks in the `injection` and `path-traversal` categories.
 - `DependencyAnalyzer` covers unpinned `requirements.txt` dependencies,
-  unpinned `pyproject.toml` project/Poetry dependencies, unpinned
+  unpinned `pyproject.toml` dependencies across `[project]`,
+  `[project.optional-dependencies]`, PEP 735 `[dependency-groups]`, and
+  `[tool.poetry.dependencies]`, unpinned
   `package.json` `dependencies` / `devDependencies` / `optionalDependencies`,
   unpinned `Cargo.toml` `dependencies` / `dev-dependencies` / `build-dependencies`
   (Cargo semantics: a bare/caret/wildcard spec is unpinned, only `=X.Y.Z` is an
-  exact pin), missing npm lockfiles, a `Cargo.toml` present without a
-  `Cargo.lock`, and a `go.mod` declaring module requirements without a
-  `go.sum`, in the `dependency` category
+  exact pin), missing npm lockfiles, a dependency-declaring `pyproject.toml`
+  shipping none of `poetry.lock` / `pdm.lock` / `uv.lock` / `Pipfile.lock`, a
+  `Cargo.toml` present without a `Cargo.lock`, and a `go.mod` declaring module
+  requirements without a `go.sum`, in the `dependency` category
   (`manifest-hygiene` rule kind, medium confidence, offline).
 - `WorkflowActionAnalyzer` covers missing, branch, and broad major-version
   GitHub Actions `uses:` refs in workflow files in the `dependency` category
@@ -75,18 +78,22 @@ run only when their tool is installed), each audit run records a deterministic
 
 ## Impact-ranked coverage gaps
 
-1. **Project manifests beyond `requirements.txt`, `pyproject.toml`, and bounded `package.json`
-   dependency sections (`dependency`)**
+1. **Manifest breadth beyond the parsed declarations across `requirements.txt`,
+   `pyproject.toml`, `package.json`, `Cargo.toml`, and `go.mod` (`dependency`)**
    - Current coverage: `DependencyAnalyzer` parses `requirements.txt` and
-     `pyproject.toml` dependency declarations for exact Python pins, parses
+     `pyproject.toml` dependency declarations (`[project]`,
+     `[project.optional-dependencies]`, PEP 735 `[dependency-groups]`, and
+     `[tool.poetry.dependencies]`) for exact Python pins, parses
      `package.json` `dependencies` / `devDependencies` / `optionalDependencies`
-     with the stdlib JSON parser for exact npm pins, and checks that
-     `package.json` has one recognized lockfile, that a `Cargo.toml` is
-     accompanied by a `Cargo.lock`, and that a `go.mod` declaring module
+     with the stdlib JSON parser for exact npm pins, and checks lockfile
+     **presence**: that `package.json` has one recognized lockfile, that a
+     dependency-declaring `pyproject.toml` ships one of
+     `poetry.lock` / `pdm.lock` / `uv.lock` / `Pipfile.lock`, that a `Cargo.toml`
+     is accompanied by a `Cargo.lock`, and that a `go.mod` declaring module
      requirements is accompanied by a `go.sum`.
-   - Gap: `poetry.lock`, `Pipfile.lock`,
-     `peerDependencies`, npm alias/workspace/file specs, and lockfile contents
-     are not inventoried.
+   - Gap: `peerDependencies`, npm alias/workspace/file specs, and lockfile
+     *contents* (only lockfile presence is checked, not the versions pinned
+     inside a lockfile) are not inventoried.
    - Candidate follow-up: extend existing dependency parsing before adding
      networked advisory enrichment.
 
