@@ -63,6 +63,26 @@ were attempted, the telemetry field remains `None` and the gate fails closed.
   adapter can emit `correctness` findings only when `pyflakes` is already
   installed.
 
+## Optional-tool dormancy contract
+
+QB's gate of record (`make check`) is stdlib-only and stays green on a stock
+toolchain. Three optional tools enrich coverage where present and lie dormant
+where absent — none of them can fail the gate:
+
+- **`ruff` / `pyflakes`** — when absent, `QualityAnalyzer`'s `quality` and
+  `correctness` adapters are recorded `tool-unavailable` in the capability
+  report (below) and emit no findings, so analyzer breadth is
+  environment-dependent.
+- **`coverage.py`** — when absent, `make coverage` prints an install hint and
+  exits 0 (a no-op); the measured line-coverage figure reproduces only where
+  `coverage.py` is installed.
+
+In every case `make check` stays green: none of these tools is required for a
+no-regression run, so a green gate on one machine reproduces on another. This
+is an intentional, recorded caveat (cross-referenced in `BASELINE.md`'s
+"Analyzer-coverage and parity caveats" and "Measured line-coverage reference"
+sections), not a silent gap.
+
 ## Run-level capability report
 
 Because some coverage is environment-dependent (the `ruff` / `pyflakes` adapters
