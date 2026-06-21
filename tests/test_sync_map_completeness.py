@@ -115,6 +115,9 @@ class SyncMapCompletenessTests(unittest.TestCase):
         check = _run(self.repo, "--check")
         self.assertEqual(check.returncode, 1, check.stdout + check.stderr)
         self.assertIn("unmapped_shared_source=planners/extra-planner.md", check.stderr)
+        # The fail-loud contract also includes an actionable remediation line so a
+        # contributor who adds an unmapped shared/ file knows how to fix it.
+        self.assertIn("Add a MAP entry in scripts/sync.sh", check.stderr)
 
     def test_pycache_under_shared_is_ignored(self) -> None:
         cache = self.repo / "shared/scripts/__pycache__"
