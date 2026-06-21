@@ -156,7 +156,7 @@ This is the authoritative "before" state every forward phase closes against.
 | Gap | Status today | Closing phase |
 |---|---|---|
 | Full execution sandboxing of analyzed code | QB ships disposable write isolation plus command-level process confinement, but not filesystem, network, syscall, or container isolation for arbitrary analyzed code | Phase 1 hardens confine-by-default / sandboxed authorization; full execution sandboxing of analyzed code remains a boundary item per the README |
-| Live A2/A3 autonomy proofs | Gates exist; end-to-end campaign evidence over a labelled corpus is pending | Phase 3 (corpus campaigns / autonomy proofs) |
+| Live A2/A3 autonomy proofs | Gates exist and the A2/A3 campaign tests (`test_a1_campaign`, `test_a2_campaign`, `test_a3_campaign`) pass over the labelled corpus under `make check` (Phase 3 closed) | Phase 3 (corpus campaigns / autonomy proofs) |
 | Disabled cloud CI | Local `make check` is the gate of record | Phase 0 (this baseline + regression net compensate) |
 | Analyzer breadth / environment-dependence | `pyflakes`/`ruff` optional and dormant when absent | Phase 2 (analyzer coverage) |
 | Antigravity parity | Planning-only; not a `sync.sh` destination; ships no audit engine | Phase 5 (multi-host parity) |
