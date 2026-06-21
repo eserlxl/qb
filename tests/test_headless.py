@@ -83,6 +83,57 @@ class HeadlessTests(unittest.TestCase):
             for name in ("findings.jsonl", "report.json", "summary.txt"):
                 self.assertNotIn(token, (out / name).read_text())
 
+    def test_crashing_analyzer_is_isolated(self) -> None:
+        # A single analyzer raising must NOT abort the whole headless run: the audit
+        # completes on the surviving analyzers, logs an `analyzer-error` event, and
+        # names the crashed analyzer in summary.analyzers_skipped with its exception
+        # type/message as the reason. Without run_headless's own per-analyzer
+        # try/except this falls through to the fail-closed handler -> EXIT_INTERNAL_ERROR
+        # with zero findings and no per-analyzer attribution (the removal test).
+        ai = _load("qb_analyzer_interface_for_headless",
+                   SHARED_DIR / "scripts/analyzer_interface.py")
+
+        class _BoomAnalyzer:
+            descriptor = ai.AnalyzerDescriptor(id="boom", categories=("quality",), offline=True)
+
+            def analyze(self, repo_root, config):
+                raise RuntimeError("boom went off")
+
+        original = self.hl._audit.build_default_registry
+
+        def _registry_with_boom():
+            registry = original()
+            registry.register(_BoomAnalyzer())
+            return registry
+
+        self.hl._audit.build_default_registry = _registry_with_boom
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                repo = Path(d) / "repo"
+                repo.mkdir()
+                (repo / "readme.md").write_text("# nothing actionable\n", encoding="utf-8")
+                (repo / "LICENSE").write_text(_LICENSE_TEXT, encoding="utf-8")
+                out = Path(d) / ".qb/audit"
+                code = self.hl.run_headless(repo, output_dir=out)
+                # The run completes on the surviving analyzers, NOT EXIT_INTERNAL_ERROR.
+                self.assertEqual(code, self.hl.EXIT_CLEAN)
+                summary = json.loads((out / "summary.json").read_text())
+                skipped = {s["id"]: s["reason"] for s in summary["analyzers_skipped"]}
+                self.assertIn("boom", skipped)
+                self.assertTrue(skipped["boom"].startswith("RuntimeError:"),
+                                f"unexpected skip reason: {skipped['boom']!r}")
+                self.assertNotIn("boom", summary["analyzers_run"])
+                # The failure is attributed in the run log.
+                events = [json.loads(line)
+                          for line in (out / "run-log.jsonl").read_text().splitlines()
+                          if line.strip()]
+                boom_errors = [e for e in events
+                               if e.get("event") == "analyzer-error" and e.get("analyzer") == "boom"]
+                self.assertEqual(len(boom_errors), 1)
+                self.assertIn("boom went off", boom_errors[0].get("error", ""))
+        finally:
+            self.hl._audit.build_default_registry = original
+
     def test_self_audit_on_qb_repo_yields_documented_exit_code(self) -> None:
         # Phase 7.3: "QB audits QB" must be a repeatable run that produces the
         # findings inventory with a DOCUMENTED exit code (0 clean / 1 findings) when
