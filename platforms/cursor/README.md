@@ -11,7 +11,7 @@ then ship it one safe slice at a time.
 
 <br>
 
-[![version](https://img.shields.io/badge/version-0.19.0-2563EB)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.20.0-2563EB)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 [![Cursor](https://img.shields.io/badge/Cursor-plugin-0F172A)](https://cursor.com)
 [![works with](https://img.shields.io/badge/works%20with-new%20%26%20existing%20repos-EA580C)](#what-youll-get)

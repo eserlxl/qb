@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-06-21
+
+### Changed
+- Add a container-config analyzer (Dockerfile / compose / k8s misconfiguration detection) and a manifest-undeclared-license rule to the license analyzer across all four platforms; isolate per-analyzer crashes so one failing analyzer no longer aborts a headless run; fix SARIF/report evidence-location parsing to split on the last colon and to accept paths containing spaces; fail the release-manifest --check closed on missing tracked files and traverse nested manifests; anchor the supply-chain signal in the production-gate engine inventory; raise ProcessGroupKillError on a failed process-group kill; document the tomllib (Python 3.11+) contract with TOML-fallback tests; and enforce an 80% line-coverage floor in the Makefile gate.
+
 ## [0.19.0] - 2026-06-20
 
 ### Added

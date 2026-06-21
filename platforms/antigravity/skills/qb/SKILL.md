@@ -2,7 +2,7 @@
 name: qb
 description: Vibecoding-first Antigravity planning with assessment, ontology, ledger memory, helper-agent-aware QA, and gated handoff.
 metadata:
-  version: "0.19.0"
+  version: "0.20.0"
 ---
 
 # QB

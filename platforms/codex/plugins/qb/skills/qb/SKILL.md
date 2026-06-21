@@ -2,7 +2,7 @@
 name: qb
 description: Repo-aware Codex planning with assessment, phase sub-plans, QA audit, and gated handoff.
 metadata:
-  version: "0.19.0"
+  version: "0.20.0"
 ---
 
 # QB
