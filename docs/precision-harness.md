@@ -114,6 +114,18 @@ per-analyzer / per-category precision/recall of the fully-labelled scopes are.
 **not scored** — a not-run analyzer never fails the gate, distinct from a
 below-threshold one.
 
+**Phase 0 re-derived reference.** Re-derived on a clean tree at v0.20.0,
+`make precision` reports `{"gate": "PASS"}`: overall `recall = 1.0` (every
+labelled defect found) and the per-analyzer and per-category precision/recall
+all sit at the `1.0` bar — zero margin by construction, since these scopes are
+fully labelled and cannot dip below 1.0 without a real regression. The ungated
+totals precision is `0.3` (6 true positives / 14 unlabelled false positives) —
+expected, because the unlabelled `license`/`config` findings depress it (see
+"Why totals precision is not gated" above). This is the frozen Phase 0
+precision reference Phase 1's corpus expansion ratchets from; the threshold
+bars in [`tests/fixtures/precision-thresholds.json`](../tests/fixtures/precision-thresholds.json)
+are unchanged.
+
 The raw routine is also callable directly:
 `python3 shared/scripts/precision_harness.py --corpus <dir> --thresholds <file>`,
 or with the `--min-precision` / `--min-recall` overall flags.
