@@ -25,14 +25,20 @@ test:
 # coverage -- line-coverage of the QB engine source (shared/scripts) over the test
 # suite. coverage.py is an optional dev tool (like the quality analyzer's
 # ruff/pyflakes): when installed this emits a real line-coverage report AND enforces a
-# minimum floor (COVERAGE_FLOOR, default 80%) via `coverage report --fail-under`, so a
+# minimum floor (COVERAGE_FLOOR, default 84%) via `coverage report --fail-under`, so a
 # measured line-coverage regression fails the target instead of passing silently; when
 # absent the target stays dormant, prints how to install it, and exits 0 so it never
-# breaks a clean tree (the optional-dev-tool contract). The floor is a deliberately
-# conservative gate below the current measured coverage (~85% over shared/scripts);
-# raise COVERAGE_FLOOR as coverage improves to ratchet it. Not part of `make check` --
+# breaks a clean tree (the optional-dev-tool contract). Not part of `make check` --
 # a measurement + regression floor, not the gate of record.
-COVERAGE_FLOOR ?= 80
+#
+# Ratchet policy: the floor sits a small margin (~1-2 points) below the latest measured
+# line-coverage of shared/scripts, so a clean tree never fails while a real regression
+# is caught. Measured anchor: 86% (precisely 85.7% -- 4457 statements, 637 missed) at
+# v0.20.0; floor raised 80 -> 84 here (a documented ~1.7-point margin). Re-measure with
+# `make coverage` after adding engine code or tests, and ratchet the floor up again
+# whenever measured coverage rises a few points above it -- always keeping the floor
+# strictly below the measured value.
+COVERAGE_FLOOR ?= 84
 coverage:
 	@if python3 -c "import coverage" 2>/dev/null; then \
 		python3 -m coverage run --source=shared/scripts -m unittest discover -s tests -p 'test_*.py'; \
