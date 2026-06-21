@@ -125,7 +125,12 @@ class BaselineConsistencyTests(unittest.TestCase):
         live = _live_modules()
         for count in counts:
             self.assertEqual(
-                live, count, f"BASELINE module count {count} != live test modules {live}"
+                live,
+                count,
+                f"BASELINE module count {count} != live test modules {live} — "
+                "adding or removing a test module requires updating the "
+                "BASELINE.md 82/676 counts in the SAME change "
+                "(see BASELINE.md 'Same-change update rule')",
             )
 
     def test_function_count_matches_live_discovery(self) -> None:
@@ -134,7 +139,12 @@ class BaselineConsistencyTests(unittest.TestCase):
         live = _live_functions()
         for count in counts:
             self.assertEqual(
-                live, count, f"BASELINE test count {count} != live unittest count {live}"
+                live,
+                count,
+                f"BASELINE test count {count} != live unittest count {live} — "
+                "adding or removing a test requires updating the "
+                "BASELINE.md 82/676 counts in the SAME change "
+                "(see BASELINE.md 'Same-change update rule')",
             )
 
     def test_make_check_inventory_matches_makefile_recipe(self) -> None:
