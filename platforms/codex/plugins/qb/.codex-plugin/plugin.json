@@ -1,6 +1,6 @@
 {
   "name": "qb",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "QB packages a repo-aware Codex planning workflow with an existing-project assessment, gated implementation handoff prompt, and audit/harden engine.",
   "author": {
     "name": "Eser KUBALI",

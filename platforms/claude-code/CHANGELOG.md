@@ -5,6 +5,11 @@ All notable changes to QB are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.1] - 2026-06-23
+
+### Changed
+- Harden the public_privacy release guard with focused tests for its CLI surface (scan_paths file I/O and main exit codes).
+
 ## [0.21.0] - 2026-06-21
 
 ### Changed

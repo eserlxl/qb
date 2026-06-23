@@ -9,7 +9,7 @@ then ship it one safe slice at a time.
 
 <br>
 
-[![version](https://img.shields.io/badge/version-0.21.0-2563EB)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-0.21.1-2563EB)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-16A34A)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-0F172A)](https://claude.com/claude-code)
 [![works with](https://img.shields.io/badge/works%20with-new%20%26%20existing%20repos-EA580C)](#what-youll-get)
