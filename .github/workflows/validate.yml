@@ -24,6 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # Python version matrix: the stdlib-only engine must validate clean on every
+    # supported interpreter. fail-fast is disabled so one version's failure does not
+    # cancel the others' diagnostics. Local `make check` (on the project's own
+    # interpreter) stays the authoritative gate; this matrix is part of the mirror.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
     # Pinning policy: major-version tags are broad refs that the offline analyzer
     # reports; full semver tags and immutable commit SHAs are the clean states.
     # This disabled mirror workflow keeps local `make check` authoritative. The
@@ -33,6 +41,6 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
       - name: Run monorepo validation
         run: make check
