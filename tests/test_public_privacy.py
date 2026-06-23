@@ -19,7 +19,9 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 from tests.qb_monorepo import REPO_ROOT
 
@@ -37,7 +39,9 @@ def _load_public_privacy():
 _pp = _load_public_privacy()
 PRIVATE_PATTERNS = _pp.PRIVATE_PATTERNS
 scan_text = _pp.scan_text
+scan_paths = _pp.scan_paths
 public_docs = _pp.public_docs
+main = _pp.main
 ALLOW_MARKER = _pp.ALLOW_MARKER
 
 
@@ -84,6 +88,43 @@ class PublicPrivacyGuardTest(unittest.TestCase):
     def test_clean_text_has_no_findings(self) -> None:
         clean = "Run `make check`; the gate of record lives in RUNBOOK.md.\n~/.config is fine."
         self.assertEqual(scan_text(clean), [])
+
+    def test_scan_paths_reports_relpath_line_and_rule(self) -> None:
+        # scan_paths is the file-I/O layer behind the CLI; pin its finding format.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            doc = root / "leaky.md"
+            # Built by concatenation so this source carries no literal private path.
+            doc.write_text("clean line\nsee /home/" + "erin/notes\n", encoding="utf-8")
+            findings = scan_paths([doc], root=root)
+            self.assertEqual(len(findings), 1, findings)
+            self.assertTrue(
+                findings[0].endswith(":2:unix_home_path"),
+                f"unexpected finding string: {findings[0]!r}",
+            )
+
+    def test_scan_paths_skips_unreadable_path(self) -> None:
+        # An unreadable/absent path is swallowed (fail-skip), never raised.
+        missing = REPO_ROOT / "does-not-exist-public-privacy-fixture.md"
+        self.assertEqual(scan_paths([missing]), [])
+
+    def test_main_exit_codes(self) -> None:
+        # main() is the CLI entry: non-zero on a leak, zero on a clean set.
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            leak = root / "leak.md"
+            leak.write_text("/home/" + "frank/x\n", encoding="utf-8")
+            clean = root / "clean.md"
+            clean.write_text("nothing private here\n", encoding="utf-8")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+                rc_leak = main([str(leak)])
+                rc_clean = main([str(clean)])
+        self.assertEqual(rc_leak, 1)
+        self.assertEqual(rc_clean, 0)
 
 
 if __name__ == "__main__":
